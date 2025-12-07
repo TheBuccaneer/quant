@@ -1,0 +1,10 @@
+Update the CircuitSimulator to support caching sampling results to a user-specified register name 
+```python
+import qoda
+kernel = qoda.make_kernel()
+qreg = kernel.qalloc(2)
+kernel.x(qreg)
+kernel.mz(qreg, register_name="test_measurement")
+measure_counts = qoda.sample(kernel, shots_count=10)
+measure_counts.register_names() # -> should have test_measurement
+```

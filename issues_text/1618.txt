@@ -1,0 +1,9 @@
+There is an oversight in this line:
+
+https://github.com/NVIDIA/cuda-quantum/blob/035bd3ba0b2a5e6b90b23c2bb6dfdcdc3d7bf40c/python/cudaq/kernel/analysis.py#L49
+
+There are two cases:
+
+- For simple variable comparison (`var == True/False`): the `id` field is actually in the `left` node, i.e., we need to look for `condition.left.id`.
+
+- For subscript variables, e.g., `results[0]`, the `left` is an `ast.Subscript` object, hence we need to look for the `value` field to find the variable name.

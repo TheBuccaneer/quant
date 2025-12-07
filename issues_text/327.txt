@@ -1,0 +1,40 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+The cmake files are missing dependencies. Incremental builds thus fail erroneously.
+
+### Steps to reproduce the bug
+
+```console
+% cd build
+% cmake ...
+% vi ../runtime/cudaq/platform/default/rest/helpers/quantinuum/quantinuum.config
+<add a new pass to the config>
+% make -j8 check-nvqpp
+```
+The new config is not installed and the new pass is not run. If tests require the new pass they fail.
+
+### Expected behavior
+
+The config files should be copied if modified into the build tree.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: 
+- **Python version**: 
+- **C++ compiler**: 
+- **Operating system**: 
+
+
+### Suggestions
+
+_No response_

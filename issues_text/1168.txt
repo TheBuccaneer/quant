@@ -1,0 +1,62 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+When explicitly disabling the `aggressive-early-inline` pass, JIT compilation fails when the entry-point function calls another function
+
+### Steps to reproduce the bug
+
+Compile and run the following file with `nvq++ --target ionq --emulate --no-aggressive-early-inline [file] && ./a.out`
+
+```c++
+#include <cudaq.h>
+
+void foo(cudaq::qview<> q, size_t n) __qpu__ {
+    cudaq::qvector temp(n);
+    x(q[0]);
+    h(temp[0]);
+}
+
+struct entry {
+  auto operator()(size_t n) __qpu__ {
+    cudaq::qreg q(n);
+    foo(q, n);
+  }
+};
+
+int main() {
+  auto counts = cudaq::sample(entry{}, 2);
+  counts.dump();
+  return 0;
+}
+```
+
+This causes the following error message:
+
+>  loc("test.cpp":12:5): error: 'func.call' op '__nvqpp__mlirgen__function_foo._Z3fooN5cudaq5qviewILm2EEEm' does not> reference a valid function
+> terminate called after throwing an instance of 'std::runtime_error'
+>   what():  Could not successfully apply quake-synth.
+> Aborted
+
+### Expected behavior
+
+The result should be the same as compiling with inlining enabled (`nvq++ --target ionq --emulate [file] && ./a.out`). In particular, running the file should not fail and it should output `{ 1010:536 1000:464 }` (or a similar result)
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: I used the latest docker image from nvcr (`sha256:754ed8de850d15e1334da517b35663cb1ccff7c9fd111572cbae759c66f87da5`)
+- **C++ compiler**: `nvq++` compiler packaged within the docker image
+- **Operating system**: macOS
+
+
+### Suggestions
+
+_No response_

@@ -1,0 +1,113 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [X] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+The code snippet below calculates expectation values using `observe` and `observe_async` and executes fine 
+
+```
+import cudaq
+from cudaq import spin 
+
+kernel = cudaq.make_kernel()
+
+qubits = kernel.qalloc(2)
+
+kernel.x(qubits[0])
+
+kernel.y(qubits[1])
+
+hamiltonian = spin.z(0)
+
+result1 = cudaq.observe(kernel, hamiltonian).expectation_z()
+
+result2 = cudaq.observe_async(kernel, hamiltonian, qpu_id = 0).get().expectation_z()
+
+result1 == result2
+
+```
+
+If I extend the hamiltonian to a list of 2 elements, I can successfully calculate the expectation value as such: 
+
+```
+import cudaq
+from cudaq import spin 
+
+
+kernel = cudaq.make_kernel()
+
+qubits = kernel.qalloc(2)
+
+kernel.x(qubits[0])
+
+kernel.y(qubits[1])
+
+hamiltonian = [spin.z(0), spin.z(1)]
+
+result = cudaq.observe(kernel, hamiltonian)
+
+exp_val = [result[i].expectation_z() for i in range(len(result))]
+```
+
+However, with `obersve_async` the following error is produced: 
+
+```
+import cudaq
+from cudaq import spin 
+
+
+kernel = cudaq.make_kernel()
+
+qubits = kernel.qalloc(2)
+
+kernel.x(qubits[0])
+
+kernel.y(qubits[1])
+
+hamiltonian = [spin.z(0), spin.z(1)]
+
+result = cudaq.observe_async(kernel, hamiltonian, qpu_id = 0)
+
+
+```
+
+```
+---------------------------------------------------------------------------
+TypeError                                 Traceback (most recent call last)
+Cell In[2], line 15
+     11 kernel.y(qubits[1])
+     13 hamiltonian = [spin.z(0), spin.z(1)]
+---> 15 result = cudaq.observe_async(kernel, hamiltonian, qpu_id = 0)
+
+TypeError: observe_async(): incompatible function arguments. The following argument types are supported:
+    1. (kernel: cudaq._pycudaq.Kernel, spin_operator: cudaq::spin_op, *args, qpu_id: int = 0, shots_count: int = -1, noise_model: Optional[cudaq::noise_model] = None) -> cudaq::async_result<cudaq::observe_result>
+
+Invoked with: <cudaq._pycudaq.Kernel object at 0x7f0c50ff2770>, [<cudaq._pycudaq.SpinOperator object at 0x7f0c50fd1630>, <cudaq._pycudaq.SpinOperator object at 0x7f0c4c674e30>]; kwargs: qpu_id=0
+```
+
+`observe_async` supports `type(spin.z(0))` which is `cudaq._pycudaq.SpinOperator` but the type of `hamiltonian = [spin.z(0), spin.z(1)]` is a list. 
+
+This is also reflected in the documentation where `observe` [can accept a list of a spinop](https://nvidia.github.io/cuda-quantum/latest/api/languages/python_api.html#kernel-execution:~:text=spin_operator%20(SpinOperator%20or%20list%5BSpinOperator%5D)%20%E2%80%93%20The%20Hermitian%20spin%20operator%20to%20calculate%20the%20expectation%20of%2C%20or%20a%20list%20of%20such%20operators.) but `observe_async` [only accepts spinop ](https://nvidia.github.io/cuda-quantum/latest/api/languages/python_api.html#kernel-execution:~:text=spin_operator%20(SpinOperator)%20%E2%80%93%20The%20Hermitian%20spin%20operator%20to%20calculate%20the%20expectation%20of.)
+
+### Steps to reproduce the bug
+
+NA
+
+### Expected behavior
+
+NA
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+NA
+
+### Suggestions
+
+_No response_

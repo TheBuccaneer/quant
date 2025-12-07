@@ -1,0 +1,55 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [X] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+The unit test test_runtime_dm does this on Ubuntu 22.04
+
+mdaniels@daniels:~/src/cuda-quantum/build/unittests$ ./test_runtime_dm 
+[==========] Running 67 tests from 21 test suites.
+[----------] Global test environment set-up.
+[----------] 2 tests from dm_AdjointTester
+[ RUN      ] dm_AdjointTester.checkSimple
+{ 0:1000 }
+{ 00000:1000 }
+{ 0:1000 }
+{ 00:1000 }
+{ 101:1000 }
+[       OK ] dm_AdjointTester.checkSimple (71 ms)
+[ RUN      ] dm_AdjointTester.checkNestedAdjoint
+{ 000:233 010:188 111:99 001:4 011:69 100:237 101:25 110:145 }
+[       OK ] dm_AdjointTester.checkNestedAdjoint (6 ms)
+[----------] 2 tests from dm_AdjointTester (78 ms total)
+
+[----------] 17 tests from dm_BuilderTester
+[ RUN      ] dm_BuilderTester.checkSimple
+realloc(): invalid pointer
+Aborted (core dumped)
+
+
+### Steps to reproduce the bug
+
+went into build directory and unittests and ran ./test_runtime_dm
+
+### Expected behavior
+
+passing test
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression -- first time I have built cuda-quantum.
+
+### Environment
+
+- **CUDA Quantum version**:  Today's git:  1537660f8adff60edfc047a4be1d0bcd3a8f0021
+- **Python version**:   3.10.12
+- **C++ compiler**:  clang++ 16.0.0, 
+- **Operating system**:  Ubuntu 22.04 
+
+
+### Suggestions
+
+_No response_

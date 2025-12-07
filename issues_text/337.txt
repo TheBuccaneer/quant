@@ -1,0 +1,70 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [X] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+When we trying to compile an `if` statement inside a `for` loop, I notice that some instructions are disappearing.
+
+### Steps to reproduce the bug
+
+Try to compile: (`test-1.cpp` in #323 )
+```cpp
+#include <cudaq.h>
+#include <iostream>
+
+__qpu__ void load_value(unsigned value) {
+  cudaq::qreg qubits(4);
+  for (std::size_t i = 0; i < 4; ++i) {
+    if (value & (1 << i))
+      x(qubits[3 - i]);
+  }
+  mz(qubits);
+}
+
+int main() {
+  for (auto i = 0; i < 16; ++i) {
+    auto result = cudaq::sample(1000, load_value, i);
+    std::cout << result.most_probable() << '\n';
+  }
+  return 0;
+}
+``` 
+
+By running the program with `CUDAQ_LOG_LEVEL=info`, we can see that the `x` operation are not executed:
+```
+[2023-07-03 15:33:25.629] [info] [NVQIR.cpp:80] Creating the qpp backend.
+[2023-07-03 15:33:25.629] [info] [CircuitSimulator.h:805] Setting current circuit name to 
+[2023-07-03 15:33:25.632] [info] [CircuitSimulator.h:639] Allocating 4 new qubits.
+[2023-07-03 15:33:25.632] [info] [CircuitSimulator.h:659] Deferring qubit 0 deallocation
+[2023-07-03 15:33:25.632] [info] [CircuitSimulator.h:659] Deferring qubit 1 deallocation
+[2023-07-03 15:33:25.632] [info] [CircuitSimulator.h:659] Deferring qubit 2 deallocation
+[2023-07-03 15:33:25.632] [info] [CircuitSimulator.h:659] Deferring qubit 3 deallocation
+[2023-07-03 15:33:25.632] [info] [NVQIR.cpp:168] Resetting execution context.
+[2023-07-03 15:33:25.632] [info] [CircuitSimulator.h:465] Sampling the current state, with measure qubits = [0, 1, 2, 3]
+[2023-07-03 15:33:25.634] [info] [CircuitSimulator.h:790] Deallocated all qubits, reseting state vector.
+```
+
+This will also happen if we change the condition to `if (value)`. (Before even with `if (true)` this would fail in the same way----now it seems to not be the case.)
+
+### Expected behavior
+
+The `x` operations should not disappear. The program should output values 0-15 in binary.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: main
+- **C++ compiler**: gcc-12
+- **Operating system**: Ubuntu (AArch64)
+
+
+
+### Suggestions
+
+_No response_

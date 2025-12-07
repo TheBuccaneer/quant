@@ -1,0 +1,64 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+The following code only passes in emulation, but not in library mode. The bug is a qpp dimension issue (more triage needed to determine what impact, if any, on nvidia backends), meaning we will likely need to update somewhere along the function stack of `qpp::applyGate`. 
+
+```
+#include "cudaq.h"
+#include <iostream>
+
+// fails with: `nvq++ test.cpp && ./a.out`
+// passes with: `nvq++ --target quantinuum --emulate test.cpp && ./a.out`
+
+int main() {
+    auto kernel = cudaq::make_kernel();
+    // Using a mixture of qregs and qubits as controls
+    auto controls1 = kernel.qalloc(2);
+    auto controls2 = kernel.qalloc(2);
+    auto control3 = kernel.qalloc();
+    auto target = kernel.qalloc();
+
+    // bug with any control gate
+    kernel.x<cudaq::ctrl>(controls1, controls2, control3, target);
+
+    auto counts = cudaq::sample(kernel);
+    counts.dump();
+}
+```
+
+Runtime error:
+```
+terminate called after throwing an instance of 'qpp::exception::SubsysMismatchDims'
+  what():  qpp::applyCTRL(): Subsystems mismatch dimensions! [ctrl/dims]
+```
+
+### Steps to reproduce the bug
+
+Run the above code with `nvq++ test.cpp && ./a.out`
+
+### Expected behavior
+
+The behavior should match the output of `nvq++ --target quantinuum --emulate test.cpp && ./a.out` .
+
+Note: the reason this is an issue only in library mode is because of the compiler passes that are specific to emulation. They will redefine the multi-controls as two qubit gates, circumventing the dimension issue.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: latest
+- **Python version**: latest
+- **C++ compiler**: lates
+- **Operating system**: Ubuntu
+
+
+### Suggestions
+
+_No response_

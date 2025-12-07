@@ -328,6 +328,100 @@ oder Installation ausgelöst wird, wird eher eine andere Schicht gewählt
 (z.B. Framework-Integration oder High-Level-API).
 
 
+### 2.2 Backend-Library
+
+**Definition:**  
+Diese Kategorie umfasst Bugs, deren primäre Ursache in der **Backend-nahen Implementierung** liegt – also Bibliotheken, die eigentliche Rechenkerne, Lineare Algebra, Statevector-/Tensor-Operationen oder Code-Generierung bereitstellen. Beispiele sind u.a. **cuStateVec, cuTensorNet, qpp, MLIR/LLVM-Codegen-Pfade** oder vergleichbare Low-Level-Backends.
+
+**Typische Indikatoren:**
+
+- Der Fehler tritt **unabhängig von der High-Level-API** auf, sobald ein bestimmtes Backend verwendet wird.
+- Das Issue bezieht sich explizit auf eine Backend-Komponente (z.B. `custatevec`, „statevector backend“, „tensornet backend“, „MLIR lowering“).
+- Es geht um falsche Resultate, Crashes oder Exceptions, die auf **numerische Kerne, Low-Level-Kernels oder Code-Generierung** zurückzuführen sind.
+
+**Abgrenzung:**
+
+- Wenn das Problem nur bei **einem bestimmten Backend** auftritt, obwohl die High-Level-Aufrufe korrekt sind → eher **Backend-Library** als High-Level-API.
+- Wenn die Ursache in falscher Backend-Auswahl oder -Initialisierung liegt (z.B. falsches Device, Backend nicht geladen), ist das eher **2.3 Framework-Integration**.
+
+**Beispiele (schematisch):**
+
+- Falsche Simulationsergebnisse nur im `custatevec`-Backend, andere Backends liefern korrekte Werte.
+- Crash in einem bestimmten MLIR-Lowering-Pass bei validem Input.
+
+---
+
+### 2.3 Framework-Integration
+
+**Definition:**  
+Diese Kategorie umfasst Bugs im **Zusammenspiel zwischen High-Level-Framework (Python-/C++-API)** und den darunterliegenden Backends. Es geht um Fehler in **Backend-Selection, Initialisierung, Konfiguration und Aufruf der Backends** durch das Framework.
+
+**Typische Indikatoren:**
+
+- Der Bug tritt nur auf, wenn ein **bestimmtes Backend über die Framework-API ausgewählt** wird (z.B. `--target`, `set_backend(...)`).
+- Fehlermeldungen deuten auf **fehlgeschlagene Initialisierung**, falsche Geräteselektion oder mismatchende Optionen zwischen Framework und Backend.
+- Das Backend selbst arbeitet korrekt, aber das Framework reicht **falsche Parameter, Optionen oder Datentypen** an das Backend weiter.
+
+**Abgrenzung:**
+
+- Liegt das Problem direkt in der User-facing API-Semantik (Kernel-Aufruf, Parameter-Checking, Messlogik), ist es eher **2.4 High-Level-API / Framework-Logik**.
+- Wenn Treiber, CUDA-Versionen, Pfade oder System-Umgebung nicht stimmen → eher **2.1 Build/Deploy/Environment**.
+
+**Beispiele (schematisch):**
+
+- Das Framework versucht, ein GPU-Backend zu verwenden, obwohl nur CPU verfügbar ist, und behandelt den Fehler nicht robust.
+- Falsche Übersetzung von Framework-Optionen (`shots`, `qubits`, `precision`) in Backend-spezifische Flags, was zu Runtime-Errors führt.
+
+---
+
+### 2.4 High-Level-API / Framework-Logik
+
+**Definition:**  
+Diese Kategorie umfasst Bugs in der **User-facing API und Framework-Logik** – also in Kernel-Semantik, Parametervalidierung, Typ-/Shape-Handling, Ergebnisverarbeitung, Transformations- und Messungslogik. Die Ursache liegt typischerweise im **Frontend** (z.B. Python-API, Dekoratoren, High-Level-Konstrukte).
+
+**Typische Indikatoren:**
+
+- Die API erfüllt ihren **eigenen Vertrag** nicht (laut Doku sollte etwas funktionieren, tut es aber nicht).
+- Fehler im Umgang mit **Typen, Shapes, Containern oder Standardwerten** von Parametern.
+- Falsche oder irreführende High-Level-Ergebnisse (z.B. falsche Messungsindizes, falsche Aggregation von Shots), obwohl das Backend korrekt arbeitet.
+- Bugs in Transformations-Pipelines (z.B. QNode-Transforms, Pass-Pipelines), die direkt von Usern verwendet werden.
+
+**Abgrenzung:**
+
+- Wenn das Problem durch **falsche Nutzung** der API entsteht, die API sich aber korrekt gemäß Spezifikation verhält, kann es ein **Usage-/User-Error** sein (falls separat codiert).
+- Wenn die API korrekt ist, aber ein bestimmtes Backend intern falsch rechnet → eher **2.2 Backend-Library**.
+- Wenn die Ursache in der Umgebung/Installation liegt → **2.1 Build/Deploy/Environment**.
+
+**Beispiele (schematisch):**
+
+- `list[list[int]]` wird laut Doku als Kernel-Argument unterstützt, führt aber zu einem internen Typ-Inferenz-Fehler.
+- Eine High-Level-Funktion zur Messungsaggregation gibt ein falsch sortiertes oder falsch indiziertes Ergebnis zurück.
+
+---
+
+### 2.5 Runtime-/Framework-Laufzeit
+
+**Definition:**  
+Diese Kategorie deckt Bugs ab, die sich primär in der **Laufzeitphase des Frameworks** zeigen, typischerweise im Bereich **Ressourcenmanagement, Caching, Scheduling und Performance**. Dazu gehören z.B. Memory-Leaks, ineffiziente JIT-Caches, fehlerhaftes Lazy-Evaluation-Verhalten oder starke Performance-Regressionen bei ansonsten korrekten Ergebnissen.
+
+**Typische Indikatoren:**
+
+- Das Programm liefert zwar **korrekte Resultate**, zeigt aber **Memory-Leaks**, ungewöhnlich hohe GPU-/CPU-Auslastung oder inkonsistentes Laufzeitverhalten.
+- JIT-/Cache-Mechanismen verhalten sich falsch (z.B. falsches Reuse von kompilierten Kernels, nicht invalidierte Caches).
+- Performance-Probleme sind klar auf **Framework-Laufzeitlogik** zurückzuführen, nicht auf generelle Hardware-Limitierungen.
+
+**Abgrenzung:**
+
+- Wenn das Problem primär durch falsche Konfiguration/Installation (z.B. falsche BLAS-/CUDA-Version) entsteht → **2.1 Build/Deploy/Environment**.
+- Wenn falsche Resultate (nicht nur Performance/Resource-Verhalten) betroffen sind, kann es **2.2 Backend-Library** oder **2.4 High-Level-API / Framework-Logik** sein – je nach Lokalisierung.
+
+**Beispiele (schematisch):**
+
+- Wiederholte Ausführung desselben Kernels führt zu ständig wachsender GPU-Memory-Nutzung (Leak im Runtime-Layer).
+- Ein JIT-Cache speichert zu viele Varianten und wird nie bereinigt → stark wachsende Compile-Time und/oder RAM-Verbrauch.
+
+
+
 ## 3. Compile-Time-Vermeidbarkeit (CTClass A/B/C)
 
 Zur Einordnung, inwieweit ein Bug prinzipiell durch Compile-Time-Mechanismen

@@ -1,0 +1,8 @@
+TwoTargetRewrite in LowerToQIR.cpp has been left with 
+```cpp
+if (numControls != 0)
+      return instOp.emitError("unsupported controlled op " + instName +
+                              " with " + std::to_string(numControls) +
+                              " ctrl qubits");
+
+```

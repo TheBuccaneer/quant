@@ -1,0 +1,10 @@
+```bash
+[59/257] Building CXX obj...QIRExecutionManager.cpp.o
+/workspaces/cuda-quantum/runtime/cudaq/qis/managers/qir/QubitQIRExecutionManager.cpp:190:28: warning: '(anonymous namespace)::QIRExecutionManager::measure' hides overloaded virtual function [-Woverloaded-virtual]
+  cudaq::SpinMeasureResult measure(cudaq::spin_op &op) override {
+                           ^
+/workspaces/cuda-quantum/runtime/cudaq/qis/managers/BasicExecutionManager.h:253:7: note: hidden overloaded virtual function 'cudaq::BasicExecutionManager::measure' declared here: type mismatch at 1st parameter ('const cudaq::QuditInfo &' vs 'cudaq::spin_op &')
+  int measure(const cudaq::QuditInfo &target) override {
+      ^
+1 warning generated.
+```

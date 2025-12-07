@@ -1,0 +1,75 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [X] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+For a statement like `if (a && b) { doSomething(); }`, the generated IR is incorrect. This is the current behavior:
+| a | b | Actual Result | Expected Result |
+|---|---|---|---|
+| false | false | true | false |
+| false | true | true | false |
+| true | false | false | false |
+| true | true | true | true |
+
+### Steps to reproduce the bug
+
+With the following test.cpp file:
+```cpp
+#include <cudaq.h>
+
+struct kernel {
+  void operator()(bool a, bool b) __qpu__ {
+    cudaq::qubit q;
+    if (a && b)
+      x(q);
+    mz(q);
+  }
+};
+
+int main() {
+
+  int nShots = 100;
+  // Sample
+  auto counts = cudaq::sample(/*shots*/ nShots, kernel{}, false, false);
+  counts.dump();
+  counts = cudaq::sample(/*shots*/ nShots, kernel{}, false, true);
+  counts.dump();
+  counts = cudaq::sample(/*shots*/ nShots, kernel{}, true, false);
+  counts.dump();
+  counts = cudaq::sample(/*shots*/ nShots, kernel{}, true, true);
+  counts.dump();
+  return 0;
+}
+```
+Run the following compile/run commands from the build directory (or adjust if you're running from another directory):
+```bash
+[root@docker-desktop build (main)]# bin/nvq++ ~/test.cpp --target quantinuum --emulate
+[root@docker-desktop build (main)]# ./a.out 
+{ 1:100 }
+{ 1:100 }
+{ 0:100 }
+{ 1:100 }
+```
+
+### Expected behavior
+
+It should follow the typical logical `&&` operator behavior as shown in the truth table in the bug description.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: main
+- **Python version**: N/A
+- **C++ compiler**: 16.0.6
+- **Operating system**: Ubuntu 22.04
+
+
+### Suggestions
+
+A PR will be forthcoming with a fix.

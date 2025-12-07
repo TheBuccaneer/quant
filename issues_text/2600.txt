@@ -1,0 +1,17 @@
+The following fails 
+
+```python 
+import cudaq 
+
+@cudaq.kernel 
+def myop(p0 : float, p1: float) -> list[complex]:
+    return [0., p0, p1, 0.] 
+
+print(myop)
+```
+with 
+```
+error: type of return operand 0 ('!cc.stdvec<f64>') doesn't match function result type ('!cc.stdvec<complex<f64>>') in function @__nvqpp__mlirgen__myop
+RuntimeError: Failure while executing pass pipeline.
+```
+we should do some auto-casting from float to complex if the return type is specified like this. 

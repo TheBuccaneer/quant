@@ -1,0 +1,50 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+When trying the `vqe_h2.cpp` example (`cuda-quantum/docs/sphinx/examples/cpp/algorithms/vqe_h2.cpp`) with IonQ simulator target,
+
+```
+nvq++ --emulate --target ionq cuda-quantum/docs/sphinx/examples/cpp/algorithms/vqe_h2.cpp
+./a.out
+```
+
+it hit an assertion:
+```
+assert(static_cast<uint64_t>(index * element_size_bytes) < storage.size() &&
+         "Provided index for Array::operator[] not valid.");
+```
+
+Seems like it is trying to access index 4 on a size-4 array.
+
+
+### Steps to reproduce the bug
+
+```
+nvq++ --emulate --target ionq cuda-quantum/docs/sphinx/examples/cpp/algorithms/vqe_h2.cpp
+./a.out
+```
+
+### Expected behavior
+
+No assertion
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: main
+- **Python version**: 3.10.12
+- **C++ compiler**: 11.4
+- **Operating system**: Ubuntu22.04
+
+
+### Suggestions
+
+_No response_

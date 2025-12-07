@@ -1,0 +1,59 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+The `do { ... } while (0)` construct is common in C/C++ macros, and if used in a `__qpu__` kernel, it causes the program to go in an apparent infinite loop.
+
+### Steps to reproduce the bug
+
+Consider the following test program
+```cpp
+#include "cudaq.h"
+
+void kernel() __qpu__ {
+  cudaq::qubit q;
+  do {
+    x(q);
+  } while (0);
+}
+
+int main(int argc, char *argv[]) {
+  auto counts = cudaq::sample(kernel);
+  counts.dump();
+  return 0;
+}
+```
+Compile and run it like this to see the error:
+```bash
+$ nvq++ --enable-mlir issue.cpp && ./a.out
+# This hangs during program execution
+```
+
+### Expected behavior
+
+The program should run the same as when not using `--enable-mlir`:
+```bash
+$ nvq++ issue.cpp && ./a.out
+{ 1:1000 }
+```
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: latest (2da801bc3)
+- **Python version**: 
+- **C++ compiler**: 
+- **Operating system**: 
+
+
+### Suggestions
+
+_No response_

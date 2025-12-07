@@ -1,0 +1,100 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [X] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+```
+import cudaq 
+from cudaq import spin 
+import torch 
+
+```
+
+```
+n_qubits = 2
+
+kernel, thetas = cudaq.make_kernel(list)
+
+qubits = kernel.qalloc(n_qubits)
+
+kernel.rx(thetas[0], qubits[0])
+kernel.ry(thetas[1], qubits[1])
+
+```
+
+
+We need to supply 2 theta values to observe in order to run the circuit above which we do below via `torch.rand(2)`
+
+```
+theta_vals = torch.rand(2)
+
+hamiltonian = spin.z(0)
+
+results = cudaq.observe(kernel, hamiltonian, theta_vals)
+
+exp_vals = results.expectation_z()
+
+```
+
+We can also supply 3 batches of values to automatically broadcast the input
+
+```
+theta_vals = torch.rand(3,2)
+
+hamiltonian = spin.z(0)
+
+results = cudaq.observe(kernel, hamiltonian, theta_vals)
+
+exp_vals = [results[i].expectation_z() for i in range(len(results))]
+
+```
+
+All of the above works fine. 
+
+If we now change the Hamiltonian to a list, we get the following: 
+
+```
+theta_vals = torch.rand(3,2)
+
+hamiltonian = [spin.z(0), spin.z(1)]
+
+results = cudaq.observe(kernel, hamiltonian, theta_vals)
+```
+
+results should contain 3*2 values but instead is a list of length 3 where each element is a float rather than 2 floats. 
+
+```
+results[0].expectation_z()
+
+1.7673358748029913
+```
+
+
+
+
+### Steps to reproduce the bug
+
+NA
+
+### Expected behavior
+
+NA
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: LATEST
+- **Python version**: 
+- **C++ compiler**: 
+- **Operating system**: 
+
+
+### Suggestions
+
+NA

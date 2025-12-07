@@ -1,0 +1,36 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+There is no comprehensive error message based on which one can take action when something goes wrong with the job submission to a hardware backend. 
+
+TODO:
+I haven't checked if the compiler error gets printed correctly when we fail to compile - would be to confirm that!
+
+### Steps to reproduce the bug
+
+Copy the example for submitting to Quantinuum, don't create a file with the credentials, and run it using Python. This result simply in an "Abort" being displayed without any further information.
+
+### Expected behavior
+
+It should print a message that tells me no credentials were found, similar for other submission issues, like e.g. specifying a machine that doesn't exist.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**:  current main
+- **Python version**:  N/A
+- **C++ compiler**: N/A
+- **Operating system**: N/A
+
+
+### Suggestions
+
+_No response_

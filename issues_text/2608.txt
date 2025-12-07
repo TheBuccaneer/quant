@@ -1,0 +1,54 @@
+### Required prerequisites
+
+- [x] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [x] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [x] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+It seems the bridge is getting lost when using captured globals. In the following case, `angle`, seems to be identified as a float; the symbols table's entry, however, has its type as `!cc.ptr<f64>`, which is not indeed a `f64`. Thus the issues seems to be that the user of `angle` expects a value (register), while the bridge symbol table gets populated with memory.
+
+```python
+import cudaq
+
+angle = 3.14
+
+@cudaq.kernel
+def kernel():
+    qubit = cudaq.qubit()
+    rz(angle, qubit)
+    mz(qubit)
+
+ret = cudaq.sample(kernel)
+print(ret)
+```
+
+```
+cudaq.kernel.ast_bridge.CompilerError: bug_me.py:8: error: rotational parameter must be a float, or int.
+	 (offending source -> rz(angle, qubit))
+```
+
+
+### Steps to reproduce the bug
+
+Trying to run the above code.
+
+### Expected behavior
+
+The code should run.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA-Q version**: (https://github.com/NVIDIA/cuda-quantum 20e5869901c69c0bbbac074cc468e1b398ce136e)
+- **Python version**: 3.10
+- **Operating system**: Ubuntu 24.04.1 LTS
+
+
+### Suggestions
+
+_No response_

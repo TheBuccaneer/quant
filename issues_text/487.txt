@@ -1,0 +1,8 @@
+Kernels with arguments that have plain standard defined types such as `int` and `double` can be compiled currently. However, the introduction of `typedef` type aliases, etc. can expose bugs in the compiler. Some aliases may already have been added, but a more comprehensive solution that correctly deals with any/all type aliases must be implemented.
+
+Example:
+```c++
+__qpu__ void my_kernel(cudaq::qreg<> qubits, std::size_t arg1,
+                 std::size_t arg2) {
+  ...
+```

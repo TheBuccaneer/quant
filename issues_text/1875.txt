@@ -1,0 +1,108 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+If I run example 1, it will work and print the register `a`. However, if I run example 2, it will not print the register `a`
+
+
+
+### Steps to reproduce the bug
+
+Example 1:
+
+```
+import cudaq
+
+@cudaq.kernel
+def kernel_break():
+    ancilla_a=cudaq.qubit()
+    ancilla_b=cudaq.qubit()
+    q=cudaq.qubit()
+    
+    
+    
+    h(ancilla_a)
+    h(ancilla_b)
+    x(q)
+        
+    aux_1=mz(ancilla_a)
+    aux_2=mz(ancilla_b)
+    if aux_1==0:
+        if aux_2==0:
+            x.ctrl(ancilla_a,q)
+            a=mz(q)
+         
+            
+
+
+count=cudaq.sample(kernel_break,shots_count=1000)
+print(count)
+```
+
+Example 2:
+```
+import cudaq
+
+@cudaq.kernel
+def kernel_break():
+    ancilla_a=cudaq.qubit()
+    ancilla_b=cudaq.qubit()
+    q=cudaq.qubit()
+    
+    
+    
+    h(ancilla_a)
+    h(ancilla_b)
+    x(q)
+        
+    aux_1=mz(ancilla_a)
+    aux_2=mz(ancilla_b)
+    if aux_1==0 and aux_2==0:
+        #if aux_2==0:
+        x.ctrl(ancilla_a,q)
+        a=mz(q)
+         
+            
+
+
+count=cudaq.sample(kernel_break,shots_count=1000)
+print(count)
+```
+
+### Expected behavior
+
+```
+if aux_1==0:
+   if aux_2==0:
+      ......
+```
+
+and 
+
+```
+if aux_1==0 and axu_2==0:
+   ....
+```
+
+I expect the two if statement should work.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: latest
+- **Python version**: 3.10
+- **C++ compiler**: 
+- **Operating system**: linux
+
+
+### Suggestions
+
+_No response_

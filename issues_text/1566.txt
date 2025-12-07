@@ -1,0 +1,87 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [X] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+Passing a list of Pauli words to a `cudaq.observe_async()` function produces the following error:
+```
+RuntimeError: Unable to cast Python instance of type <class 'str'> to C++ type 'cudaq::pauli_word'
+```
+
+It works fine if you pass to `cudaq.observe()`.
+
+### Steps to reproduce the bug
+
+You can reproduce the bug by create a file called test.py with the following:
+```python
+import cudaq
+import numpy as np
+import random
+
+random.seed(13)
+np.random.seed(13)
+
+def generateRandomPauliStrings(numQubits, numPaulis):
+    s = ['X', 'Y', 'Z', 'I']
+    return [
+        ''.join([random.choice(s)
+                for i in range(numQubits)])
+        for i in range(numPaulis)
+    ]
+
+def build_cudaq_obs(hs, paulis):
+    observable = cudaq.SpinOperator()
+    for h, p in zip(hs, paulis):
+        observable += h * cudaq.SpinOperator.from_word(p)
+    return observable - cudaq.SpinOperator()
+
+
+@cudaq.kernel
+def gqeCirc(N: int, thetas: list[float], paulis: list[cudaq.pauli_word]):
+    q = cudaq.qvector(N)
+    for i in range(len(paulis)):
+        exp_pauli(thetas[i], q, paulis[i])
+
+numQubits = 4
+numPaulis = 8
+numberOfTerms = 4
+
+# Generate the observable
+obs_ps = generateRandomPauliStrings(numQubits, numberOfTerms)
+obs = build_cudaq_obs([1.0]*len(obs_ps), obs_ps)
+
+pauliStings = generateRandomPauliStrings(numQubits, numPaulis)
+ts = np.random.rand(len(pauliStings))
+
+exp_val = cudaq.observe_async(gqeCirc, obs, numQubits, list(ts), pauliStings).get().expectation()
+print(exp_val)
+```
+When run, it produces this error:
+```bash
+$ python3 test2.py 
+RuntimeError: Unable to cast Python instance of type <class 'str'> to C++ type 'cudaq::pauli_word'
+```
+
+### Expected behavior
+
+It should run without errors
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: latest (bf579701d)
+- **Python version**: 
+- **C++ compiler**: 
+- **Operating system**: 
+
+
+### Suggestions
+
+PR forthcoming

@@ -1,0 +1,67 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [X] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+I haven't done much of a preliminary analysis on this bug and thus it is hard to say if this is a compiler bug or a runtime bug.  The issue is that the following code won't simulate:
+
+```cpp
+#include <cudaq.h>
+#include <iostream>
+
+__qpu__ void bar(cudaq::qspan<> qubits) {
+  auto controls = qubits.front(qubits.size() - 1);
+  auto &target = qubits.back();
+  x<cudaq::ctrl>(controls, target);
+}
+
+__qpu__ void foo() {
+  cudaq::qreg qubits(4);
+  x(qubits);
+  bar(qubits);
+  mz(qubits);
+}
+
+int main() {
+  auto result = cudaq::sample(1000, foo);
+  std::cout << result.size() << '\n';
+  for (auto &&[bits, counts] : result) {
+    std::cout << bits << '\n';
+  }
+  return 0;
+}
+```
+
+Because we get the following error:
+```
+terminate called after throwing an instance of 'qpp::exception::SubsysMismatchDims'
+  what():  qpp::applyCTRL(): Subsystems mismatch dimensions! [dims/ctrl/target]
+FileCheck error: '<stdin>' is empty.
+FileCheck command line:  /opt/llvm/bin/FileCheck /workspaces/cuda-quantum/test/NVQPP/test-4.cpp
+```
+
+### Steps to reproduce the bug
+
+Try to emulate the above program for the quantinuum target.
+
+### Expected behavior
+
+The program should execute correctly.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: main
+- **C++ compiler**: gcc 12
+- **Operating system**: Ubuntu 22.04 (x86-64, docker)
+
+
+### Suggestions
+
+_No response_

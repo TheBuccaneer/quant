@@ -1,0 +1,17 @@
+* Using pybind11 version 2.11.0+ results in three test failures in 'eager' mode under 'experimental/python' branch. These tests work as expected with pybind11 version 2.10.4.
+* When the behavior is modified either on pybind11 or on CUDA Quantum, upgrade pybind11 to latest version.
+* Origin:
+
+> This issue was introduced with the update to pybind11 2.11 (appears to be a pybind bug). pybind version 2.10 and below work. Easiest fix would be to lower to pybind 2.10 until a fix appears in a future version. pybind 2.11 (appears to be a pybind bug). pybind version 2.10 and below work. Easiest fix would be to lower to pybind 2.10 until a fix appears in a future version.
+
+_Originally posted by @amccaskey in https://github.com/NVIDIA/cuda-quantum/pull/1001#discussion_r1426640287_
+
+
+```[tasklist]
+### Tasks
+- [x] Identify the changes / commit in pybind11 that introduced change in behavior.
+- [ ] Check behavior with latest version of pybind11
+- [ ] Triage if fix possible on CUDA Quantum
+```
+
+            

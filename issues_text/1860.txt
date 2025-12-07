@@ -1,0 +1,3 @@
+When doing iterative development on files in `python/` one will notice that source files may be copied to their working `build/python/` tree. These are a second copy of the files from the source tree, `cuda-quantum/python/`. Making edits to the files in the source tree may not update the files in the build tree when running `make` (or `ninja`) again. This can lead to confusing results as, for example, debug print statements remain only in the source tree and are thus not included in the build tree code, which may be what is executed.
+
+I suspect that there may be missing boilerplate regarding copying the `.py` files in our cmake recipes.

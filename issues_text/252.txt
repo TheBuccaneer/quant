@@ -1,0 +1,73 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+This bug is related to #251
+
+If JIT compilations fails, we should not send a job to the backend.
+
+
+
+### Steps to reproduce the bug
+
+Given the following kernel:
+
+```cpp
+#include <cudaq.h>
+#include <iostream>
+
+struct ak2 {
+  void operator()() __qpu__ {
+    cudaq::qubit q;
+    h(q);
+    mz(q);
+  }
+};
+
+int main() {
+  auto counts = cudaq::sample(ak2{});
+  std::cout << "Test: ";
+  counts.dump();
+  return 0;
+}
+```
+
+After compiling targeting Quantinuum backend (which will run using the mock server):
+```bash
+nvq++ --enable-mlir -v /test_kernel.cpp -o test_kernel.x --target quantinuum --quantinuum-url http://localhost:6245
+```
+
+We get an error when trying to run the executable, but the job is still posted and we get results back:
+```
+./test_kernel.x
+loc("-":4:8): error: could not trace offset value
+Posting job with name =  ak2
+INFO:     127.0.0.1:32810 - "POST /job HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32824 - "GET /job/9c36430d-b5ab-4bca-93a5-4821a84acc74 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32832 - "GET /job/9c36430d-b5ab-4bca-93a5-4821a84acc74 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32846 - "GET /job/9c36430d-b5ab-4bca-93a5-4821a84acc74 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32852 - "GET /job/9c36430d-b5ab-4bca-93a5-4821a84acc74 HTTP/1.1" 200 OK
+Test: { 11:50 00:50 }
+```
+
+### Expected behavior
+
+Get an error and do not post the job.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: main
+- **C++ compiler**: gcc-12
+- **Operating system**: Ubuntu (AArch64)
+
+### Suggestions
+
+_No response_

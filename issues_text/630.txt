@@ -1,0 +1,36 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+We run a python formatting check in the CI with yapf, but it appears that it's not actually being enforced. This can be confirmed by `pip install yapf`, then pulling down CUDA Quantum main and running `yapf cuda-quantum/python/tests/unittests -r -i`. For main to be passing the CI, yapf should produce no changes to the code. Instead, it has to reformat multiple files -- indicating the python formatting step isn't throwing an error when it should be.
+
+### Steps to reproduce the bug
+
+```
+$ pip install yapf
+$ yapf cuda-quantum/python/tests/unittests -r -i
+```
+
+### Expected behavior
+
+An error should be thrown in the CI if the python files have not been formatted through yapf.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: 0.4
+- **Python version**: 3.10
+- **C++ compiler**: NA
+- **Operating system**: NA 
+
+
+### Suggestions
+
+_No response_

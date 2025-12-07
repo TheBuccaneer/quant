@@ -1,0 +1,75 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [X] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+This compound subtraction statement used within a python kernel produces an error when executed:
+    rz(1.0 - (mu / sigma), qubits[1])
+
+However, it executes properly if re-written as:
+    rz(1.0 + -(mu / sigma), qubits[1])
+
+The error is:
+**cudaq.kernel.ast_bridge.CompilerError: zz__pybug_subtract.py:22: error: unhandled BinOp.Sub types.
+         (offending source -> 1.0 - mu / sigma)**
+
+
+### Steps to reproduce the bug
+
+          # A simple test program 
+          # PYTHON KERNEL - SUBTRACTION BUG
+          
+          import cudaq
+          
+          @cudaq.kernel
+          def bug_subtract():
+          
+              # Allocate a number of qubits
+              qubits = cudaq.qvector(4)
+          
+              # Place some bits into test state
+              x(qubits[0:2])
+              
+              mu = 0.7951
+              sigma = 0.6065
+                 
+              rz(1.0 + -(mu / sigma), qubits[1])      # this construct works, but the one below fails
+              
+              rz(1.0 - (mu / sigma), qubits[1])       # BUG: this line gives an error, one above doesn't
+          
+              # Apply measurement gates to just the `qubits`
+              mz(qubits)
+              
+          #######################
+          
+          #### MAIN
+           
+          if __name__ == "__main__":
+              
+              result = cudaq.sample(bug_subtract)
+              print(f"result: {result}")
+
+
+### Expected behavior
+
+There should be no error on the subject expression
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: 0.7.1
+- **Python version**:  3.10.12
+
+
+
+### Suggestions
+
+This is a bad bug as it is such a simple construct.
+While the workaround is simple, it will delay the work of users, while they figure out the workaround (as  did).

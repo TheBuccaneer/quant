@@ -1,0 +1,63 @@
+Take the following files 
+```cpp
+// lib.h 
+#include "cudaq.h"
+
+void kernel(cudaq::qvector<>& q);
+```
+```cpp
+// lib.cpp 
+#include "lib.h"
+
+__qpu__ void kernel(cudaq::qvector<>& q) {
+    x(q[0]);
+}
+```
+and 
+```cpp
+// user.cpp
+#include "lib.h"
+
+__qpu__ void userKernel(const std::function<void(cudaq::qvector<> &)> &init) {
+  cudaq::qvector q(2);
+  init(q);
+}
+
+int main() { userKernel(kernel); }
+```
+Compile and link with the following 
+```bash 
+nvq++ --enable-mlir -fPIC -c lib.cpp -o lib.o
+nvq++ --enable-mlir -fPIC lib.o user.cpp 
+# The run 
+CUDAQ_LOG_LEVEL=info ./a.out 
+```
+This results in a segmentation fault. 
+
+Can anyone else reproduce this? I would be very thankful for anyone's help on this one. This kind of pattern will be a primary feature of future downstream libraries. 
+
+Another variation would be this 
+```cpp
+// lib.h 
+#include "cudaq.h"
+
+std::function<void(cudaq::qvector<>&)> get_kernel();//cudaq::qvector<>& q);
+```
+```cpp
+// lib.cpp
+#include "lib.h"
+
+__qpu__ void kernel(cudaq::qvector<> &q) { x(q[0]); }
+
+std::function<void(cudaq::qvector<> &)> get_kernel() { return kernel; }
+```
+```cpp
+#include "lib.h"
+
+__qpu__ void userKernel(const std::function<void(cudaq::qvector<> &)> &init) {
+  cudaq::qvector q(2);
+  init(q);
+}
+
+int main() { userKernel(get_kernel()); }
+```

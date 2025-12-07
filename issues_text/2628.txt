@@ -1,0 +1,191 @@
+### Required prerequisites
+
+- [x] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [x] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [x] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+```
+import cupy as cp
+import cudaq
+import numpy as np
+    
+#cudaq.set_target('nvidia')
+cudaq.set_target('nvidia', option="mqpu")
+target = cudaq.get_target()
+qpu_count = target.num_qpus()
+print("Number of QPUs:", qpu_count)
+
+data=np.array([[0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 1, 1, 1, 1, 1, 0, 0],
+                  [0, 1, 1, 1, 1, 1, 1, 0],
+                  [0, 1, 1, 1, 1, 1, 1, 0],
+                  [0, 1, 1, 1, 1, 1, 1, 0],
+                  [0, 0, 0, 1, 1, 1, 1, 0],
+                  [0, 0, 0, 1, 1, 1, 1, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0]])
+
+
+def amplitude_encode(data):
+    # Convert the input data to a CuPy array
+    data = cp.array(data)
+    
+    rms = cp.sqrt(cp.sum(cp.sum(data**2, axis=1)))
+    
+    data_norm = data / rms
+    
+    data_norm_flat = data_norm.flatten()
+    
+    return data_norm_flat.astype(cp.complex64)
+
+result_1 = amplitude_encode(data)
+state_1= cudaq.State.from_data(result_1)
+
+result_2= amplitude_encode(data.T)
+state_2= cudaq.State.from_data(result_2)
+
+@cudaq.kernel
+def kernel(state: cudaq.State):
+    
+    ancilla=cudaq.qubit()
+    qubits = cudaq.qvector(state)
+    
+    mz(ancilla)
+    mz(qubits)
+
+result_1 = cudaq.sample_async(kernel, state_1, qpu_id=0)
+print(result_1.get())
+
+result_2= cudaq.sample_async(kernel, state_2, qpu_id=1)
+print(result_2.get())
+
+#result_1 = cudaq.sample(kernel, state_1)
+#print(result_1)
+
+#result_2= cudaq.sample(kernel, state_2)
+#print(result_2)
+```
+
+Running this code using mqpu and sample_async on different qpu_id gives this error:
+terminate called after throwing an instance of 'ubackend::RuntimeError'
+  what():  cudaErrorIllegalAddress
+Aborted (core dumped)
+
+However, if I  run the code where qpu_id=0 in both or just simply use single gpu like :
+result_1 = cudaq.sample(kernel, state_1)
+print(result_1)
+
+result_2= cudaq.sample(kernel, state_2)
+print(result_2)
+
+code works with no error.
+
+
+### Steps to reproduce the bug
+
+Run this python code
+
+```
+import cupy as cp
+import cudaq
+import numpy as np
+    
+#cudaq.set_target('nvidia')
+cudaq.set_target('nvidia', option="mqpu")
+target = cudaq.get_target()
+qpu_count = target.num_qpus()
+print("Number of QPUs:", qpu_count)
+
+data=np.array([[0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 1, 1, 1, 1, 1, 0, 0],
+                  [0, 1, 1, 1, 1, 1, 1, 0],
+                  [0, 1, 1, 1, 1, 1, 1, 0],
+                  [0, 1, 1, 1, 1, 1, 1, 0],
+                  [0, 0, 0, 1, 1, 1, 1, 0],
+                  [0, 0, 0, 1, 1, 1, 1, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0]])
+
+
+def amplitude_encode(data):
+    # Convert the input data to a CuPy array
+    data = cp.array(data)
+    
+    rms = cp.sqrt(cp.sum(cp.sum(data**2, axis=1)))
+    
+    data_norm = data / rms
+    
+    data_norm_flat = data_norm.flatten()
+    
+    return data_norm_flat.astype(cp.complex64)
+
+result_1 = amplitude_encode(data)
+state_1= cudaq.State.from_data(result_1)
+
+result_2= amplitude_encode(data.T)
+state_2= cudaq.State.from_data(result_2)
+
+@cudaq.kernel
+def kernel(state: cudaq.State):
+    
+    ancilla=cudaq.qubit()
+    qubits = cudaq.qvector(state)
+    
+    mz(ancilla)
+    mz(qubits)
+
+result_1 = cudaq.sample_async(kernel, state_1, qpu_id=0)
+print(result_1.get())
+
+result_2= cudaq.sample_async(kernel, state_2, qpu_id=1)
+print(result_2.get())
+```
+
+
+### Expected behavior
+
+kernel should give the result when using two different qpu_id
+```
+result_1 = cudaq.sample_async(kernel, state_1, qpu_id=0)
+print(result_1.get())
+
+result_2= cudaq.sample_async(kernel, state_2, qpu_id=1)
+print(result_2.get())
+```
+
+same as when using 
+```
+result_1 = cudaq.sample_async(kernel, state_1, qpu_id=0)
+print(result_1.get())
+
+result_2= cudaq.sample_async(kernel, state_2, qpu_id=0)
+print(result_2.get())
+```
+
+or 
+
+```
+result_1 = cudaq.sample(kernel, state_1)
+print(result_1)
+
+result_2= cudaq.sample(kernel, state_2)
+print(result_2)
+```
+
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA-Q version**: 0.9.1
+- **Python version**: 3.10
+- **C++ compiler**: 
+- **Operating system**: 
+
+
+### Suggestions
+
+_No response_

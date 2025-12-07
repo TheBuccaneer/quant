@@ -1,0 +1,60 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+```
+E       RuntimeError: Failed to launch kernel. Error: Failed to execute the kernel on the remote server: "Failed to process incoming request"
+E       Error message: "test_remote_code_exec.py:364: error: unhandled function call - custom_h, known kernels are dict_keys([])\n\t (offending source -> custom_h(qubits[0]))"
+```
+
+### Steps to reproduce the bug
+
+```
+def test_arbitrary_unitary_synthesis():
+    cudaq.register_operation("custom_h",
+                             1. / np.sqrt(2.) * np.array([1, 1, 1, -1]))
+    cudaq.register_operation("custom_x", np.array([0, 1, 1, 0]))
+
+    @cudaq.kernel
+    def bell(angles: list[float]):
+        qubits = cudaq.qvector(2)
+        custom_h(qubits[0])
+        custom_x.ctrl(qubits[0], qubits[1])
+        ry(angles[0], qubits[1])
+
+    hamiltonian = 5.907 - 2.1433 * spin.x(0) * spin.x(1) - 2.1433 * spin.y(
+        0) * spin.y(1) + .21829 * spin.z(0) - 6.125 * spin.z(1)
+
+    optimizer = cudaq.optimizers.Adam()
+    energy, parameter = cudaq.vqe(kernel=bell,
+                                  spin_operator=hamiltonian,
+                                  optimizer=optimizer,
+                                  parameter_count=1)
+    print(f"\nminimized <H> = {round(energy,16)}")
+    print(f"optimal theta = {round(parameter[0],16)}")
+```
+
+### Expected behavior
+
+Application program runs successfully.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: `main` (or PR#1794 if not yet merged)
+- **Python version**: any
+- **C++ compiler**: N/A
+- **Operating system**: 
+
+
+### Suggestions
+
+_No response_

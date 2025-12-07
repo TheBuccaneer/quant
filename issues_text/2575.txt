@@ -1,0 +1,50 @@
+### Required prerequisites
+
+- [x] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [x] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [x] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+`cudaq.register_operation` appears  not to work in a nested kernel situation.  see code example below
+
+### Steps to reproduce the bug
+
+```
+my_matrix = np.matrix([[0, 1], [1, 0]])
+cudaq.register_operation("my_gate", my_matrix)
+
+@cudaq.kernel
+def my_kernel(qubits : cudaq.qview):
+    my_gate(qubits[0])
+    
+@cudaq.kernel
+def kernel(num_qubits : int):
+    qubits = cudaq.qvector(num_qubits)
+    my_kernel(qubits[0]) # Can't call custom gate through another kernel here
+    my_gate(qubits[0]) # Can call the custom gate directly here 
+
+result = cudaq.sample(kernel, 2, shots_count=1000)
+print(result)
+```
+
+### Expected behavior
+
+Expected to call the my_gate through the my_kernel call.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA-Q version **: 0.9.1 
+- **Python version**: 
+- **C++ compiler**: 
+- **Operating system**: 
+
+
+### Suggestions
+
+_No response_

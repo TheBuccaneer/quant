@@ -1,0 +1,96 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [X] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+```
+import cudaq 
+
+def ghz(n): 
+            
+    kernel = cudaq.make_kernel()
+
+    qubits = kernel.qalloc(n)
+
+    kernel.h(qubits[0])
+        
+    for i in range(n): 
+        if i+1==n: 
+            break 
+        else: 
+            kernel.cx(qubits[i], qubits[i+1])
+            
+    kernel.mz(qubits)
+    
+    return kernel 
+
+cudaq.set_target("nvidia")
+cudaq.sample(ghz(4)).dump()
+```
+
+The code above executes fine however changing the target yields an error: 
+
+```
+
+cudaq.set_target("nvidia-mqpu")
+cudaq.sample_async(ghz(4), qpu_id = 0).get().dump()
+```
+
+```
+Segmentation fault (core dumped)
+```
+
+The fix is the following: 
+
+```
+def ghz(kernel, n): 
+    qubits = kernel.qalloc(n)
+    kernel.h(qubits[0])
+    for i in range(n): 
+        if i+1==n: 
+            break 
+        else: 
+            kernel.cx(qubits[i], qubits[i+1])
+    kernel.mz(qubits)
+    return kernel 
+
+
+kernel = cudaq.make_kernel()
+cudaq.sample_async(ghz(kernel, 10), qpu_id = 0).get().dump()
+
+```
+
+The kernel must be created outside of the function and passed in as an argument. This may be due to kernel going out of scope. 
+
+Not sure if there is something we need to fix here but curious to note it down in case we can think of a workaround. 
+
+
+
+
+
+### Steps to reproduce the bug
+
+NA
+
+### Expected behavior
+
+NA
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: 
+- **Python version**: 
+- **C++ compiler**: 
+- **Operating system**: 
+
+
+### Suggestions
+
+_No response_

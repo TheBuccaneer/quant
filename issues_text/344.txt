@@ -1,0 +1,52 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [X] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+The compiler is crashing when trying to compile kernels that take values of type `std::uint8_t`, `std::size_t`, and possibly other similar types as arguments.
+
+Example:
+```cpp
+#include <cudaq.h>
+#include <iostream>
+
+__qpu__ void variable_qreg(std::uint8_t value) {
+  cudaq::qreg qubits(value);
+  mz(qubits);
+}
+
+int main() {
+  for (auto i = 1; i < 5; ++i) {
+    auto result = cudaq::sample(1000, variable_qreg, i);
+    std::cout << result.most_probable() << '\n';
+  }
+  return 0;
+}
+```
+
+### Steps to reproduce the bug
+
+Try to compile the above program.
+
+### Expected behavior
+
+Compiler should not crash.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: main
+- **Python version**: 
+- **C++ compiler**: gcc 12
+- **Operating system**: Ubuntu 22.04 (x86-64, docker)
+
+
+### Suggestions
+
+_No response_

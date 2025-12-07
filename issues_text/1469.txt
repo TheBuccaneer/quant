@@ -1,0 +1,86 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [X] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+Python programs that use `for i in range(...)` cannot use `i` to index lists.
+
+If they try to do so, they will produce an error like this: `loc("<builder>":1:1): error: 'builtin.module' op unexpected constant arrays`
+
+Note that this is also the cause of the `qaoa_maxcut.py` failures in our Nightly Integration jobs (link: https://github.com/NVIDIA/cuda-quantum/actions/runs/8516826927)
+
+I made a similar program in C++ and it appears to work just fine.
+
+### Steps to reproduce the bug
+
+Given the following `test.py` program:
+```python
+import cudaq
+import numpy as np
+
+@cudaq.kernel
+def problem_kernel(parms: list[float]):
+    q = cudaq.qubit()
+
+    # This fails
+    for i in range(len(parms)):
+        rz(parms[i], q)
+
+    # This works
+    # for i in parms:
+    #     rz(i, q)
+
+
+parms = np.zeros(1)
+counts = cudaq.sample(problem_kernel, parms)
+print(counts)
+```
+Run the test program as follows:
+```bash
+$ python3 test.py --target remote-mqpu
+loc("<builder>":1:1): error: 'builtin.module' op unexpected constant arrays
+RuntimeError: Remote rest platform: applying IR passes failed.
+````
+
+### Expected behavior
+
+The program should run without errors. Note that the `# This works` section of the example does indeed work.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: 0.7.0
+- **Python version**: 3.10
+- **C++ compiler**: N/A
+- **Operating system**: Ubuntu
+
+
+### Suggestions
+
+Below, the noted line in the MLIR is causing `eraseConstantArrayOps` to fail inside `LowerToQIR.cpp`. I don't know if we expect `LowerToQIR` to be able to handle this type of IR, or if the problem is that this MLIR should never have been generated.
+
+```mlir
+module attributes {quake.mangled_name_map = {__nvqpp__mlirgen__problem_kernel = "__nvqpp__mlirgen__problem_kernel_PyKernelEntryPointRewrite"}} {
+  func.func @__nvqpp__mlirgen__problem_kernel() attributes {"cudaq-entrypoint", "cudaq-kernel"} {
+    %c0_i64 = arith.constant 0 : i64
+    %0 = quake.alloca !quake.veq<1>
+    %1 = cc.const_array [0.000000e+00] : !cc.array<f64 x 1>
+    %2 = quake.extract_ref %0[0] : (!quake.veq<1>) -> !quake.ref
+    %3 = cc.alloca !cc.array<i64 x 1>
+    %4 = cc.compute_ptr %3[0] : (!cc.ptr<!cc.array<i64 x 1>>) -> !cc.ptr<i64>
+    cc.store %c0_i64, %4 : !cc.ptr<i64>
+    %5 = cc.load %4 : !cc.ptr<i64>
+    %6 = cc.get_const_element %1, %5 : (!cc.array<f64 x 1>, i64) -> f64 ; this appears to be the problematic line
+    quake.rz (%6) %2 : (f64, !quake.ref) -> ()
+    quake.dealloc %0 : !quake.veq<1>
+    return
+  }
+}
+```

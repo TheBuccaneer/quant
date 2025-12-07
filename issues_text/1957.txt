@@ -1,0 +1,28 @@
+**Steps to reproduce:**
+
+Source code: 
+```
+#include <cudaq.h>
+
+struct kernelSingle {
+  auto operator()(cudaq::pauli_word pauli, double theta) __qpu__ {
+    cudaq::qvector q(4);
+    x(q[0]);
+    x(q[1]);
+    exp_pauli(theta, q, pauli);
+  }
+};
+```
+
+Compile with MLIR mode:
+
+```
+nvq++ --enable-mlir -c <file>
+```
+
+Error:
+
+```
+pauli_word.cpp:22:5: error: could not determine string argument
+    exp_pauli(theta, q, pauli);
+```

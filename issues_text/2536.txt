@@ -1,0 +1,136 @@
+### Required prerequisites
+
+- [x] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [x] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [x] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+`cudaq::adjoint` works when the specified kernel contains a trivial loop condition (i.e. a numeric variable). However, `nvq++` does not compile the code when the loop conditions contains arithmetic expressions (e.g. variable + 1) or function/method calls (e.g. `qview.size()`). The issue appears to be present in version 0.9.1 but not 0.9.0.
+
+### Steps to reproduce the bug
+
+Create `adj.cpp`:
+```cpp
+#include <cudaq.h>
+#include <vector>
+
+__qpu__ void ToInvert(cudaq::qview<> qc, int size)
+{
+    for (int i = 0; i < size - 1; i++)
+    {
+        x(qc[i]);
+    }
+}
+
+struct RunInv
+{
+    __qpu__ void operator()(int n)
+    {
+        cudaq::qvector qc(n);
+        cudaq::adjoint(ToInvert, qc, n);
+        mz(qc);
+    }
+};
+
+int main()
+{
+    int n = 3;
+    auto result = cudaq::sample(1000, RunInv{}, n);
+    result.dump();
+}
+```
+Compile it:
+```
+$ nvq++ adj.cpp 
+/opt/nvidia/cudaq/include/cudaq/qis/qubit_qis.h:24:17: error: cannot make adjoint of kernel with unstructured control flow
+#define __qpu__ __attribute__((annotate("quantum")))
+                ^
+```
+The same error can be obtained by using the qview size as the loop condition:
+```cpp
+for (int i = 0; i < qc.size(); i++)
+{
+    x(qc[i]);
+}
+```
+No error appears when using a simpler loop condition, such as `i < size`.
+On another note, transforming the `for` loop into a `while` loop results in another error:
+```cpp
+// includes...
+__qpu__ void ToInvert(cudaq::qview<> qc, int size)
+{
+    int i = 0;
+    while (i < size)
+    {
+        x(qc[i]);
+        i++;
+    }
+}
+// main...
+```
+```
+$ nvq++ adj.cpp
+cudaq-opt: /usr/local/llvm/include/llvm/ADT/ilist_iterator.h:138: llvm::ilist_iterator<OptionsT, IsReverse, IsConst>::reference llvm::ilist_iterator<OptionsT, IsReverse, IsConst>::operator*() const [with OptionsT = llvm::ilist_detail::node_options<mlir::Block, true, false, void>; bool IsReverse = true; bool IsConst = false; llvm::ilist_iterator<OptionsT, IsReverse, IsConst>::reference = mlir::Block&]: Assertion `!NodePtr->isKnownSentinel()' failed.
+PLEASE submit a bug report to https://github.com/NVIDIA/cuda-quantum and include the crash backtrace.
+Stack dump:
+0.      Program arguments: /opt/nvidia/cudaq/bin/cudaq-opt --pass-pipeline=builtin.module(func.func(unwind-lowering),canonicalize,lambda-lifting,func.func(memtoreg{quantum=0}),canonicalize,apply-op-specialization,kernel-execution,aggressive-early-inlining,func.func(quake-add-metadata,const-prop-complex,lift-array-alloc),globalize-array-values,func.func(get-concrete-matrix),device-code-loader,expand-measurements,func.func(lower-to-cfg),canonicalize,cse) adj.qke -o adj.qke.Z3knf4
+Stack dump without symbol names (ensure you have llvm-symbolizer in your PATH or set the environment var `LLVM_SYMBOLIZER_PATH` to point to it):
+0  cudaq-opt 0x000055f2a9857e76 llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) + 246
+1  cudaq-opt 0x000055f2a985560e
+2  libc.so.6 0x00007f7bf392b520
+3  libc.so.6 0x00007f7bf397f9fc pthread_kill + 300
+4  libc.so.6 0x00007f7bf392b476 raise + 22
+5  libc.so.6 0x00007f7bf39117f3 abort + 211
+6  libc.so.6 0x00007f7bf391171b
+7  libc.so.6 0x00007f7bf3922e96
+8  cudaq-opt 0x000055f2a8cdb483
+9  cudaq-opt 0x000055f2a8cdbdf1
+10 cudaq-opt 0x000055f2a8cdc75e
+11 cudaq-opt 0x000055f2a93e3fc1 mlir::detail::OpToOpPassAdaptor::run(mlir::Pass*, mlir::Operation*, mlir::AnalysisManager, bool, unsigned int) + 1665
+12 cudaq-opt 0x000055f2a93e4699 mlir::detail::OpToOpPassAdaptor::runPipeline(mlir::OpPassManager&, mlir::Operation*, mlir::AnalysisManager, bool, unsigned int, mlir::PassInstrumentor*, mlir::PassInstrumentation::PipelineParentInfo const*) + 393
+13 cudaq-opt 0x000055f2a93e52f9 mlir::PassManager::run(mlir::Operation*) + 2089
+14 cudaq-opt 0x000055f2a8930f7b
+15 cudaq-opt 0x000055f2a893158f
+16 cudaq-opt 0x000055f2a893182b
+17 cudaq-opt 0x000055f2a977877e mlir::splitAndProcessBuffer(std::unique_ptr<llvm::MemoryBuffer, std::default_delete<llvm::MemoryBuffer>>, llvm::function_ref<mlir::LogicalResult (std::unique_ptr<llvm::MemoryBuffer, std::default_delete<llvm::MemoryBuffer>>, llvm::raw_ostream&)>, llvm::raw_ostream&, bool, bool) + 142
+18 cudaq-opt 0x000055f2a892faf0 mlir::MlirOptMain(llvm::raw_ostream&, std::unique_ptr<llvm::MemoryBuffer, std::default_delete<llvm::MemoryBuffer>>, mlir::PassPipelineCLParser const&, mlir::DialectRegistry&, bool, bool, bool, bool, bool, bool, bool, bool) + 432
+19 cudaq-opt 0x000055f2a8931c8d mlir::MlirOptMain(int, char**, llvm::StringRef, mlir::DialectRegistry&, bool) + 1053
+20 cudaq-opt 0x000055f2a8769e18 main + 472
+21 libc.so.6 0x00007f7bf3912d90
+22 libc.so.6 0x00007f7bf3912e40 __libc_start_main + 128
+23 cudaq-opt 0x000055f2a876e7f5 _start + 37
+/opt/nvidia/cudaq/bin/nvq++: line 27:    42 Aborted                 (core dumped) $*
+failed: "/opt/nvidia/cudaq/bin/cudaq-opt --pass-pipeline=builtin.module(func.func(unwind-lowering),canonicalize,lambda-lifting,func.func(memtoreg{quantum=0}),canonicalize,apply-op-specialization,kernel-execution,aggressive-early-inlining,func.func(quake-add-metadata,const-prop-complex,lift-array-alloc),globalize-array-values,func.func(get-concrete-matrix),device-code-loader,expand-measurements,func.func(lower-to-cfg),canonicalize,cse) adj.qke -o adj.qke.Z3knf4"
+
+```
+
+### Expected behavior
+
+I expect to be able to use loop conditions more complex than a plain variable comparison. This is handy when applying multi-qubit gates over a qvector, such as when creating the GHZ state, that is defined in the examples as follows:
+```cpp
+__qpu__ ghz(const int n_qubits) {
+  cudaq::qvector q(n_qubits);
+  h(q[0]);
+  for (int i = 0; i < n_qubits - 1; ++i)
+    // note use of ctrl modifier
+    x<cudaq::ctrl>(q[i], q[i+1]);
+
+  mz(q);
+}
+```
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+0.9.0
+
+### Environment
+
+- **CUDA-Q version**: 0.9.1 (pre-built binaries and `cu12-0.9.1` Docker image)
+- **Operating system**: Ubuntu 22.04.5 LTS
+
+
+### Suggestions
+
+_No response_

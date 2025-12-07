@@ -1,0 +1,89 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+`import os
+import numpy as np
+
+import cudaq
+from cudaq import chemistry
+geometry = [('Li', (0., 0., 0.)), ('H', (0., 0., 1.5))]
+molecule, data = chemistry.create_molecular_hamiltonian(
+    geometry, 'sto-3g', 1, 0)
+cudaq.set_target('nvidia')
+numElectrons = data.n_electrons
+numQubits = 2 * data.n_orbitals
+
+kernel, thetas = cudaq.make_kernel(list)
+qubits = kernel.qalloc(12)
+
+kernel.x(qubits[0])
+kernel.x(qubits[1])
+kernel.x(qubits[2])
+kernel.x(qubits[3])
+
+
+
+cudaq.kernels.uccsd(kernel, qubits, thetas, numElectrons, numQubits)
+
+num_parameters = cudaq.kernels.uccsd_num_parameters(numElectrons, numQubits)
+print("num_parameters: ", num_parameters)
+optimizer = cudaq.optimizers.SPSA()
+energy, params = cudaq.vqe(kernel,
+                            molecule,
+                            optimizer,
+                            parameter_count=num_parameters)
+print(energy, params)
+
+`
+When I comment out cudaq.set_target('nvidia'), the result is:
+`<H> = -4.703793
+<H> = -4.758690
+<H> = -7.863358
+<H> = -4.931899
+<H> = -4.906214
+<H> = -7.863358
+-7.863357621533178 [-1.17716665170367e-12, -1.17716665170367e-12, 1.17716665170367e-12, 1.17716665170367e-12, -3.5484976526133087e-12, -1.17716665170367e-12, 3.5484976526133087e-12, 3.5484976526133087e-12, 3.5484976526133087e-12, -3.5484976526133087e-12, -3.5484976526133087e-12, -1.17716665170367e-12, -1.17716665170367e-12, 1.17716665170367e-12, 1.17716665170367e-12, 1.17716665170367e-12, 3.5484976526133087e-12, 1.17716665170367e-12, -1.17716665170367e-12, 1.17716665170367e-12, -1.17716665170367e-12, 3.5484976526133087e-12, 3.5484976526133087e-12, -3.5484976526133087e-12, -1.17716665170367e-12, -1.17716665170367e-12, 3.5484976526133087e-12, 1.17716665170367e-12, -1.17716665170367e-12, -3.5484976526133087e-12, 3.5484976526133087e-12, -1.17716665170367e-12, -3.5484976526133087e-12, 1.17716665170367e-12, -3.5484976526133087e-12, 1.17716665170367e-12, 3.5484976526133087e-12, 1.17716665170367e-12, -1.17716665170367e-12, -3.5484976526133087e-12, 3.5484976526133087e-12, -3.5484976526133087e-12, -3.5484976526133087e-12, -1.17716665170367e-12, 3.5484976526133087e-12, 1.17716665170367e-12, 3.5484976526133087e-12, -1.17716665170367e-12, -3.5484976526133087e-12, -1.17716665170367e-12, 3.5484976526133087e-12, 1.17716665170367e-12, -1.17716665170367e-12, 1.17716665170367e-12, -3.5484976526133087e-12, -1.17716665170367e-12, -1.17716665170367e-12, -3.5484976526133087e-12, -3.5484976526133087e-12, -3.5484976526133087e-12, -1.17716665170367e-12, 1.17716665170367e-12, 3.5484976526133087e-12, 1.17716665170367e-12, 1.17716665170367e-12, -1.17716665170367e-12, -1.17716665170367e-12, -3.5484976526133087e-12, 3.5484976526133087e-12, -3.5484976526133087e-12, -3.5484976526133087e-12, 3.5484976526133087e-12, -1.17716665170367e-12, -1.17716665170367e-12, 3.5484976526133087e-12, -1.17716665170367e-12, 1.17716665170367e-12, 1.17716665170367e-12, -3.5484976526133087e-12, -3.5484976526133087e-12, 3.5484976526133087e-12, -1.17716665170367e-12, 3.5484976526133087e-12, -3.5484976526133087e-12, 3.5484976526133087e-12, -1.17716665170367e-12, 3.5484976526133087e-12, 1.17716665170367e-12, 1.17716665170367e-12, -1.17716665170367e-12, 1.17716665170367e-12, -1.17716665170367e-12]
+`
+
+but,When I uncomment out cudaq.set_target('nvidia'), the result is:
+`
+<H> = -4.103592
+<H> = -4.103592
+<H> = -4.103592
+<H> = -4.103592
+<H> = -4.103592
+<H> = -4.103592
+-4.10359188271741 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+`
+
+
+
+### Steps to reproduce the bug
+
+Download the cuda-quantum docker according to the documentation, then run the above code to reproduce the result via set_target('nvidia')
+
+### Expected behavior
+
+The gpu should run faster, and the result should be the same
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: 0.4.0
+- **Python version**: Python 3.10.6
+- **C++ compiler**: 11.30
+- **Operating system**:  ubuntu 22.04
+
+
+### Suggestions
+
+_No response_

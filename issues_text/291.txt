@@ -1,0 +1,32 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+The multi control decomposition pass is erasing non-multi control ops
+
+### Steps to reproduce the bug
+
+Apply the pass to any kernel that has non-controlled quantum operations.
+
+### Expected behavior
+
+These ops should be left alone by the pass.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: main
+- **C++ compiler**: gcc 12
+- **Operating system**: Ubuntu 22.04 (docker)
+
+
+### Suggestions
+
+_No response_

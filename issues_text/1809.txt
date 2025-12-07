@@ -1,0 +1,48 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [X] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+When I pass a list[list[int]] to a cudaq kernel, I get the following error:
+RuntimeError: error: Cannot infer CUDA-Q type from provided Python type (!cc.stdvec<!cc.stdvec<i64>>)
+I didn't expect this, since in the documentation there are examples where this type is passed to a kernel.
+
+### Steps to reproduce the bug
+```
+import cudaq
+@cudaq.kernel
+def test_list_list(a: list[list[int]]):
+    qc = cudaq.qvector(3)
+    j = 0
+    for i in a:
+        if i[0] == 1:
+            x(qc[j])
+        j += 1
+    mz(qc)
+ 
+print(cudaq.sample(test_list_list,[[0,1],[1,0],[1,0]]))
+```
+
+### Expected behavior
+
+I expect to get the output {'011' : 1000}.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: 0.7.1
+- **Python version**: 3.10.14
+- **C++ compiler**: 
+- **Operating system**: RHEL 9.3
+
+
+### Suggestions
+
+_No response_

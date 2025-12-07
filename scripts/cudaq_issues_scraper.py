@@ -1,0 +1,62 @@
+import requests
+import csv
+import sys
+from datetime import datetime
+
+def scrape_github_issues():
+    all_issues = []
+    page = 1
+    per_page = 100
+    
+    while True:
+        url = "https://api.github.com/search/issues"
+        params = {
+            'q': 'repo:NVIDIA/cuda-quantum is:issue label:bug created:2023-01-01..2025-11-19',
+            'per_page': per_page,
+            'page': page
+        }
+        
+        print(f"Fetching page {page}...", file=sys.stderr)
+        
+        response = requests.get(url, params=params)
+        if response.status_code != 200:
+            print(f"Error: {response.status_code}", file=sys.stderr)
+            break
+        
+        data = response.json()
+        issues = data.get('items', [])
+        
+        if not issues:
+            break
+        
+        for issue in issues:
+            all_issues.append({
+                'Project': 'NVIDIA/cuda-quantum',
+                'IssueID': str(issue['number']),
+                'URL': issue['html_url'],
+                'Title': issue['title'],
+                'Status': issue['state'],
+                'CreatedAt': issue['created_at']
+            })
+        
+        print(f"  Found {len(issues)} issues on page {page} (total so far: {len(all_issues)})", file=sys.stderr)
+        
+        # Check if there are more pages
+        if len(issues) < per_page:
+            break
+        
+        page += 1
+    
+    return all_issues
+
+def write_csv(issues, filename='cudaq_issues_raw.csv'):
+    with open(filename, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=['Project', 'IssueID', 'URL', 'Title', 'Status', 'CreatedAt'])
+        writer.writeheader()
+        writer.writerows(issues)
+
+if __name__ == '__main__':
+    issues = scrape_github_issues()
+    write_csv(issues)
+    print(f"Total issues scraped: {len(issues)}", file=sys.stderr)
+    print("CSV file created: github_issues.csv", file=sys.stderr)

@@ -1,0 +1,26 @@
+## Initial problem
+
+In attempting to reproduce a different problem in `experimental/python`, I was trying to build CUDA Quantum on a dusty deck OS. I run into this linker failure.
+
+```console
+/opt/rh/gcc-toolset-13/root/usr/lib/gcc/aarch64-redhat-linux/13/../../../../bin/ld: CMakeFiles/cudaq-common.dir/Executor.cpp.o: in function `cudaq::Executor::execute(std::vector<cudaq::KernelExecution, std::allocator<cudaq::KernelExecution> >&)':
+
+Executor.cpp:(.text._ZN5cudaq8Executor7executeERSt6vectorINS_15KernelExecutionESaIS2_EE+0x208): undefined reference to `cudaq::RestClient::post(std::basic_string_view<char, std::char_traits<char> >, std::basic_string_view<char, std::char_traits<char> >, nlohmann::json_v3_11_1::basic_json<std::map, std::vector, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, bool, long, unsigned long, double, std::allocator, nlohmann::json_v3_11_1::adl_serializer, std::vector<unsigned char, std::allocator<unsigned char> > >&, std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&, bool)'
+
+clang-16: error: linker command failed with exit code 1 (use -v to see invocation)
+```
+This system is hacked together and wouldn't resemble one of our pristine containers based on a nice docker image.
+
+It has gcc-13 installed. I've built LLVM 16 (from tpls). And I'm building using
+```console
+% declare -x CC="/opt/llvm/bin/clang --gcc-toolchain=/opt/rh/gcc-toolset-13/root/usr"
+% declare -x CXX="/opt/llvm/bin/clang++ --gcc-toolchain=/opt/rh/gcc-toolset-13/root/usr"
+% cmake .. -DCMAKE_INSTALL_PREFIX=/opt/cudaq -DCMAKE_BUILD_TYPE=Release -DLLVM_DIR=/opt/llvm/lib/cmake/llvm -DMLIR_DIR=/opt/llvm/lib/cmake/mlir -DLLVM_EXTERNAL_LIT=$HOME/cuda-quantum/tpls/llvm/build/bin/llvm-lit -DZLIB_USE_STATIC_LIBS=FALSE -DCMAKE_CXX_STANDARD=20
+...
+% make -j128
+```
+The error message is correct. Executor.o refers to a symbol in RestClient.o, but RestClient.o is never built.
+
+## Notes
+
+This is a cmake configuration issue that just isn't being detected, caught, or reported in a meaningful way. The issue appears to be that a handful of prerequisite packages must be built from sources, must be built in a specific order (they have dependences upon one another), and must be installed in very specific paths, and must be static libraries. Even if the build system already has these packages installed (say using the system package manager), the cmake configuration will misconfigure. Since the download, configuration, build, and install of these packages happens outside of cmake, cmake doesn't react to these libraries in a meaningful way.

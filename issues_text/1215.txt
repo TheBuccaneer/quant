@@ -1,0 +1,72 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+It seems that the execution manager is not correctly handle double adjoint correctly
+
+### Steps to reproduce the bug
+
+Consider the following example, which is a really convoluted way to write identity:
+```cpp
+#include <cmath>
+#include <cudaq.h>
+#include <cudaq/algorithm.h>
+
+__qpu__ void foo(cudaq::qubit &q) { rz<cudaq::adj>(M_PI_2, q); }
+
+__qpu__ void bar() {
+  cudaq::qubit q;
+  rz<cudaq::adj>(M_PI_2, q);
+  cudaq::adjoint(foo, q);
+}
+
+int main() {
+  auto result = cudaq::get_state(bar);
+  result.dump();
+
+  return 0;
+}
+```
+
+While developing the circuit drawer, I noticed that this circuit would be drawn as:
+```
+     ╭─────────────────────────╮╭─────────────────────────╮
+q0 : ┤ rz(-1.5707963267948966) ├┤ rz(-1.5707963267948966) ├
+     ╰─────────────────────────╯╰─────────────────────────╯
+```
+(The second one should be a positive angle, we are doing the adjoint of the adjoint, i.e., just rz)
+
+The result of the above is:
+```
+2.22045e-16+1j 0+0
+```
+cleaning up:
+```
+0+1j 0+0
+```
+
+### Expected behavior
+
+The result should be:
+```
+1+0j 0+0j
+```
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: main branch
+- **C++ compiler**: g++ (GCC) 13.2.1 2023120
+- **Operating system**: Fedora-39 (Docker)
+
+
+### Suggestions
+
+_No response_

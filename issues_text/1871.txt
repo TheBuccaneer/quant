@@ -1,0 +1,135 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+If I run the code in the example 1 below with both 
+```
+cudaq.control(my_func,ancilla,q,theta)
+cudaq.adjoint(my_func,q,theta)
+```
+I got this error: 
+`error: 'func.call' op '__nvqpp__mlirgen__my_func.adj' does not reference a valid function`
+
+However if I comment one of them, for example:
+```
+cudaq.control(my_func,ancilla,q,theta)
+#cudaq.adjoint(my_func,q,theta)
+```
+It works.
+
+In Example 2, I am trying first to apply a cudaq.control on a given quantum kernel and then apply control-adjoint of the quantum kernel, but it gives error. 
+`error: 'func.call' op '__nvqpp__mlirgen__my_func.adj.ctrl' does not reference a valid function`
+
+A work around it is shown in example 3. Example 3 works.
+
+This does not make sense. Because, I have to explicitly rewrite the kernel using adj() for each applied gate instead of using the cudaq.adjoint() and then cudaq.control(). 
+
+### Steps to reproduce the bug
+
+Example 1:
+
+```
+import cudaq
+
+@cudaq.kernel
+def my_func(q:cudaq.qubit, theta:float):
+    ry(theta,q)
+    rz(theta,q)
+
+@cudaq.kernel
+def kernel(theta:float):
+    ancilla=cudaq.qubit()
+    q=cudaq.qubit()
+    
+    h(ancilla)
+    cudaq.control(my_func,ancilla,q,theta)
+    cudaq.adjoint(my_func,q,theta)
+
+theta=1.5
+count=cudaq.sample(kernel,theta)
+print(count)
+```
+
+Example 2:
+
+```
+import cudaq
+
+@cudaq.kernel
+def my_func(q:cudaq.qubit, theta:float):
+    ry(theta,q)
+    rz(theta,q)
+
+@cudaq.kernel
+def adj_func(q:cudaq.qubit, theta:float):
+    cudaq.adjoint(my_func,q,theta)
+
+
+@cudaq.kernel
+def kernel(theta:float):
+    ancilla=cudaq.qubit()
+    q=cudaq.qubit()
+    
+    h(ancilla)
+    cudaq.control(my_func,ancilla,q,theta)
+    cudaq.control(adj_func,ancilla,q,theta)
+
+theta=1.5
+count=cudaq.sample(kernel,theta)
+print(count)
+```
+
+Example 3:
+```
+import cudaq
+
+@cudaq.kernel
+def my_func(q:cudaq.qubit, theta:float):
+    ry(theta,q)
+    rz(theta,q)
+
+@cudaq.kernel
+def adj_func(q:cudaq.qubit, theta:float):
+    #cudaq.adjoint(my_func,q,theta)
+    ry.adj(theta,q)
+    rz.adj(theta,q)
+
+
+@cudaq.kernel
+def kernel(theta:float):
+    ancilla=cudaq.qubit()
+    q=cudaq.qubit()
+    
+    h(ancilla)
+    cudaq.control(my_func,ancilla,q,theta)
+    cudaq.control(adj_func,ancilla,q,theta)
+
+theta=1.5
+count=cudaq.sample(kernel,theta)
+print(count)
+```
+
+### Expected behavior
+
+I expect to be able to call the same quantum kernel and use it with both cudaq.control() and cudaq.adjoint(). 
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: latest
+- **Python version**: 3.10
+- **C++ compiler**: 
+- **Operating system**: linux
+
+
+### Suggestions
+
+_No response_

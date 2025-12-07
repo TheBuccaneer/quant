@@ -1,0 +1,48 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+When installing `cuquantum` via `apt-get` (e.g., `sudo apt-get -y install cuquantum`) as described [here](https://developer.nvidia.com/cuquantum-downloads?target_os=Linux&target_arch=x86_64&Distribution=Ubuntu&target_version=20.04&target_type=deb_network), with the latest cuQuantum SDK **v23.03**, the install location is different from the previous version:
+- `custatevec.h` is in `/usr/include`
+- `libcustatevec_static.a` is in `/usr/lib/x86_64-linux-gnu` 
+
+This is incompatible with the CMake [script](https://github.com/NVIDIA/cuda-quantum/blob/main/runtime/nvqir/custatevec/CMakeLists.txt) of `custatevec` runtime backend.
+
+### Steps to reproduce the bug
+
+- Install the latest `cuquantum` (v23.03) via Ubuntu deb repository (`apt-get`)
+- Not able to build `custatevec` backend by passing `-DCUSTATEVEC_ROOT` to cmake. Will get errors like 
+
+`No rule to make target '/usr/lib64/libcustatevec_static.a', needed by 'lib/libnvqir-custatevec.so'.  Stop.` if set `-DCUSTATEVEC_ROOT=/usr` etc.
+
+### Expected behavior
+
+Cmake script to be compatible with the latest `cuquantum` SDK installed via `apt-get`. 
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: main
+- **Python version**: 3.8.10
+- **C++ compiler**: gcc-10
+- **Operating system**: Ubuntu 20.04
+
+
+### Suggestions
+
+CMake `find_library` seems to work fine in this case: looking into the default system lib paths, e.g., `/usr/lib/x86_64-linux-gnu`, to search for the file.
+
+For example, I guess this would work for both the old (`/opt/nvidia/cuquantum`) and new installation settings.
+```
+find_library(CUSTATEVEC_STATIC_LIB
+        NAMES custatevec_static
+        HINTS ${CUSTATEVEC_ROOT}/${CUSTATEVEC_LIBDIR}
+ )
+```

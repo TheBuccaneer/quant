@@ -1,0 +1,1 @@
+`cudaq.list_qpus()` returns: `['tensornet', 'custatevec', 'dm', 'qpp', 'cuquantum_mgpu', 'custatevec_f32']` where `custatevec` should instead be `cuquantum` 

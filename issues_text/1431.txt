@@ -1,0 +1,59 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+In PR #1082, we reverted the endianness of `qpp` state vector but didn't adjust the `QppCircuitSimulator::observe` implementation, which uses `spin_op::to_matrix` to construct the full Hamiltonian matrix. This matrix and the state vector need to be in sync. w.r.t. endianness. 
+
+Note: this code path is **not** active by default
+
+
+ 
+
+### Steps to reproduce the bug
+
+With CUDA-Q version 0.7.0,
+
+```
+import cudaq
+import os
+
+os.environ["CUDAQ_OBSERVE_FROM_SAMPLING"] = "0"
+cudaq.set_target("qpp-cpu")
+kernel = cudaq.make_kernel()
+qreg = kernel.qalloc(2)
+kernel.x(qreg[0])
+hamiltonian = cudaq.spin.z(0)
+
+print("<Z0> =", cudaq.observe(kernel, hamiltonian, shots_count=-1).expectation())
+```
+
+This is expected to print `-1` but will print `1`.
+  
+Change the `hamiltonian` to `z(1)` will produce -1, indicating an endian issue.
+
+### Expected behavior
+
+Correct calculation for all modes.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Since PR 1082
+
+### Environment
+
+- **CUDA Quantum version**: 0.7.0
+- **Python version**: 3.10
+- **C++ compiler**: gcc12
+- **Operating system**: Ubuntu22.04
+
+
+### Suggestions
+
+There is another implementation of this 'direct' calculation in https://github.com/NVIDIA/cuda-quantum/blob/main/unittests/backends/qpp_observe/QPPObserveBackend.cpp#L22.
+
+Not sure why we have two different implementations. We might want to consolidate them.

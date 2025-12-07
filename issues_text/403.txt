@@ -1,0 +1,9 @@
+The executable hangs after submitting a job for execution on the IONQ simulator.
+
+```console
+% nvq++ --target ionq my_first_cudaq.cpp
+% ./a.out
+```
+./a.out never exits.
+
+Looking at the dashboard on the ionq website all the jobs are marked as failed due to not having permissions, but hanging the process isn't very informative on the other end.

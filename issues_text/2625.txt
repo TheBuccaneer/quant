@@ -1,0 +1,90 @@
+### Required prerequisites
+
+- [x] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [x] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [x] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+I'm getting the following error message:
+```
+python3: /llvm-project/llvm/include/llvm/Support/Casting.h:651: decltype(auto) llvm::dyn_cast(const From&) [with To = mlir::OpResult; From = mlir::Value]: Assertion `detail::isPresent(Val) && "dyn_cast on a non-existent value"' failed.
+Aborted (core dumped)
+```
+
+When trying to compile the `bar` kernel in the following code snippet.
+```python
+import cudaq
+
+@cudaq.kernel
+def foo():
+    ancilla = cudaq.qubit()
+    qubits = cudaq.qvector(4)
+    qubit_num = qubits.size()
+
+    x.ctrl(ancilla, qubits[0])
+    for i in range(1, qubit_num):
+        x.ctrl([ancilla,qubits[0:i]], qubits[i])
+
+@cudaq.kernel
+def bar():
+    ancilla = cudaq.qubit()
+    qubits = cudaq.qvector(4)
+    qubit_num = qubits.size()
+
+    for i in range(qubit_num):
+        if i == 0:
+            x.ctrl(ancilla, qubits[0])
+        else:
+            x.ctrl([ancilla, qubits[0:i]], qubits[i])
+
+shots=10000
+print('sample foo:')
+cudaq.sample(foo, shots_count=shots)
+print('sample bar:')
+cudaq.sample(bar, shots_count=shots)
+```
+
+### Steps to reproduce the bug
+
+Try to run the following code:
+
+```python
+import cudaq
+
+@cudaq.kernel
+def bar():
+    ancilla = cudaq.qubit()
+    qubits = cudaq.qvector(4)
+    qubit_num = qubits.size()
+
+    for i in range(qubit_num):
+        if i == 0:
+            x.ctrl(ancilla, qubits[0])
+        else:
+            x.ctrl([ancilla, qubits[0:i]], qubits[i])
+
+shots=10000
+print('sample bar:')
+cudaq.sample(bar, shots_count=shots)
+```
+
+### Expected behavior
+
+The kernel `bar` should correctly compile and have the same observable behavior as `foo`.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA-Q version**: CUDA-Q Version 0.9.1 (https://github.com/NVIDIA/cuda-quantum a3ab722eab7ba39ec81424278789fabca726c436)
+- **Python version**: Python 3.10.13
+- **Operating system**: Ubuntu 24.04.2 LTS
+
+
+### Suggestions
+
+_No response_

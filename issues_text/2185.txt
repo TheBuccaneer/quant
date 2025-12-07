@@ -1,0 +1,38 @@
+### Required prerequisites
+
+- [x] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [x] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [x] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+Using the [`CUDAQ_MAX_CPU_MEMORY_GB` environment variable](https://nvidia.github.io/cuda-quantum/latest/using/backends/simulators.html#id4) setting, when an unlimited setting (`None`) is used or a value larger than the actual physical system's memory available, the simulation may fail (e.g., with a cuda error) or produce invalid simulation results.
+
+
+
+### Steps to reproduce the bug
+
+- Run a simulation that requires more qubits than GPU memory.
+
+- Set `CUDAQ_MAX_CPU_MEMORY_GB` to a value larger than the physical host memory.
+
+### Expected behavior
+
+The simulation should work as expected or at least a more descriptive error message should be displayed.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: 0.8
+- **Python version**: 3.10
+- **C++ compiler**: gcc-11
+- **Operating system**: Ubuntu 22.04
+
+
+### Suggestions
+
+The current workaround is to set `CUDAQ_MAX_CPU_MEMORY_GB` to a valid value, taking into account the physical system memory configuration.

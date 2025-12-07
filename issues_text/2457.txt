@@ -1,0 +1,55 @@
+### Required prerequisites
+
+- [x] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [x] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [x] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+Currently, a CUDA-Q kernel containing the `mx` measurement operation cannot be translated into OpenQASM 2.0 via `cudaq.translate()` 
+
+### Steps to reproduce the bug
+
+Running the following snippet: 
+
+```python
+import cudaq
+cudaq.set_target("nvidia")
+
+@cudaq.kernel
+def bell():
+    q = cudaq.qvector(2)
+    h(q[0])
+    cx(q[0], q[1])
+    mx(q)
+
+cudaq.translate(bell, format="openqasm2")
+```
+
+results in the following error: 
+```
+error: 'quake.mx' op unable to translate op to OpenQASM 2.0
+RuntimeError: getASM: failed to translate to OpenQASM.
+```
+
+
+
+### Expected behavior
+
+The measurement operation should converted into a supported OpenQASM 2.0 standard
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA-Q version**: 0.9.0
+- **Python version**: 3.12.4
+- **Operating system**: Ubuntu
+
+
+### Suggestions
+
+_No response_

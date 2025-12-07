@@ -1,0 +1,81 @@
+### Required prerequisites
+
+- [x] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [x] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [x] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [x] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+Currently, the presence of mid-circuit measurements has no "collapsing" effect on most of our simulators. This leads to an inconsistency in results when we do shot-by-shot versions of sample (due to the presence of `if` checks in the code) vs when we do a single pass and sample once at the end.
+
+For simulators, mid-circuit measurements should collapse the state (statevector or density matrix, etc.), but they do not currently do that.
+
+
+
+### Steps to reproduce the bug
+
+Run the following test kernels, which are semantically identical to each other:
+```python
+import cudaq
+
+@cudaq.kernel
+def midCircMeasTest1():
+    q = cudaq.qvector(1)
+    h(q)
+    midCircuit = mz(q)
+    h(q)
+
+@cudaq.kernel
+def midCircMeasTest2():
+    q = cudaq.qvector(1)
+    h(q)
+    midCircuit = mz(q)
+    # Put a dummy if check here to force shot-by-shot sampling
+    if midCircuit:
+        pass
+    h(q)
+
+
+print('midCircMeasTest1 results')
+print(cudaq.sample(midCircMeasTest1))
+
+print('midCircMeasTest2 results')
+print(cudaq.sample(midCircMeasTest2))
+```
+```bash
+$ python3 test.py
+midCircMeasTest1 results
+{
+  __global__ : { 0:1000 }
+   midCircuit : { 0:513 1:487 }
+}
+
+midCircMeasTest2 results
+{
+  __global__ : { 0:482 1:518 }
+   midCircuit : { 1:497 0:503 }
+}
+```
+
+The problem exists for all of our simulators except for `stim`.
+
+### Expected behavior
+
+At a minimum, the two example kernels should produce similar results in the `__global__` register. And it seems like the shot-by-shot implementation is *more* correct right now (showing a 50/50 split on the `__global__` register), which is what would happen if you ran this on real hardware.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: latest (4e069429bbc7c8715c053ee32b8f7c29ce10276b)
+- **Python version**: 3.10
+- **C++ compiler**: N/A
+- **Operating system**: Ubuntu: 22.04
+
+
+### Suggestions
+
+We likely need to make sure that our simulators collapse the state after sampling. For optimality, we probably _only_ want to do this on mid-circuit measurements (right before executing the next gate), not final measurements (where there is no next gate to worry about).

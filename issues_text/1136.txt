@@ -1,0 +1,10 @@
+This code block to allocate scratch space for the `tensornet` backend is prone to race condition:
+
+https://github.com/NVIDIA/cuda-quantum/blob/5ece3200511c1347ad3da5e964a26d15f05ada95/runtime/nvqir/cutensornet/tensornet_utils.h#L70-L73
+
+In particular, according to the [docs](https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__MEMORY.html#group__CUDART__MEMORY_1g376b97f5ab20321ca46f7cfa9511b978) of `cudaMemGetInfo`:
+
+> In a multi-tenet situation, free estimate returned is prone to race condition where a new allocation/free done by a different process or a different thread in the same process between the time when free memory was estimated and reported, will result in deviation in free value reported and actual free memory. 
+
+For example, two `tensornet` simulator instances may call this at an exact same time, hence wrongly estimate the scratch memory to use. 
+

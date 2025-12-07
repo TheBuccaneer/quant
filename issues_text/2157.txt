@@ -1,0 +1,64 @@
+### Required prerequisites
+
+- [x] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [x] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [x] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [x] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+Drawing functionality does not plot out mid circuit measurements: 
+
+```
+@cudaq.kernel 
+def kernel(): 
+    
+    qubits = cudaq.qvector(3)
+    
+    h(qubits[0])
+    
+    m1 = mz(qubits[0])
+        
+    if m1 == 1: 
+        z(qubits[2])
+    
+```
+
+
+![Image](https://github.com/user-attachments/assets/0171a18d-4492-428e-9db4-77bad2cf8a8b)
+
+
+In this circuit, the `z` gate is only applied if the measurement result is `1`. 
+
+This is how conditional gates are represented in literature: 
+
+
+
+![Image](https://github.com/user-attachments/assets/5e838c95-1616-4b11-b5a8-440ceebf0606)
+
+
+
+
+### Steps to reproduce the bug
+
+NA
+
+### Expected behavior
+
+NA
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: 
+- **Python version**: 
+- **C++ compiler**: 
+- **Operating system**: 
+
+
+### Suggestions
+
+_No response_

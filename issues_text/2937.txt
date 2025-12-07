@@ -1,0 +1,60 @@
+### Required prerequisites
+
+- [x] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [x] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [x] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [x] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+For my specific circuit shown in the code below, there should be 16 items in the count result, but there are only 8 items with the tensornet or tensornet-mps target. With the nvidia target, I can get the correct simulation result. I know the tensornet target outputs a sample result, but it seems that the result is far from the correct one. Please let me know if this issuce could be fixed by some simple configuration.
+
+### Steps to reproduce the bug
+
+The Python code to reproduce the bug:
+
+import cudaq
+import numpy as np
+
+qubit_count = 20
+
+cudaq.set_target("tensornet")
+
+kernel = cudaq.make_kernel()
+
+qubits = kernel.qalloc(qubit_count)
+
+
+depth = qubit_count // 5
+for i in range(0, depth):
+    kernel.h(qubits[i * 5])
+    for j in range(4):
+        kernel.cx(qubits[i * 5+j], qubits[i * 5+j+1])
+
+kernel.mz(qubits)
+
+result = cudaq.sample(kernel, shots_count=10240)
+result.dump()
+
+The wrong simulation result is:
+{ 00000000000000000000:1233 00000000001111111111:1311 00000111110000000000:1281 00000111111111111111:1283 11111000000000000000:1309 11111000001111111111:1241 11111111110000000000:1244 11111111111111111111:1338 }
+
+### Expected behavior
+
+{ 00000000000000000000:637 00000000000000011111:661 00000000001111100000:597 00000000001111111111:650 00000111110000000000:640 00000111110000011111:638 00000111111111100000:613 00000111111111111111:661 11111000000000000000:634 11111000000000011111:659 11111000001111100000:634 11111000001111111111:633 11111111110000000000:653 11111111110000011111:640 11111111111111100000:642 11111111111111111111:648 }
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA-Q version**:  0.10.0 and 0.11.0
+- **Python version**:  3.10.16
+- **C++ compiler**: 
+- **Operating system**:  Ubuntu 22.04
+
+
+### Suggestions
+
+_No response_

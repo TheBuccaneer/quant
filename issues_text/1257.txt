@@ -1,0 +1,60 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+When a kernel calls another kernel **multiple times**, if we disable inlining (`--no-aggressive-early-inline`), the body of the callee is repeated multiple times, causing redefinition error if we try to recompile that quake code.
+
+### Steps to reproduce the bug
+
+Code:
+
+```
+#include <cudaq.h>
+#include <iostream>
+
+__qpu__ void bar(cudaq::qubit &q) { h(q); }
+
+struct foo {
+  __qpu__ void operator()() {
+    cudaq::qubit q;
+    bar(q);
+    bar(q);
+    auto result = mz(q);
+  }
+};
+
+int main() {
+  auto quakeCode = cudaq::get_quake_by_name("foo");
+  std::cout << "Quake code: " << quakeCode << "\n";
+  return 0;
+}
+```
+
+Compile: `nvq++ --enable-mlir --no-aggressive-early-inline <file>`
+
+The output shows `__nvqpp__mlirgen__function_bar._Z3barRN5cudaq5quditILm2EEE`  defined 2 times.
+
+### Expected behavior
+
+Single definition for each function.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: main
+- **Python version**: main
+- **C++ compiler**: gcc-12
+- **Operating system**: Ubuntu 22.04
+
+
+### Suggestions
+
+_No response_

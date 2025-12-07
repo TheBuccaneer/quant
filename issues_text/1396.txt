@@ -1,0 +1,121 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [X] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+In summary, I have a circuit with 3 qubits and none of them are entangled with each other hence we can treat them as 3, 1 qubit circuits effectively. 
+
+Therefore, whether I measure a qubit or not, it should not change the output of other qubits. 
+
+Let us describe the bug with an example: 
+
+```
+import cudaq 
+from cudaq import spin 
+import numpy as np 
+
+np.random.seed(4)
+
+qubit_count = 3 
+num_of_samples = 3 
+num_of_params = 3
+theta_vals = np.random.rand(num_of_samples, num_of_params)
+
+kernel, thetas = cudaq.make_kernel(list)
+
+qubits = kernel.qalloc(qubit_count)
+
+kernel.ry(thetas[0], qubits[0])
+kernel.rx(thetas[1], qubits[1])
+kernel.rz(thetas[2], qubits[2])
+
+
+```
+
+```
+#Helper function to extract results 
+
+def print_results(num_of_samples, hamiltonian, results):
+    for s in range(num_of_samples): 
+        
+        for h in range(len(hamiltonian)): 
+            
+            print(results[s][h].expectation())
+```
+
+```
+hamiltonian = [spin.z(0)]
+results = cudaq.observe(kernel, hamiltonian, theta_vals)
+
+print_results(num_of_samples, hamiltonian, results)
+
+0.5677470285445452 #sample 0, hamiltonian term 0
+0.7552138976752758 #sample 1, hamiltonian term 0
+0.5601126664678304 #sample 2, hamiltonian term 0
+
+```
+
+```
+hamiltonian = [spin.z(0), spin.z(1)]
+
+results = cudaq.observe(kernel, hamiltonian, theta_vals)
+
+print_results(num_of_samples, hamiltonian, results)
+
+0.5677470285445452 #sample 0, hamiltonian term 0
+0.8539678547531366 #sample 0, hamiltonian term 1
+0.7552138976752758 #sample 1, hamiltonian term 0
+0.7663033716380596 #sample 1, hamiltonian term 1
+0.5601126664678304 #sample 2, hamiltonian term 0
+0.999980520849931 #sample 2, hamiltonian term 1
+```
+
+```
+hamiltonian = [spin.z(0), spin.z(1), spin.z(2)]
+
+results = cudaq.observe(kernel, hamiltonian, theta_vals)
+
+print_results(num_of_samples, hamiltonian, results)
+
+0.5677470285445452    #sample 0, hamiltonian term 0
+0.0              #sample 0, hamiltonian term 1 
+0.9999999310821295.   #sample 0, hamiltonian term 2
+0.7552138976752758.    #sample 1, hamiltonian term 0
+0.0              #sample 1, hamiltonian term 1
+1.0000000335276127     #sample 1, hamiltonian term 2
+0.5601126664678304     #sample 2, hamiltonian term 0
+0.0              #sample 2, hamiltonian term 1
+0.9999999288265826    #sample 2, hamiltonian term 2
+```
+
+Some of the outputs across the last 2 examples should be the same since the circuit is not entangled and hence measurement outcomes should not affect each other however the outcomes differ. 
+
+
+
+### Steps to reproduce the bug
+
+NA
+
+### Expected behavior
+
+NA
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: latest
+- **Python version**: 
+- **C++ compiler**: 
+- **Operating system**: 
+
+
+### Suggestions
+
+_No response_

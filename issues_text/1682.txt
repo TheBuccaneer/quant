@@ -1,0 +1,106 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [X] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+I am getting this error when running my code (code is in next section):
+
+error: 'cc.unwind_break' op arity of arguments and loop result mismatch
+RuntimeError: Failure while executing pass pipeline.
+
+During handling of the above exception, another exception occurred:
+
+RuntimeError: could not compile code for 'qrbm_reuse_ancilla'.
+
+### Steps to reproduce the bug
+
+```
+import cudaq
+import numpy as np
+
+cudaq.set_target("nvidia")
+
+@cudaq.kernel
+def qrbm_reuse_ancilla(v_nodes:int, h_nodes:int, theta:list[float], coupling:list[float]):
+
+    qubits_num=v_nodes+h_nodes
+    qubits=cudaq.qvector(qubits_num)
+    ancilla=cudaq.qubit()
+
+    count=0
+    for i in range(v_nodes+h_nodes):
+        ry(theta[count],qubits[i])
+        count+=1
+
+    count=0
+
+    for v in range(v_nodes):
+        for h in range(v_nodes,v_nodes+h_nodes):
+            
+            while True:
+                ry.ctrl(coupling[count],qubits[v],qubits[h],ancilla)
+                x(qubits[v])
+                ry.ctrl(coupling[count+1],qubits[v],qubits[h],ancilla)
+                x(qubits[v])
+                x(qubits[h])
+                ry.ctrl(coupling[count+1],qubits[v],qubits[h],ancilla)
+                x(qubits[v])
+                ry.ctrl(coupling[count],qubits[v],qubits[h],ancilla)
+                x(qubits[v])
+                x(qubits[h])
+
+                res=mz(ancilla)
+
+                if res:
+                    x(ancilla)
+                    break   
+        
+            count+=2
+
+    mz(qubits)
+
+
+
+v_nodes=2
+h_nodes=2
+anc=v_nodes*h_nodes
+
+num_parameters=v_nodes+h_nodes+anc
+np.random.seed(42)
+param=np.random.normal(loc=0, scale=1.0, size=num_parameters)
+
+theta=[2.048261245441427, 1.432970465322398, 2.17743831657737, 2.7122130882862665]
+coupling=[1.8256697267461248, 3.141592653589793, 1.8257122143430777, 
+          3.141592653589793, 3.141592653589793, 0.4152516591461476, 3.141592653589793, 0.9654676752934497]
+
+#print(theta)
+#print(coupling)
+
+count=cudaq.sample(qrbm_reuse_ancilla,v_nodes, h_nodes, theta, coupling)
+
+print(count)
+```
+
+### Expected behavior
+
+The code should restart the circuit if the condition is not met. Otherwise, if the condition met the loop should break.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: latest (0.7.1)
+- **Python version**: 3.10
+- **C++ compiler**: 
+- **Operating system**: 
+
+
+### Suggestions
+
+_No response_

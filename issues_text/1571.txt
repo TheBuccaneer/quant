@@ -1,0 +1,44 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [X] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+When switching between different branches, the command
+```
+% make check-targets
+```
+does not build all of the runtime libraries and as a result a large number of tests will fail. One possible failure mode is a spew of undefined symbols, where the symbols are defined in the last branch that was built.
+
+### Steps to reproduce the bug
+
+```
+% git checkout experimental/stateHandling
+% cd build; make install
+% cd ..; git checkout main
+% cd build; make check-targets
+```
+
+
+### Expected behavior
+
+The above sequence of commands should not produce linker failures with undefined symbols. The runtime libraries should be rebuilt.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: tip
+- **Python version**: irrelevant
+- **C++ compiler**: clang++ 16
+- **Operating system**: Ubuntu 22.04
+
+
+### Suggestions
+
+_No response_

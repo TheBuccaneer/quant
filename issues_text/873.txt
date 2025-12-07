@@ -1,0 +1,41 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+Our current way of combining classical and quantum code won't work on macOS. The current behavior implemented in `nvq++` calls the `cuda-quake` tool that outputs:
+* LLVM assembly code (`foo.ll`) for the whole translation unit  (including implementations of the quantum kernels in "non-quantum" way) 
+* Quake code (`foo.qke`), which is further processed into a LLVM assembly through `cudaq-opt`, `foo.qke.ll` (not the real name).
+
+At this point, if we were to generate object code for both files (`foo.classic.o` and `foo.quantum.o`) and try to linking them together, we would get an error about duplicate symbols since quantum kernels appear in both files using the same symbols. 
+
+The `fixup-linkage` tool aims to solve this problem: It looks for kernel symbols that appears in both `foo.qke.ll` and `foo.ll`, and modify them in a way that, once we generate object code, the implementations in `foo.quantum.o` will be selected by the linker.
+
+The current implementation of this mechanism won't work for Mach-O. The first reason is that the `fixup-linkage` tool looks for the symbols using a regular expression that requires the presence of `dso_local` or `internal`. [These are not be present in Mach-O](https://reviews.llvm.org/D98458), for a example: [see](https://godbolt.org/#g:!((g:!((g:!((h:codeEditor,i:(filename:'1',fontScale:14,fontUsePx:'0',j:1,lang:c%2B%2B,selection:(endColumn:1,endLineNumber:5,positionColumn:1,positionLineNumber:5,selectionStartColumn:1,selectionStartLineNumber:5,startColumn:1,startLineNumber:5),source:'//+Type+your+code+here,+or+load+an+example.%0Aint+square(int+num)+%7B%0A++++return+num+*+num%3B%0A%7D%0A'),l:'5',n:'0',o:'C%2B%2B+source+%231',t:'0')),k:25.251572327044027,l:'4',n:'0',o:'',s:0,t:'0'),(g:!((h:compiler,i:(compiler:clang160assert,deviceViewOpen:'1',filters:(b:'0',binary:'1',binaryObject:'1',commentOnly:'0',debugCalls:'1',demangle:'0',directives:'0',execute:'1',intel:'0',libraryCode:'0',trim:'1'),flagsViewOpen:'1',fontScale:14,fontUsePx:'0',j:1,lang:c%2B%2B,libs:!(),options:'-O0+-emit-llvm',overrides:!(),selection:(endColumn:17,endLineNumber:1,positionColumn:17,positionLineNumber:1,selectionStartColumn:8,selectionStartLineNumber:1,startColumn:8,startLineNumber:1),source:1),l:'5',n:'0',o:'+x86-64+clang+16.0.0+(assertions)+(Editor+%231)',t:'0')),k:32.83253721837434,l:'4',n:'0',o:'',s:0,t:'0'),(g:!((h:compiler,i:(compiler:clang160assert,deviceViewOpen:'1',filters:(b:'0',binary:'1',binaryObject:'1',commentOnly:'0',debugCalls:'1',demangle:'0',directives:'0',execute:'1',intel:'0',libraryCode:'0',trim:'1'),flagsViewOpen:'1',fontScale:14,fontUsePx:'0',j:2,lang:c%2B%2B,libs:!(),options:'-O0+-target+arm64-apple-macosx13.0.0+-emit-llvm',overrides:!(),selection:(endColumn:1,endLineNumber:1,positionColumn:1,positionLineNumber:1,selectionStartColumn:1,selectionStartLineNumber:1,startColumn:1,startLineNumber:1),source:1),l:'5',n:'0',o:'+x86-64+clang+16.0.0+(assertions)+(Editor+%231)',t:'0')),k:41.91589045458164,l:'4',n:'0',o:'',s:0,t:'0')),l:'2',n:'0',o:'',t:'0')),version:4). Furthermore, suppose we solve the regex issue, I'm unsure if adding `dso_preemptable` would work. We need to further investigate this.
+
+
+### Steps to reproduce the bug
+
+Try to compile any free function kernel to a macOS target.
+
+### Expected behavior
+
+Successfully compilation of the program.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: main
+- **C++ compiler**: clang 16.0.4
+- **Operating system**: macOS 13
+
+
+### Suggestions
+
+_No response_

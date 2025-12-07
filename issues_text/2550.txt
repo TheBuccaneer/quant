@@ -1,0 +1,5 @@
+In `NoiseModel.h`, `kraus_op` data is templated (`cudaq::complex`).
+
+However, when generating Python binding (`py_NoiseModel.cpp`), this is compiled only with double precision config.
+
+This caused bogus Kraus channel data for single-precision targets, e.g., when the channel is created in Python with `cudaq.KrausChannel`. 

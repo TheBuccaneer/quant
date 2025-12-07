@@ -1,0 +1,229 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+When running VQEs requiring larger amounts of memory from within the CUDA Quantum docker container (v0.6.0) on NVIDIA GH200, there is an increasing chance of getting the following error:
+
+> python: /llvm-project/llvm/lib/ExecutionEngine/RuntimeDyld/RuntimeDyldELF.cpp:514: void llvm::RuntimeDyldELF::resolveAArch64Relocation(const llvm::SectionEntry&, uint64_t, uint64_t, uint32_t, int64_t): Assertion `isInt<33>(Result) && "overflow check failed for relocation"' failed.
+
+
+### Steps to reproduce the bug
+
+```
+# The following has been adapted from Marwa Farag's code at https://github.com/marwafar/QChem-cudaq/blob/main/LiH-full-space/Full-space-cudaq.py
+# To reproduce the error, run this code from within the CUDA Quantum v0.6.0 container (docker run --rm -it --gpus=all nvcr.io/nvidia/cuda-quantum:0.6.0)
+
+import cudaq
+from cudaq import spin
+from pyscf import gto, scf, mp, mcscf, fci, cc
+from pyscf import ao2mo
+from pyscf.tools import molden
+from functools import reduce
+import numpy as np
+
+from openfermion import generate_hamiltonian
+from openfermion.transforms import jordan_wigner
+
+from typing import List, Tuple
+
+def init_param_CCSD(qubits_num,nele_cas,t1,t2):
+    
+    sz=np.empty(qubits_num)
+
+    for i in range(qubits_num):
+        if i%2 == 0:
+            sz[i]=0.5
+        else:
+            sz[i]=-0.5
+
+# thetas for single excitation
+    thetas_1=[]
+# theta for double excitation
+    thetas_2=[]
+
+    tot_params=0
+    nmo_occ=nele_cas//2
+
+    for p_occ in range(nele_cas):
+        for r_vir in range(nele_cas,qubits_num):
+            if (sz[r_vir]-sz[p_occ]==0):
+                thetas_1.append(t1[p_occ//2,r_vir//2-nmo_occ])
+                tot_params+=1
+
+
+    for p_occ in range(nele_cas-1):
+        for q_occ in range(p_occ+1,nele_cas):
+            for r_vir in range(nele_cas,qubits_num-1):
+                for s_vir in range(r_vir+1,qubits_num):
+                    if (sz[r_vir]+sz[s_vir]-sz[p_occ]-sz[q_occ])==0:
+                        thetas_2.append(t2[p_occ//2,q_occ//2,r_vir//2-nmo_occ,s_vir//2-nmo_occ])
+                        tot_params+=1
+
+
+    init_params=np.concatenate((thetas_2,thetas_1), axis=0)
+    return init_params,tot_params
+
+
+mol=gto.M(
+    atom='Li 0.0 0.0 0.0; H 0.0 0.0 1.5',
+    spin=0,
+    charge=0,
+    basis='6-31G',
+    output='LiH'+'.out',
+    verbose=4
+)
+
+## 1- Classical preprocessing
+
+print('\n')
+print('Beginning of classical preprocessing', '\n')
+print ('Energies from classical simulations','\n')
+
+##################################
+# Mean field (HF)
+##################################
+myhf=scf.RHF(mol)
+myhf.max_cycle=100
+myhf.kernel()
+
+nelec = mol.nelectron
+print('Total number of electrons= ', nelec, '\n')
+norb = myhf.mo_coeff.shape[1]
+print('Total number of orbitals= ', norb, '\n')
+
+print('RHF energy= ', myhf.e_tot, '\n')
+
+mycc=cc.CCSD(myhf).run()
+print('Total CCSD energy= ', mycc.e_tot, '\n')
+
+myfci=fci.FCI(myhf)
+result= myfci.kernel()
+print('FCI energy= ', result[0], '\n')
+
+# Compute the 1e integral in atomic orbital then convert to HF basis
+h1e_ao = mol.intor("int1e_kin") + mol.intor("int1e_nuc")
+## Ways to convert from ao to mo
+h1e=reduce(np.dot, (myhf.mo_coeff.conj().T, h1e_ao, myhf.mo_coeff))
+
+# Compute the 2e integrals then convert to HF basis
+h2e_ao = mol.intor("int2e_sph", aosym='1')
+h2e=ao2mo.incore.full(h2e_ao, myhf.mo_coeff)
+
+# Reorder the chemist notation (pq|rs) ERI h_pqrs to h_prqs
+# to "generate_hamiltonian" in openfermion 
+h2e=h2e.transpose(0,2,3,1)
+
+nuclear_repulsion = myhf.energy_nuc()
+
+print('h1e_shape ', h1e.shape, '\n')
+print('h2e_shape ', h2e.shape, '\n')
+
+mol_ham=generate_hamiltonian(h1e,h2e,nuclear_repulsion)
+
+ham_operator = jordan_wigner(mol_ham)
+
+spin_ham=cudaq.SpinOperator(ham_operator)
+
+# We will be optimizing over a custom objective function that takes a vector
+# of parameters as input and returns either the cost as a single float,
+# or in a tuple of (cost, gradient_vector) depending on the optimizer used.
+
+# In this case, we will use the spin Hamiltonian and ansatz from `simple_vqe.py`
+# and find the `thetas` that minimize the expectation value of the system.
+hamiltonian = spin_ham
+qubits_num=2*norb
+cudaq.set_target("nvidia")
+
+
+kernel, thetas = cudaq.make_kernel(list)
+qubits = kernel.qalloc(qubits_num)
+
+for i in range(nelec):
+    kernel.x(qubits[i])
+cudaq.kernels.uccsd(kernel, qubits, thetas, nelec, qubits_num)
+parameter_count = cudaq.kernels.uccsd_num_parameters(nelec,qubits_num)
+
+init_params,tot_params=init_param_CCSD(qubits_num,nelec,mycc.t1,mycc.t2)
+
+# Define the optimizer that we'd like to use.
+optimizer = cudaq.optimizers.Adam()
+optimizer.max_iterations = 1
+# optimizer = cudaq.optimizers.COBYLA()
+optimizer.initial_parameters=init_params
+
+# Since we'll be using a gradient-based optimizer, we can leverage
+# CUDA Quantum's gradient helper class to automatically compute the gradient
+# vector for us. The use of this class for gradient calculations is
+# purely optional and can be replaced with your own custom gradient
+# routine.
+gradient = cudaq.gradients.CentralDifference()
+
+
+def objective_function(parameter_vector: List[float],
+                       hamiltonian=hamiltonian,
+                       gradient_strategy=gradient,
+                       kernel=kernel) -> Tuple[float, List[float]]:
+    """
+    Note: the objective function may also take extra arguments, provided they
+    are passed into the function as default arguments in python.
+    """
+
+    # Call `cudaq.observe` on the spin operator and ansatz at the
+    # optimizer provided parameters. This will allow us to easily
+    # extract the expectation value of the entire system in the
+    # z-basis.
+
+    # We define the call to `cudaq.observe` here as a lambda to
+    # allow it to be passed into the gradient strategy as a
+    # function. If you were using a gradient-free optimizer,
+    # you could purely define `cost = cudaq.observe().expectation()`.
+    get_result = lambda parameter_vector: cudaq.observe(
+        kernel, hamiltonian, parameter_vector, shots_count=100).expectation()
+    # `cudaq.observe` returns a `cudaq.ObserveResult` that holds the
+    # counts dictionary and the `expectation`.
+    cost = get_result(parameter_vector)
+    print(f"<H> = {cost}")
+    # Compute the gradient vector using `cudaq.gradients.STRATEGY.compute()`.
+    gradient_vector = gradient_strategy.compute(parameter_vector, get_result,
+                                                cost)
+
+    # Return the (cost, gradient_vector) tuple.
+    return cost, gradient_vector
+
+
+cudaq.set_random_seed(13)  # make repeatable
+import time
+start = time.time()
+energy, parameter = optimizer.optimize(dimensions=1,
+                                       function=objective_function)
+tot_time = time.time()-start
+print(f"time per iteration {tot_time}")
+
+print(f"\nminimized <H> = {round(energy,16)}")
+print(f"optimal theta = {round(parameter[0],16)}")
+```
+
+### Expected behavior
+
+The code should run without producing an error.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: 0.6.0
+- **Python version**: 3.10.12
+- **C++ compiler**: gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0
+- **Operating system**: Host OS Ubuntu 22.04.4 LTS (GNU/Linux 6.2.0-1015-nvidia-64k aarch64)
+
+
+### Suggestions
+
+_No response_

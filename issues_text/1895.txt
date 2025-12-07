@@ -1,0 +1,56 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [X] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+Endian is inconsistent between State and SpinOperator.to_matrix.
+
+
+### Steps to reproduce the bug
+
+```python
+@cudaq.kernel
+def bell():
+    qubits = cudaq.qvector(2)
+    h(qubits[0])
+```
+
+```python
+observable = cudaq.SpinOperator.from_word("XZ")
+res = cudaq.observe(bell, observable)
+print(res.expectation())
+```
+0.9999999403953552
+
+```python
+state = np.array(cudaq.get_state(bell))
+print(state @ observable.to_matrix() @ state)
+```
+0j
+
+### Expected behavior
+
+These two examples should return the same result.
+In my understanding, CUDA-Q is big-endian, so observe's behavior is correct.
+
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: 0.7.1
+- **Python version**: 3.10.12
+- **C++ compiler**: 
+- **Operating system**: Ubuntu 22.04.4 LTS
+
+
+
+### Suggestions
+
+_No response_

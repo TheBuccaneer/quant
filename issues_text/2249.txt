@@ -1,0 +1,3 @@
+It appears that the anyon target is not stable in the CI. Various tests will fail to verify when this target is selected and report that the standard output of the process is empty. We believe this is an undiscovered bug somewhere in this target's implementation.
+
+As a workaround, we're removing this target from target tests on an ad hoc basis to keep the CI working in a deterministic way.

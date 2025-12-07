@@ -1,0 +1,74 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+The nvqpp_SampleAsync test (included in the cuda-quantum repo) fails with the following error: `double free or corruption (out)`
+
+### Steps to reproduce the bug
+
+On a machine with multiple GPUs, build cuda-quantum and then run this command (or something similar):
+```bash
+$ CUDA_VISIBLE_DEVICES=2,3 ctest --test-dir build -R "^nvqpp_SampleAsync$" -V
+```
+It will return something like this:
+```bash
+Internal ctest changing into directory: /workspaces/tmp/cuda-quantum/build
+UpdateCTestConfiguration  from :/workspaces/tmp/cuda-quantum/build/DartConfiguration.tcl
+Parse Config file:/workspaces/tmp/cuda-quantum/build/DartConfiguration.tcl
+UpdateCTestConfiguration  from :/workspaces/tmp/cuda-quantum/build/DartConfiguration.tcl
+Parse Config file:/workspaces/tmp/cuda-quantum/build/DartConfiguration.tcl
+Test project /workspaces/tmp/cuda-quantum/build
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 491
+    Start 491: nvqpp_SampleAsync
+
+491: Test command: /usr/bin/bash "-c" "rm -f SampleAsync; /workspaces/tmp/cuda-quantum/build/bin/nvq++  --target nvidia-mqpu /workspaces/tmp/cuda-quantum/docs/sphinx/snippets/cpp/using/cudaq/platform/sample_async.cpp -o SampleAsync &&                /workspaces/tmp/cuda-quantum/build/docs/SampleAsync"
+491: Working Directory: /workspaces/tmp/cuda-quantum/build/docs
+491: Test timeout computed to be: 1500
+491: double free or corruption (out)
+491: /usr/bin/bash: line 1:  6582 Aborted                 (core dumped) /workspaces/tmp/cuda-quantum/build/docs/SampleAsync
+1/1 Test #491: nvqpp_SampleAsync ................***Failed    5.77 sec
+
+0% tests passed, 1 tests failed out of 1
+
+Label Time Summary:
+gpu_required    =   5.77 sec*proc (1 test)
+
+Total Test time (real) =   5.78 sec
+
+The following tests FAILED:
+        491 - nvqpp_SampleAsync (Failed)
+Errors while running CTest
+Output from these tests are in: /workspaces/tmp/cuda-quantum/build/Testing/Temporary/LastTest.log
+Use "--rerun-failed --output-on-failure" to re-run the failed cases verbosely.
+```
+
+### Expected behavior
+
+The test should not fail.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Yes, this is a regression. git bisect says a8a8ba5ee5a962562120ea5bd77cfddbd6e718b4 is the problem
+
+### Environment
+
+- **CUDA Quantum version**: a8a8ba5ee5a962562120ea5bd77cfddbd6e718b4 
+- **Python version**: 
+- **C++ compiler**: 
+- **Operating system**: Ubuntu
+
+
+### Suggestions
+
+_No response_

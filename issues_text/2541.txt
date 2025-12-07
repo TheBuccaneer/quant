@@ -1,0 +1,1 @@
+A kernel function must be annotated with the `cudaq-kernel` attribute. Python doesn't do this making proper identification of kernel functions impossible.

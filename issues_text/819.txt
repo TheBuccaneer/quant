@@ -1,0 +1,50 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+The `from_state` seems to work as expected for up to 2 qubits, but for the 3 and 4 qubit examples I tested, several discrepancies show up. For e.g., the statevector (0,0,0,0,0,0,0,1) should correspond to state |111>, but the sampling result is |110> instead. 
+
+
+### Steps to reproduce the bug
+
+```
+import numpy as np
+
+N = 3
+state = np.zeros(2**N, dtype=complex)
+state[7] = 1. `
+print(state)
+   
+
+kernel = cudaq.from_state(state)
+#extracted_state = cudaq.get_state(kernel) 
+#print(extracted_state)
+result = cudaq.sample(kernel)
+print(result) # you get |110> instead of |111>
+```
+
+### Expected behavior
+
+
+
+`from_state` on (0,0,0,0,0,0,0,1) should lead to |111> upon sampling 
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: 
+- **Python version**: 
+- **C++ compiler**: 
+- **Operating system**: 
+
+
+### Suggestions
+
+_No response_

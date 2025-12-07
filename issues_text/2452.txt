@@ -1,0 +1,42 @@
+### Required prerequisites
+
+- [x] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [x] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [x] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+When attempting to broadcast a custom unitary to a qvector, an error is not thrown. In the reproducer below, the kernel produces an incorrect result when sampled.
+
+
+### Steps to reproduce the bug
+
+```
+cudaq.register_operation("custom_i", np.array([1, 0, 0, 1]))                                                                                                                                                                                                                       
+                                                                                                                                                                                                                                                                                   
+@cudaq.kernel                                                                                                                                                                                                                                                                      
+def bell():                                                                                                                                                                                                                                                                        
+    qubits = cudaq.qvector(2)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+    custom_i(qubits) 
+```
+
+### Expected behavior
+
+An error is thrown when attempting to broadcast a custom unitary to a qvector.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA-Q version**: 
+- **Python version**: 
+- **C++ compiler**: 
+- **Operating system**: 
+
+
+### Suggestions
+
+_No response_

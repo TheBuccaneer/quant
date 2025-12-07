@@ -1,0 +1,3 @@
+Testing bug introduced with #2567 .
+
+The tests do not properly skip targets that may or may not exist in custom builds. Specifically, braket and quera targets are correctly opt-in and opt-out and tests should not rely on the assumption those targets are always available.

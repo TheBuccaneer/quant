@@ -1,0 +1,33 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [X] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+The NVQPP auto-kernel test is failing when running on aarch64 architectures.
+
+### Steps to reproduce the bug
+
+PR #548 forces the test to run only on x86_64. That requirement should be removed. 
+
+### Expected behavior
+
+The test should pass.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: 0.4.0
+- **Python version**: any
+- **C++ compiler**: any
+- **Operating system**: Linux
+
+
+### Suggestions
+
+_No response_

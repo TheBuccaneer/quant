@@ -1,0 +1,66 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+Calling a function with `const std::vector<cudaq::measure_result> &result_vec` parameters seems to not work when running with `--enable-mlir`.
+
+### Steps to reproduce the bug
+
+Consider the following file:
+```cpp
+#include "cudaq.h"
+
+bool xor_result(const std::vector<cudaq::measure_result> &result_vec) __qpu__ {
+  bool result = false;
+  for (auto x : result_vec)
+    result ^= x;
+  return result;
+}
+
+bool kernel() __qpu__ {
+  cudaq::qvector q(7);
+  std::vector<cudaq::measure_result> mz_res = mz(q);
+  bool res = xor_result(mz_res);
+  return res;
+}
+
+int main(int argc, char *argv[]) {
+  printf("Result: %d\n", static_cast<int>(kernel()));
+  return 0;
+}
+```
+That produces the following compilation error:
+```bash
+$ nvq++ --enable-mlir issue.cpp
+issue.cpp:21:14: error: 'func.call' op kernel call was not inlined, possible recursion in call tree
+issue.cpp:21:14: note: see current operation: %3 = "func.call"(%2) {callee = @__nvqpp__mlirgen__function_xor_result._Z10xor_resultRKSt6vectorIbSaIbEE} : (!cc.stdvec<i1>) -> i1
+failed: "/workspaces/cuda-quantum/build/bin/cudaq-opt --pass-pipeline=builtin.module(func.func(unwind-lowering),canonicalize,lambda-lifting,func.func(memtoreg{quantum=0}),canonicalize,apply-op-specialization,kernel-execution,aggressive-early-inlining,func.func(quake-add-metadata),device-code-loader{use-quake=1},expand-measurements,func.func(lower-to-cfg),canonicalize,cse) issue.qke -o issue.qke.v8G01q"
+```
+There is no recursion in the call tree.
+
+Also, interestingly enough, if one were to remove the `__qpu__` attribute on the `xor_result` function, the program compiles but produces a `Segmentation fault`, which is undesirable. We should throw a cleaner error message in that case.
+
+### Expected behavior
+
+The program provide in the above section should compile and run.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: latest (f7983754b)
+- **Python version**: 
+- **C++ compiler**: 
+- **Operating system**: 
+
+
+### Suggestions
+
+_No response_

@@ -1,0 +1,47 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [X] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+Controlled exp_pauli doesn't seem to be correct Example is below:
+
+### Steps to reproduce the bug
+
+```python
+unitary, qubits = cudaq.make_kernel(cudaq.qvector)
+unitary.exp_pauli(-np.pi / 2, qubits[0], "X")
+#unitary.x(qubits[0])  # This works well!
+
+hadamard_test = cudaq.make_kernel()
+aux_qubit = hadamard_test.qalloc(1)
+sys_qubits = hadamard_test.qalloc(1)
+
+hadamard_test.h(aux_qubit)
+hadamard_test.control(unitary, aux_qubit, sys_qubits)
+
+print(cudaq.get_state(hadamard_test))
+```
+
+### Expected behavior
+
+This example generates Bell states, but the output is `4.32978e-17+0j 4.32978e-17+0j 0-0.707107j 0-0.707107j`
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: 0.7.1
+- **Python version**: Python 3.10.12
+- **C++ compiler**: 
+- **Operating system**: Ubuntu 22.04.4 LTS
+
+
+### Suggestions
+
+_No response_

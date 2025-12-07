@@ -1,0 +1,42 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+After printing the circuit using print(circuit), you get a segmentation fault if you attempt to apply any gates on the qubit register. 
+
+### Steps to reproduce the bug
+
+```
+import cudaq
+
+circuit = cudaq.make_kernel()
+qubitRegister = circuit.qalloc(2)
+
+circuit.x(qubitRegister[0])  
+print(circuit)
+circuit.x(qubitRegister[0])
+```
+
+### Expected behavior
+
+It seems like one should be able to view the circuit and still edit it. It's behaving more like a dump() than a print(). 
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: A day behind on main (2f820a0651e02f219c7bd186fecab2baebc24ffd)
+- **Python version**: Python 3.10.6
+- **C++ compiler**: clang-16
+- **Operating system**: Ubuntu 22.04.2 LTS
+
+
+### Suggestions
+
+_No response_

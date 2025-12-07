@@ -1,0 +1,8 @@
+```cpp
+__qpu__ void init_state(cudaq::qreg<> &qubits, double theta) {}
+
+__qpu__ void reflect_uniform(cudaq::qreg<> &qubits, double theta) {
+  cudaq::adjoint(init_state, qubits, theta);
+}
+```
+We probably need to add a `else if (auto ty = dyn_cast<FunctionType>(calleeValue.getType()))` to the check in `ConvertExpr.cpp:1458` to handle the case of a free function being passed to `cudaq::adjoint()`. Similarly for control. 

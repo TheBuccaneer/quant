@@ -1,0 +1,80 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+When running our hardware examples for C++ only (error does not occur on python examples), I am getting the following errors on both IonQ and Quantinuum.
+
+```
+$ nvq++ --target quantinuum docs/sphinx/examples/cpp/providers/quantinuum.cpp -o out.x -v && ./out.x 
+
+/opt/llvm/bin/clang++ -DNVQPP_TARGET_BACKEND_CONFIG="quantinuum;emulate;false" -o nvqppGenTargetBackend.0S1vVD.o -c -x c++ /usr/local/cudaq/targets/backendConfig.cpp
+/usr/local/cudaq/bin/cudaq-quake --emit-llvm-file ../docs/sphinx/examples/cpp/providers/quantinuum.cpp -o quantinuum.qke
+/usr/local/cudaq/bin/cudaq-opt --pass-pipeline=builtin.module(canonicalize,lambda-lifting,func.func(memtoreg{quantum=0}),canonicalize,apply-op-specialization,kernel-execution,aggressive-early-inlining,func.func(quake-add-metadata),device-code-loader{use-quake=1},func.func(unwind-lowering),expand-measurements,func.func(lower-to-cfg),canonicalize,cse) quantinuum.qke -o quantinuum.qke.hp1ui1
+
+<unknown>:0: error: MLIR Textual PassPipeline Parser:1:14: error: 'lambda-lifting' does not refer to a registered pass or pass pipeline
+canonicalize,lambda-lifting,func.func(memtoreg{quantum=0}),canonicalize,apply-op-specialization,kernel-execution,aggressive-early-inlining,func.func(quake-add-metadata),device-code-loader{use-quake=1},func.func(unwind-lowering),expand-measurements,func.func(lower-to-cfg),canonicalize,cse
+```
+
+```
+$ nvq++ --target ionq docs/sphinx/examples/cpp/providers/ionq.cpp -o out.x -v && ./out.x 
+
+/opt/llvm/bin/clang++ -DNVQPP_TARGET_BACKEND_CONFIG="ionq;emulate;false" -o nvqppGenTargetBackend.eYrsqK.o -c -x c++ /usr/local/cudaq/targets/backendConfig.cpp
+/usr/local/cudaq/bin/cudaq-quake --emit-llvm-file ../docs/sphinx/examples/cpp/providers/ionq.cpp -o ionq.qke
+/usr/local/cudaq/bin/cudaq-opt --pass-pipeline=builtin.module(canonicalize,lambda-lifting,func.func(memtoreg{quantum=0}),canonicalize,apply-op-specialization,kernel-execution,aggressive-early-inlining,func.func(quake-add-metadata),device-code-loader{use-quake=1},func.func(unwind-lowering),expand-measurements,func.func(lower-to-cfg),canonicalize,cse) ionq.qke -o ionq.qke.z2yZIe
+
+<unknown>:0: error: MLIR Textual PassPipeline Parser:1:14: error: 'lambda-lifting' does not refer to a registered pass or pass pipeline
+canonicalize,lambda-lifting,func.func(memtoreg{quantum=0}),canonicalize,apply-op-specialization,kernel-execution,aggressive-early-inlining,func.func(quake-add-metadata),device-code-loader{use-quake=1},func.func(unwind-lowering),expand-measurements,func.func(lower-to-cfg),canonicalize,cse
+             ^
+
+failed: "/usr/local/cudaq/bin/cudaq-opt --pass-pipeline=builtin.module(canonicalize,lambda-lifting,func.func(memtoreg{quantum=0}),canonicalize,apply-op-specialization,kernel-execution,aggressive-early-inlining,func.func(quake-add-metadata),device-code-loader{use-quake=1},func.func(unwind-lowering),expand-measurements,func.func(lower-to-cfg),canonicalize,cse) ionq.qke -o ionq.qke.z2yZIe"
+```
+
+We have no issues with the python examples, however.
+
+```
+$ python3 ../docs/sphinx/examples/python/providers/quantinuum.py 
+
+Syntax check passed! Kernel is ready for submission.
+{ 01:8 10:6 00:480 11:506 }
+```
+
+```
+$ python3 ../docs/sphinx/examples/python/providers/ionq.py 
+
+{ 3:50 0:50 }
+
+{ 3:50 0:50 }
+```
+
+### Steps to reproduce the bug
+
+See bug description for commands to run. This is off of a cuda quantum build done with the `cuda-quantum/scripts/build_cudaq.sh` script.
+
+Note: This also fails when passing a url to nvq++ for quantinuum
+```
+--quantinuum-url http://localhost:6245
+```
+
+### Expected behavior
+
+To execute the programs the same as the python examples.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: 0.4.0
+- **Python version**: 3.10.6
+- **C++ compiler**: clang 16.0
+- **Operating system**: Ubuntu 22.04
+
+
+### Suggestions
+
+_No response_

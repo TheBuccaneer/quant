@@ -1,0 +1,50 @@
+### Required prerequisites
+
+- [x] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [x] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [x] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+I tried to run the demo on https://nvidia.github.io/cuda-quantum/latest/applications/python/vqe_advanced.html directly in the interpreter.  It fails with the following:
+```python
+>>> import cudaq
+>>> @cudaq.kernel
+... def kernel(qubit_num: int, electron_num: int, thetas: list[float]):
+...     qubits = cudaq.qvector(qubit_num)
+...
+OSError: could not get source code
+```
+
+### Steps to reproduce the bug
+
+Type this into the interpreter and press return:
+```python
+>>> import cudaq
+>>> @cudaq.kernel
+... def kernel(qubit_num: int, electron_num: int, thetas: list[float]):
+...     qubits = cudaq.qvector(qubit_num)
+...
+OSError: could not get source code
+```
+
+### Expected behavior
+
+What the documentation describes on the aforementioned page.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA-Q version**: latest.  I ran `pip install --upgrade cudaq` today.
+- **Python version**: 3.10.12
+- **C++ compiler**: GCC 11.4
+- **Operating system**: Ubuntu 22.04.5 LTS
+
+
+### Suggestions
+
+_No response_

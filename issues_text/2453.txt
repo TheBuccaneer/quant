@@ -1,0 +1,47 @@
+### Required prerequisites
+
+- [x] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [x] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [x] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+Attempting to use comparison operators like `<` throws an error in a cudaq.kernel.
+
+### Steps to reproduce the bug
+
+```
+@cudaq.kernel
+def test_kernel():
+    a = 0.5 < 1.0
+```
+Will throw:
+```
+error: 'arith.cmpi' op operand #0 must be signless-integer-like, but got 'f64'
+RuntimeError: Failure while executing pass pipeline.
+
+During handling of the above exception, another exception occurred:
+
+RuntimeError: could not compile code for 'test_kernel'.
+```
+
+### Expected behavior
+
+Comparison operators should function for floats.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA-Q version**: 
+- **Python version**: 
+- **C++ compiler**: 
+- **Operating system**: 
+
+
+### Suggestions
+
+_No response_

@@ -1,0 +1,32 @@
+### Describe the bug
+
+The generated executable terminates with an uncaught exception being thrown.
+
+### Steps to reproduce the bug
+
+% nvq++ docs/sphinx/examples/cpp/other/gradients.cpp --target ionq
+%  ./a.out 
+Optimize with no gradients.
+terminate called after throwing an instance of 'std::exception'
+  what():  std::exception
+Aborted
+
+### Expected behavior
+
+The example should run and produce a result.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: 
+- **Python version**: 
+- **C++ compiler**: 
+- **Operating system**: 
+
+
+### Suggestions
+
+_No response_

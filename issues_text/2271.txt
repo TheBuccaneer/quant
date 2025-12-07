@@ -1,0 +1,99 @@
+### Required prerequisites
+
+- [x] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [x] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [x] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+Adaptive quantum kernels written as C++ functions or lambdas with `__qpu__` attributes do not work correctly because internal logic in the CUDA-Q runtime cannot lookup the name of C++ functions or lambdas at runtime.
+
+### Steps to reproduce the bug
+
+The following example (based off of [targettests/execution/qir_simple_cond-1.cpp](https://github.com/NVIDIA/cuda-quantum/blob/main/targettests/execution/qir_simple_cond-1.cpp) from the existing CUDA-Q tree, but slightly modified to use functions instead of class operators) reproduces the problem.
+```cpp
+#include <cudaq.h>
+#include <iostream>
+
+__qpu__ void kernel() {
+  cudaq::qubit q0;
+  cudaq::qubit q1;
+  h(q0);
+  auto q0result = mz(q0);
+  if (q0result)
+    x(q1);
+  auto q1result = mz(q1); // Every q1 measurement will be the same as q0
+}
+
+int main() {
+
+  int nShots = 100;
+  // Sample
+  auto counts = cudaq::sample(/*shots=*/nShots, kernel);
+  counts.dump();
+  // Assert that all shots contained "00" or "11", exclusively
+  if (counts.count("00") + counts.count("11") != nShots) {
+    std::cout << "counts00 (" << counts.count("00") << ") + counts11 ("
+              << counts.count("11") << ") != nShots (" << nShots << ")\n";
+    return 1;
+  }
+  std::cout << "SUCCESS\n";
+  return 0;
+}
+```
+Save the above file to `test-if.cpp`; then compile and run with `nvq++`:
+```bash
+$ nvq++ --enable-mlir test-if.cpp
+$ ./a.out
+...
+counts00 (0) + counts11 (0) != nShots (100)
+```
+The easiest way to see the underlying root cause for the bug is by running with `CUDAQ_LOG_LEVEL=info`. This is a circuit that requires mid-circuit measurements, so the simulator *should* run the circuit `nShots` times, but as you can see from the logs, it only runs it *once* and generates the shots from the remaining state vector. This is wrong.
+```bash
+$ CUDAQ_LOG_LEVEL=info ./a.out
+...
+[2024-10-14 00:24:54.217] [info] [PluginUtils.h:24] Requesting N5nvqir16CircuitSimulatorE plugin via symbol name getCircuitSimulator.
+[2024-10-14 00:24:54.217] [info] [PluginUtils.h:36] Successfully loaded the plugin.
+[2024-10-14 00:24:54.217] [info] [NVQIR.cpp:90] Creating the qpp backend.
+[2024-10-14 00:24:54.217] [info] [DefaultExecutionManager.cpp:244] [DefaultExecutionManager] Creating the qpp backend.
+[2024-10-14 00:24:54.217] [info] [CircuitSimulator.h:1134] Setting current circuit name to void ()
+[2024-10-14 00:24:54.218] [info] [CircuitSimulator.h:912] Allocating 2 new qubits.
+[2024-10-14 00:24:54.218] [info] [CircuitSimulator.h:1204] (apply) h(0)
+[2024-10-14 00:24:54.220] [info] [CircuitSimulator.h:656] Sampling the current state, with measure qubits = [0]
+[2024-10-14 00:24:54.222] [info] [CircuitSimulator.h:1204] (apply) x(1)
+[2024-10-14 00:24:54.222] [info] [CircuitSimulator.h:979] Deferring qubit 0 deallocation
+[2024-10-14 00:24:54.222] [info] [CircuitSimulator.h:979] Deferring qubit 1 deallocation
+[2024-10-14 00:24:54.222] [info] [CircuitSimulator.h:656] Sampling the current state, with measure qubits = [1]
+[2024-10-14 00:24:54.223] [info] [CircuitSimulator.h:1119] Deallocated all qubits, reseting state vector.
+...
+```
+
+The root cause of the underlying bug is that `cudaq::sample()` (and other CUDA-Q algorithms) cannot convert the `QuantumKernel` being passed to it into a valid string name. This causes `cudaq::kernelHasConditionalFeedback()` to return `false`, even though it should return `true` in this case.
+
+Throwing in some additional keywords for GitHub issue searchs:
+
+* `context.hasConditionalsOnMeasureResults` is not correct
+* `qubitMeasurementFeedback` attribute not being found despite `add-metadata` pass setting it correctly.
+
+### Expected behavior
+
+The above example should work the exact same way as it does in [targettests/execution/qir_simple_cond-1.cpp](https://github.com/NVIDIA/cuda-quantum/blob/main/targettests/execution/qir_simple_cond-1.cpp).
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: Latest (4e069429bbc7c8715c053ee32b8f7c29ce10276b at this time)
+- **Python version**: N/A
+- **C++ compiler**: Clang 16.0
+- **Operating system**: Ubuntu 22.04
+
+
+### Suggestions
+
+There are at least two possible solutions to this problem:
+1. Update `nvq++` to use `-rdynamic` to add function/string lookup tables into the executables so that we can properly retrieve the name of all quantum kernels. (Thanks, @1tnguyen.)
+2. Update the `nvq++` compiler to inject code where it saves the name of `__qpu__` functions into a map that can be indexed by function pointers at runtime. This will not work for library mode, but if we are considering removing support for that at some point, that may not be an issue.

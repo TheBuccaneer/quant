@@ -1,0 +1,76 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+When the shorthand `cnot` operation is used (rather than  `x<cudaq::ctrl>`), compiling with MLIR (`--enable-mlir`) produces incorrect results.
+
+### Steps to reproduce the bug
+
+```
+#include <cudaq.h>
+
+struct kernel {
+  auto operator()() __qpu__ {
+    cudaq::qvector q(2);
+    h(q[1]);
+    cnot(q[1], q[0]);
+    mz(q);
+  }
+};
+
+
+
+int main() {
+  auto result = cudaq::sample(kernel{});
+  result.dump();
+  return 0;
+}
+```
+
+Testing:
+- Library mode:
+```
+cudaq@73471b9ad6bf:~$ nvq++ test.cpp
+cudaq@73471b9ad6bf:~$ ./a.out
+{ 00:514 11:486 }
+```
+
+- MLIR mode: (the result is not a Bell state)
+```
+cudaq@73471b9ad6bf:~$ nvq++ --enable-mlir test.cpp
+cudaq@73471b9ad6bf:~$ ./a.out
+{ 10:490 11:510 }
+```
+
+Enable verbose logging, we can see that it was treated as `X` gates on individual qubits rather than a CNOT
+
+```
+[2024-04-02 02:43:56.697] [info] [CircuitSimulator.h:969] (apply) h(1)
+[2024-04-02 02:43:56.697] [info] [CircuitSimulator.h:969] (apply) x(1)
+[2024-04-02 02:43:56.697] [info] [CircuitSimulator.h:969] (apply) x(0)
+``` 
+
+### Expected behavior
+
+Correct results in MLIR mode.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: Latest (nightly docker image)
+- **Python version**: 3.10
+- **C++ compiler**: gcc-11
+- **Operating system**: Ubuntu 22.04
+
+
+### Suggestions
+
+_No response_

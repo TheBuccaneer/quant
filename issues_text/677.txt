@@ -1,0 +1,1 @@
+The regression test `test/Quake/custom-pass.qke` depends on the file `CustomPassPlugin.so` being built. That file is built in the unittests under `unittests/plugin`. There should not be dependencies between these two types of tests.

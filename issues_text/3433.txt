@@ -1,0 +1,83 @@
+### Required prerequisites
+
+- [x] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [x] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [x] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [x] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+On a fresh Ubuntu 22.04 container, you can not pip install cudaq. 
+
+### Steps to reproduce the bug
+
+```
+$ docker run --rm --gpus all --network host --name ubuntu2204cudaq -it ubuntu:22.04
+# apt-get update -y && apt-get install -y python3-pip
+# pip3 install cudaq
+Collecting cudaq
+  Downloading cudaq-0.12.0.post1.tar.gz (9.2 kB)
+  Installing build dependencies ... done
+  Getting requirements to build wheel ... done
+  Installing backend dependencies ... done
+  Preparing metadata (pyproject.toml) ... done
+  WARNING: Generating metadata for package cudaq produced metadata for project name unknown. Fix your #egg=cudaq fragments.
+Discarding https://files.pythonhosted.org/packages/a8/8a/a2eca5ac244e40b6860569d2dd9ed17e4519a587dd86780122cfb13bf183/cudaq-0.12.0.post1.tar.gz#sha256=f3bd7c0489eae5674c0b1b5544a8944ecb6afd95776fbec8777cfb79b3367bb9 (from https://pypi.org/simple/cudaq/) (requires-python:>=3.10): Requested unknown from https://files.pythonhosted.org/packages/a8/8a/a2eca5ac244e40b6860569d2dd9ed17e4519a587dd86780122cfb13bf183/cudaq-0.12.0.post1.tar.gz#sha256=f3bd7c0489eae5674c0b1b5544a8944ecb6afd95776fbec8777cfb79b3367bb9 has inconsistent name: filename has 'cudaq', but metadata has 'unknown'
+  Downloading cudaq-0.12.0.tar.gz (9.2 kB)
+  Installing build dependencies ... done
+  Getting requirements to build wheel ... done
+  Installing backend dependencies ... done
+  Preparing metadata (pyproject.toml) ... done
+  WARNING: Generating metadata for package cudaq produced metadata for project name unknown. Fix your #egg=cudaq fragments.
+Discarding https://files.pythonhosted.org/packages/26/ca/b7357fbe592cde89a8e1e0454f829f049c8b0dc086bb38e5465ed72284a2/cudaq-0.12.0.tar.gz#sha256=dfe43d4570ff4f60e51b369bb344c2f5bf1d8bae50520be9d6317391138c4411 (from https://pypi.org/simple/cudaq/) (requires-python:>=3.10): Requested unknown from https://files.pythonhosted.org/packages/26/ca/b7357fbe592cde89a8e1e0454f829f049c8b0dc086bb38e5465ed72284a2/cudaq-0.12.0.tar.gz#sha256=dfe43d4570ff4f60e51b369bb344c2f5bf1d8bae50520be9d6317391138c4411 has inconsistent name: filename has 'cudaq', but metadata has 'unknown'
+  Downloading cudaq-0.11.0.tar.gz (9.1 kB)
+  Installing build dependencies ... done
+  Getting requirements to build wheel ... done
+  Installing backend dependencies ... done
+  Preparing metadata (pyproject.toml) ... done
+  WARNING: Generating metadata for package cudaq produced metadata for project name unknown. Fix your #egg=cudaq fragments.
+Discarding https://files.pythonhosted.org/packages/12/7d/02b2724a8dfbc121d37e638151ce0e18512fa92dbbaa350938f2c0e4cc9d/cudaq-0.11.0.tar.gz#sha256=8dcfd2a187a66430714b812e4d8efaf4676efd76597336249028929c76fd7077 (from https://pypi.org/simple/cudaq/) (requires-python:>=3.10): Requested unknown from https://files.pythonhosted.org/packages/12/7d/02b2724a8dfbc121d37e638151ce0e18512fa92dbbaa350938f2c0e4cc9d/cudaq-0.11.0.tar.gz#sha256=8dcfd2a187a66430714b812e4d8efaf4676efd76597336249028929c76fd7077 has inconsistent name: filename has 'cudaq', but metadata has 'unknown'
+  Downloading cudaq-0.10.0.tar.gz (9.0 kB)
+  Installing build dependencies ... done
+  Getting requirements to build wheel ... done
+  Installing backend dependencies ... done
+  Preparing metadata (pyproject.toml) ... done
+  WARNING: Generating metadata for package cudaq produced metadata for project name unknown. Fix your #egg=cudaq fragments.
+Discarding https://files.pythonhosted.org/packages/f2/34/7bc0e2a6196a05de9c44ff6efe2e3c4c10220d0bf91ccb6b8854db6544a2/cudaq-0.10.0.tar.gz#sha256=a05f345ee26ddc4e87b6a46ab0ca28f0df00993d8c7f26b2dec0ca44d6dad400 (from https://pypi.org/simple/cudaq/) (requires-python:>=3.10): Requested unknown from https://files.pythonhosted.org/packages/f2/34/7bc0e2a6196a05de9c44ff6efe2e3c4c10220d0bf91ccb6b8854db6544a2/cudaq-0.10.0.tar.gz#sha256=a05f345ee26ddc4e87b6a46ab0ca28f0df00993d8c7f26b2dec0ca44d6dad400 has inconsistent name: filename has 'cudaq', but metadata has 'unknown'
+  Downloading cudaq-0.9.1.tar.gz (9.0 kB)
+  Installing build dependencies ... done
+  Getting requirements to build wheel ... done
+  Installing backend dependencies ... done
+  Preparing metadata (pyproject.toml) ... done
+  WARNING: Generating metadata for package cudaq produced metadata for project name unknown. Fix your #egg=cudaq fragments.
+Discarding https://files.pythonhosted.org/packages/39/a9/c47e6be5a4e42bcc5c7b79cedbf4e55d543d2882af733b3a6c6e6d934498/cudaq-0.9.1.tar.gz#sha256=c978560491e851082ca95ff796f55bde1a935dfb56099d3e185b06d26c5d8b1d (from https://pypi.org/simple/cudaq/) (requires-python:>=3.10): Requested unknown from https://files.pythonhosted.org/packages/39/a9/c47e6be5a4e42bcc5c7b79cedbf4e55d543d2882af733b3a6c6e6d934498/cudaq-0.9.1.tar.gz#sha256=c978560491e851082ca95ff796f55bde1a935dfb56099d3e185b06d26c5d8b1d has inconsistent name: filename has 'cudaq', but metadata has 'unknown'
+  Downloading cudaq-0.9.0.tar.gz (8.4 kB)
+  Installing build dependencies ... done
+  Getting requirements to build wheel ... done
+  Installing backend dependencies ... done
+  Preparing metadata (pyproject.toml) ... done
+  WARNING: Generating metadata for package cudaq produced metadata for project name unknown. Fix your #egg=cudaq fragments.
+Discarding https://files.pythonhosted.org/packages/67/2d/2204c654b9f92271ad2c9ec340891b4370d17d99d35d8395a55fb555b5e7/cudaq-0.9.0.tar.gz#sha256=9545fc50367d35c4acef9ec5afebbf8a78782c876f42810286762dbe2f2d7770 (from https://pypi.org/simple/cudaq/) (requires-python:>=3.10): Requested unknown from https://files.pythonhosted.org/packages/67/2d/2204c654b9f92271ad2c9ec340891b4370d17d99d35d8395a55fb555b5e7/cudaq-0.9.0.tar.gz#sha256=9545fc50367d35c4acef9ec5afebbf8a78782c876f42810286762dbe2f2d7770 has inconsistent name: filename has 'cudaq', but metadata has 'unknown'
+ERROR: Could not find a version that satisfies the requirement cudaq (from versions: 0.9.0, 0.9.1, 0.10.0, 0.11.0, 0.12.0, 0.12.0.post1)
+ERROR: No matching distribution found for cudaq
+```
+
+### Expected behavior
+
+cudaq metapackage should find the associated wheels and install the correct package.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+cudaq-0.12.0
+
+### Environment
+
+- **CUDA-Q version**: N/A
+- **Python version**: 3.10
+- **C++ compiler**: N/A
+- **Operating system**: Ubuntu 22.04
+
+
+### Suggestions
+
+No suggestions at the moment.

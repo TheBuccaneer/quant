@@ -1,0 +1,36 @@
+```python
+import cudaq 
+
+cudaq.set_target('tensornet')
+
+kernel, N = cudaq.make_kernel(int)
+q = kernel.qalloc(N)
+kernel.h(q[0])
+def body(idx):
+    kernel.cx(q[idx], q[idx+1])
+kernel.for_loop(0, N-1, body)
+
+print(kernel)
+
+r0 = cudaq.sample_async(kernel, 10).get()
+r0.dump()
+```
+results in the following segmentation fault
+```bash
+Thread 7 "python3-dbg" received signal SIGSEGV, Segmentation fault.
+[Switching to Thread 0x7f0dd15fe640 (LWP 1814870)]
+(anonymous namespace)::DefaultExecutionManager::DefaultExecutionManager (this=0x7f0d64000ea0) at /workspaces/cuda-quantum/runtime/cudaq/qis/managers/default/DefaultExecutionManager.cpp:218
+218                     simulator()->name());
+(gdb) bt
+#0  (anonymous namespace)::DefaultExecutionManager::DefaultExecutionManager (this=0x7f0d64000ea0)
+    at /workspaces/cuda-quantum/runtime/cudaq/qis/managers/default/DefaultExecutionManager.cpp:218
+#1  0x00007f0e7dfcaa83 in std::make_unique<(anonymous namespace)::DefaultExecutionManager> () at /usr/include/c++/11/bits/unique_ptr.h:962
+#2  0x00007f0e7dfc9ba4 in cudaq::getExecutionManager () at /workspaces/cuda-quantum/runtime/cudaq/qis/managers/default/DefaultExecutionManager.cpp:230
+#3  0x00007f0e336f8bd3 in (anonymous namespace)::DefaultQPU::setExecutionContext (this=0x3285880, context=0x7f0d64000b70)
+    at /workspaces/cuda-quantum/runtime/cudaq/platform/default/DefaultQuantumPlatform.cpp:50
+#4  0x00007f0e7ded845c in cudaq::quantum_platform::set_exec_ctx (this=0x32893c0, ctx=0x7f0d64000b70, qid=0)
+    at /workspaces/cuda-quantum/runtime/cudaq/platform/quantum_platform.cpp:96
+#5  0x00007f0e7e319127 in cudaq::details::runSampling<cudaq::detail::make_copyable_function<cudaq::pySampleAsync(cudaq::kernel_builder<>&, std::size_t, std::size_t, pybind11::args)::<lambda()> >(cudaq::pySampleAsync(cudaq::kernel_builder<>&, std::size_t, std::size_t, pybind11::args)::<lambda()>&&)::<lambda(auto:52&& ...)>&>(struct {...} &, cudaq::quantum_platform &, const std::string &, int, std::size_t, cudaq::details::future *, std::size_t, std::size_t) (wrappedKernel=..., platform=..., 
+    kernelName="__nvqppBuilderKernel_367535629127", shots=1000, qpu_id=0, futureResult=0x0, batchIteration=0, totalBatchIters=0)
+    at /workspaces/cuda-quantum/runtime/cudaq/algorithms/sample.h:88
+```

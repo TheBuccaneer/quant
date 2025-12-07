@@ -1,0 +1,69 @@
+### Required prerequisites
+
+- [x] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [x] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [x] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [x] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+```
+from typing import List
+import cudaq
+
+# Define a quantum kernel that applies X gates to supplied indices 
+@cudaq.kernel
+def padX(qubits: cudaq.qvector, indices: List[int]):
+        
+    for i in indices:
+        x(qubits[i])  
+
+@cudaq.kernel
+def main_kernel(num_qubits: int, some_list: List[int]):
+    
+    q = cudaq.qvector(num_qubits)
+    
+    x(q)
+    
+    padX(q, some_list)  #list passed in works 
+    
+    padX(q, [0, 1]) #list passed in as argument works 
+    
+    xyz = [0, 1] #list can be defined inside a kernel - no errors here
+    padX(q, xyz) #list defined inside kernel then passed in DOES NOT WORK 
+    
+    
+some_list = [0, 1] 
+num_qubits = 3
+
+print(cudaq.draw(main_kernel, num_qubits, some_list))
+print(cudaq.sample(main_kernel, num_qubits, some_list))
+```
+```
+RuntimeError: could not compile code for 'main_kernel'.
+error: 'func.call' op operand type mismatch: expected operand type '!cc.stdvec<i64>', but provided '!cc.ptr<!cc.stdvec<i64>>' for operand number 1
+```
+
+### Steps to reproduce the bug
+
+NA
+
+### Expected behavior
+
+NA
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: 
+- **Python version**: 
+- **C++ compiler**: 
+- **Operating system**: 
+
+
+### Suggestions
+
+NA

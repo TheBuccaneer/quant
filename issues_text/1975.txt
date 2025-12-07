@@ -1,0 +1,49 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [x] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+As a result of #1853 (merged on July 2), examples like vqe_h2.cpp can no longer be run through the full synthesizer and submitted to the current NVQC servers. The problem has nothing to do with VQE, per se, and in fact, the upcoming release of 0.8.0 should side-step this problem for VQE because synthesis will bypass the first argument of VQE kernels. The problem appears to be related to the usage of the `cudaq::slice_vector()` function, and it can be reproduced using a simple `cudaq::observe`. That is - VQE is not required to reproduce this problem.
+
+### Steps to reproduce the bug
+
+In the latest nightly Docker container, run
+```bash
+$ nvq++ --target nvqc examples/cpp/algorithms/vqe_h2.cpp
+$ export NVQC_API_KEY=nvapi-<key>
+$ ./a.out
+[2024-07-19 20:34:45.081] Submitting jobs to NVQC service with 1 GPU(s). Max execution time: 3600 seconds (excluding queue wait time).
+4 qubit Hamiltonian -> 36 parameters
+loc("vqe_h2.cpp":68:27): error: Unknown gep/load configuration for synthesis.
+loc("vqe_h2.cpp":60:27): error: Unknown gep/load configuration for synthesis.
+loc("vqe_h2.cpp":47:3): error: 'cc.compute_ptr' op too many indices (2) for the source pointer
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  Could not successfully apply quake-synth.
+Aborted (core dumped)
+```
+
+**The problem can also be reproduced by simply calling `cudaq::observe(ansatz, H, init_params, n_qubits, n_layers)`** (i.e. no VQE required).
+
+### Expected behavior
+
+Running the same thing with a 0.7.1 client produces valid results.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Yes, I believe PR #1853 introduced the problem
+
+### Environment
+
+- **CUDA Quantum version**: Everything including and after f444e01870e47da618c309d778aa4964410d2a4d
+- **Python version**: N/A
+- **C++ compiler**: N/A
+- **Operating system**: CUDA-Q Docker image
+
+
+### Suggestions
+
+_No response_

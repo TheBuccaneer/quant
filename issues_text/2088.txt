@@ -1,0 +1,1 @@
+When running `make check-targets` in the build directory, I can get a majority of the targettests (96) to fail if I haven't previously also done a `make install`. This is unexpected. We expect the targettests to use the tools and libraries from the build directory, not an old installation.

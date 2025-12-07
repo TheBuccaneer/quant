@@ -1,0 +1,33 @@
+```mlir
+module {
+  func.func @__nvqpp__mlirgen____nvqppBuilderKernel_367535629127() attributes {"cudaq-entrypoint"} {
+    %0 = quake.alloca !quake.veq<2>
+    %1 = quake.extract_ref %0[0] : (!quake.veq<2>) -> !quake.ref
+    quake.h %1 : (!quake.ref) -> ()
+    %2 = quake.extract_ref %0[1] : (!quake.veq<2>) -> !quake.ref
+    quake.x [%1] %2 : (!quake.ref, !quake.ref) -> ()
+    %3 = quake.mz %1 : (!quake.ref) -> i1 {registerName = ""}
+    %4 = quake.mz %2 : (!quake.ref) -> i1 {registerName = ""}
+    return
+  }
+}
+```
+
+results in invalid base profile for Quantinuum 
+
+```llvm
+define void @__nvqpp__mlirgen____nvqppBuilderKernel_367535629127() local_unnamed_addr #0 {
+  tail call void @__quantum__qis__h__body(%Qubit* null)
+  tail call void @__quantum__qis__cnot__body(%Qubit* null, %Qubit* nonnull inttoptr (i64 1 to %Qubit*))
+  tail call void @__quantum__qis__mz__body(%Qubit* null, %Result* null)
+  tail call void @__quantum__qis__mz__body(%Qubit* nonnull inttoptr (i64 1 to %Qubit*), %Result* nonnull inttoptr (i64 1 to %Result*))
+  tail call void @__quantum__rt__array_start_record_output()
+  tail call void @__quantum__rt__result_record_output(%Result* null, i8* nonnull getelementptr inbounds ([1 x i8], [1 x i8]* @cstr.00, i64 0, i64 0))
+  tail call void @__quantum__rt__result_record_output(%Result* nonnull inttoptr (i64 1 to %Result*), i8* nonnull getelementptr inbounds ([1 x i8], [1 x i8]* @cstr.00, i64 0, i64 0))
+  tail call void @__quantum__rt__array_end_record_output()
+  ret void
+}
+
+```
+
+notice the registerName is the same for each measure, causing two different results to be written to the same register name

@@ -1,0 +1,16 @@
+We shouldn't be doing this:
+```mlir
+  %1 = quake.alloca !quake.veq<5>
+  %2 = cc.alloca !quake.ref[5]          // this is going to become illegal
+  cc.loop while (...) {
+    ...
+  } do {
+  ^bb0(%idx : i64):
+    %10 = quake.extract_ref %1[%idx]
+    %11 = cc.compute_ptr %2[%idx]
+    cc.store %10, %11                  // this is going to become illegal
+    cc.continue %idx
+  }  ...
+```
+
+It is invalid to copy a quantum reference value and save it in a classic data structure (here, an array).

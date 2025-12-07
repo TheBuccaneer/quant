@@ -1,0 +1,37 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+Currently, our platform specific configurations are defined as scripts, e.g. [quantinuum](https://github.com/NVIDIA/cuda-quantum/blob/main/runtime/cudaq/platform/default/rest/helpers/quantinuum/quantinuum.config). These files can define a specific pass pipeline using the `PLATFORM_LOWERING_CONFIG` variable. However, the use of pass options breaks the JIT compilation of kernels.
+
+The problem is that the `RemoteRESTQPU` class will parse this file and split the line with this variable on `=`:
+https://github.com/NVIDIA/cuda-quantum/blob/8147bf7a1012ef79eb56e9de96dbf3e1c3e71a8f/runtime/cudaq/platform/default/rest/RemoteRESTQPU.cpp#L215-L218
+
+Since a pass with an option will have the form `pass-name{option=value}` this breaks the pipeline too.
+
+### Steps to reproduce the bug
+
+Add a pass with an option to the `PLATFORM_LOWERING_CONFIG` variable.
+
+### Expected behavior
+
+We need to be able to accept pass with options.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: main-branch
+- **C++ compiler**: gcc-12
+- **Operating system**: Ubuntu (aarch64)
+
+
+### Suggestions
+
+_No response_

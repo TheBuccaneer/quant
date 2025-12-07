@@ -1,0 +1,73 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+This issue was captured in #783, but #783 was closed because the local emulation was no longer failing. However, the underlying invalid QIR generation issue still exists.
+
+Specifically, For certain unrolled-loop test cases ([like the one in the title](https://github.com/NVIDIA/cuda-quantum/blob/fb4e42e8df0226d030fbc6b4b1c2baf6036cc5f8/test/NVQPP/qir_cond_for_loop-6.cpp#L17)), the compiler is injecting `__quantum__rt__result_record_output` calls even if `if` checks prevent measurements from occurring.
+
+The compiler should not inject those calls for cases like this.
+
+### Steps to reproduce the bug
+
+See [this gist](https://gist.github.com/bmhowe23/cedfe072c2640f8e5c1546b14899472e) for the resulting QIR coming from the compiler at the time of this issue creation (freshly regenerated at the time of the creation of this new issue).
+
+The QIR can also be generated like this in the dev image like this:
+```bash
+$ nvq++ --target quantinuum --emulate test/NVQPP/qir_cond_for_loop-6.cpp
+$ CUDAQ_DUMP_JIT_IR=1 ./a.out
+```
+
+You can also run it on the provider hardware in order to see a test actually fail:
+```bash
+$ nvq++ --target quantinuum --quantinuum-machine H1-1E test/NVQPP/qir_cond_for_loop-6.cpp
+$ ./a.out
+{ 
+  q0result%03 : { 1:8 0:92 }
+   q0result%04 : { 1:3 0:97 }
+   q0result%10 : { 0:100 }
+   q0result%02 : { 1:11 0:89 }
+   q0result%07 : { 1:1 0:99 }
+   q0result%14 : { 0:100 }
+   q0result%08 : { 0:100 }
+   q0result%01 : { 1:25 0:75 }
+   q0result%12 : { 0:100 }
+   q0result%13 : { 0:100 }
+   q0result%09 : { 0:100 }
+   q0result%11 : { 0:100 }
+   q0result%00 : { 0:49 1:51 }
+   q0result%06 : { 0:100 }
+   q0result%05 : { 1:1 0:99 }
+   q0result%18 : { 0:100 }
+   q0result%17 : { 0:100 }
+   __global__ : { 00000001000000000000:1 00100000000000000000:11 00000100000000000000:1 00001000000000000000:3 00010000000000000000:8 01000000000000000000:25 10000000000000000000:51 }
+   q0result%16 : { 0:100 }
+   q0result%15 : { 0:100 }
+   q0result%19 : { 0:100 }
+}
+FAILURE: nIterRan (20) >= nIter (20)
+```
+
+### Expected behavior
+
+When run on `H1-1E`, the unit test should pass.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: main
+- **Python version**: N/A
+- **C++ compiler**: 16.0
+- **Operating system**: Ubuntu 22.04
+
+
+### Suggestions
+
+_No response_

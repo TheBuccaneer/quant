@@ -1,0 +1,64 @@
+### Required prerequisites
+
+- [x] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [x] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [x] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [x] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+Mid-circuit measurements are being reported with incorrect values if a reset follows them. I believe this affects all of the existing simulators.
+
+### Steps to reproduce the bug
+
+The following Python test demonstrates the issue:
+```python
+import cudaq
+
+@cudaq.kernel
+def midCircMeasTest():
+    q = cudaq.qvector(5)
+
+    h(q)
+    midCircuit = mz(q)
+    reset(q)
+
+    h(q)
+
+
+print(cudaq.sample(midCircMeasTest))
+```
+
+This prints
+```bash
+$ python3 test.py
+{ 
+  __global__ : { 11111:25 11110:41 01010:36 01101:26 01110:31 01000:30 00110:38 10101:32 00101:21 01011:25 00100:27 01001:31 00000:27 00011:30 01100:41 10011:37 00010:23 00001:32 01111:37 11011:26 00111:37 11100:25 10001:31 10010:37 10100:34 10110:30 10000:27 10111:33 11000:36 11101:29 11001:34 11010:31 }
+   midCircuit : { 00000:1000 }
+}
+```
+
+This *should* print something like this:
+```bash
+   midCircuit : <similar to __global__ but counts will slightly differ>
+```
+
+### Expected behavior
+
+See above.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: 4e069429bbc7c8715c053ee32b8f7c29ce10276b (latest)
+- **Python version**: 3.10
+- **C++ compiler**: N/A
+- **Operating system**: Ubuntu 22.04
+
+
+### Suggestions
+
+I believe the root cause is that we need to call `flushAnySamplingTasks()` inside all of the simulators' `resetQubit()` implementations.

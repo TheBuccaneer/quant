@@ -1,0 +1,42 @@
+Currently, cuda quantum Python _wheels_ are built **without** MPI.
+i.e., `cudaq` MPI APIs in [`cudaq.cpp`](https://github.com/NVIDIA/cuda-quantum/blob/main/runtime/cudaq/cudaq.cpp) are compiled as stubs in the wheel binary.
+
+This can be checked by:
+
+```
+import cudaq
+
+cudaq.mpi.initialize()
+print("MPI initialized:", cudaq.mpi.is_initialized())
+print("MPI rank:", cudaq.mpi.rank())
+cudaq.mpi.finalize()
+```
+
+Run with `mpirun -n 2 python3 test.py`.
+
+- In `cudaq` docker container (natively-built `cudaq` Python package), it prints
+
+```
+MPI initialized: True
+MPI rank: 0
+MPI initialized: True
+MPI rank: 1
+```
+
+- Using `cudaq` from a wheel, it prints
+
+```
+MPI initialized: False
+MPI rank: 0
+MPI initialized: False
+MPI rank: 0
+```
+
+ -> `cudaq` MPI support is not active in the wheel binary.
+ 
+ 
+ Currently, this affects the following functionalities (only on wheels) 
+ 
+ - `cudaq.parallel.mpi` distribution mode (`cudaq.observe(..., execution=cudaq.parallel.mpi)`)
+ 
+ - MPI multi-GPU parallelization on the `tensornet` simulator (relying on `cudaq::mpi` API to detect MPI environment). 

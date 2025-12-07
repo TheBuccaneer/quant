@@ -1,0 +1,3 @@
+The QIR functions for adjoint of T and S (named `<prefix>__tdg` and `<prefix>__sdg`) are not correct for QIR base profile. In the base profile those names are spelled `<prefix>__t__adj` and `<prefix>__s__adj`, resp.
+
+Lowering to base profile needs to be updated.

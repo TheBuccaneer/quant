@@ -1,0 +1,46 @@
+### Required prerequisites
+
+- [x] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [x] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [x] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+```
+root@d115d51496d2:/workspace/build# ninja OptTransforms
+[25/80] Building CXX object lib/Optimizer/Transforms/CMakeFiles/obj.OptTransforms.dir/GetConcreteMatrix.cpp.o
+FAILED: lib/Optimizer/Transforms/CMakeFiles/obj.OptTransforms.dir/GetConcreteMatrix.cpp.o
+/usr/local/llvm/bootstrap/cxx -DGTEST_HAS_RTTI=0 -D_DEBUG -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I/workspace/build/include -I/workspace/include -I/workspace/tpls/eigen -I/workspace/runtime -I/usr/local/zlib/include -isystem /usr/local/llvm/include -isystem /workspace/tpls/json/include -fPIC -fno-semantic-interposition -fvisibility-inlines-hidden -Werror=date-time -Wall -Wextra -Wno-unused-parameter -Wwrite-strings -Wcast-qual -Wno-missing-field-initializers -Wimplicit-fallthrough -Wno-class-memaccess -Wno-redundant-move -Wno-pessimizing-move -Wno-noexcept-type -Wdelete-non-virtual-dtor -Wsuggest-override -Wno-comment -Wno-misleading-indentation -Wctad-maybe-unsupported -fdiagnostics-color -ffunction-sections -fdata-sections -O3 -DNDEBUG -std=gnu++20 -fPIC   -D_GNU_SOURCE -D_DEBUG -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS  -fno-exceptions -fno-rtti -UNDEBUG -Werror -MD -MT lib/Optimizer/Transforms/CMakeFiles/obj.OptTransforms.dir/GetConcreteMatrix.cpp.o -MF lib/Optimizer/Transforms/CMakeFiles/obj.OptTransforms.dir/GetConcreteMatrix.cpp.o.d -o lib/Optimizer/Transforms/CMakeFiles/obj.OptTransforms.dir/GetConcreteMatrix.cpp.o -c /workspace/lib/Optimizer/Transforms/GetConcreteMatrix.cpp
+In file included from /workspace/lib/Optimizer/Transforms/GetConcreteMatrix.cpp:11:
+/workspace/include/cudaq/Optimizer/CodeGen/Passes.h:71:10: fatal error: cudaq/Optimizer/CodeGen/Passes.h.inc: No such file or directory
+   71 | #include "cudaq/Optimizer/CodeGen/Passes.h.inc"
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+[58/80] Building CXX object lib/Optimizer/Dialect/Quake/CMakeFiles/obj.QuakeDialect.dir/QuakeOps.cpp.o
+ninja: build stopped: subcommand failed.
+```
+
+### Steps to reproduce the bug
+
+1. Configure the project. (Needs to be done on a fresh build directory)
+   a. I modified `scripts/build_cudaq.sh` to only configure the project, i.e., not call `ninja install`. 
+3. Try building the `OpTransforms` library alone: `ninja OptTransforms` (or `make OptTransforms`)
+
+### Expected behavior
+
+Successfully build the library.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA-Q version**: main (39a46e62ccc85922958925441c0e2e489eb27a83)
+- **Image**: cuda-quantum-devdeps:ext-cu12.0-gcc11-main
+
+
+### Suggestions
+
+_No response_

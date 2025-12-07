@@ -1,0 +1,39 @@
+The below kernel
+
+```
+@cudaq.kernel
+def kernel():
+    data = cudaq.qvector(2)
+    aux = cudaq.qubit()
+    x(aux)
+    bit = mz(aux)
+    # Compare to 1
+    if bit == 1:
+        x(data[0])
+    mz(data)
+```
+ results in the following IR:
+ 
+ ```
+  %6 = bitcast %Result* %5 to i1*
+  %7 = load i1, i1* %6, align 1
+  %8 = sext i1 %7 to i64
+  %9 = icmp eq i64 %8, 1
+```
+
+If `bit==True` (`%7 == true` in the above IR), it looks like the `icmp` returns `false`. A quick search of LLVM doc indicated that `sext i1 ... i64` may convert `true` to -1.
+
+In fact, the below kernel resulted in the correct distribution (may need the fixes from https://github.com/NVIDIA/cuda-quantum/pull/1619 to get the measurement feedback detection working properly).
+
+```
+@cudaq.kernel
+def kernel5():
+    data = cudaq.qvector(2)
+    aux = cudaq.qubit()
+    x(aux)
+    bit = mz(aux)
+    # Compare to -1
+    if bit == -1:
+        x(data[0])
+    mz(data)
+```    

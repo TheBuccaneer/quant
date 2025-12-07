@@ -1,0 +1,71 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+Some applications need to use the `multiprocessing.Process` function (or the `ProcessPoolExecutor.run_in_executor` function) to spawn child processes to perform work. By default, Python on Linux creates the child process using the "fork" method (as described in the [Python docs](https://docs.python.org/3/library/multiprocessing.html)). The docs say the following (emphasis mine):
+
+> The parent process uses [os.fork()](https://docs.python.org/3/library/os.html#os.fork) to fork the Python interpreter. The child process, when it begins, is effectively identical to the parent process. All resources of the parent are inherited by the child process. **Note that safely forking a multithreaded process is problematic.**
+
+cudaq is indeed a multithreaded process, so as it stands right now, this is problematic.
+
+Also note that according to the docs, Python 3.14 will change this behavior.
+
+> The default start method will change away from fork in Python 3.14. Code that requires fork should explicitly specify that via [get_context()](https://docs.python.org/3/library/multiprocessing.html#multiprocessing.get_context) or [set_start_method()](https://docs.python.org/3/library/multiprocessing.html#multiprocessing.set_start_method).
+
+### Steps to reproduce the bug
+
+The following example demonstrates the problem.
+
+```python
+import cudaq
+import multiprocessing
+
+def myFunc():
+    cudaq.set_target('qpp-cpu')
+
+if __name__ == '__main__':
+    # Uncommenting either *ONE* of the following lines "fixes" this problematic
+    # example.
+    # multiprocessing.set_start_method('spawn')
+    # multiprocessing.set_start_method('forkserver')
+    
+    cudaq.set_target('qpp-cpu')
+    print('Spawning another process to run myFunc')
+    process = multiprocessing.Process(target=myFunc)
+    process.start()
+    print('Joining...')
+    process.join()
+    print('DONE!') # never gets here unless set_start_method is called
+```
+When running the above code with a current version of cudaq, you'll get the following results:
+```bash
+$ python3 test.py 
+Spawning another process to run myFunc
+Joining...
+```
+Note that you'll never reach the `DONE!` section. This is the bug.
+
+### Expected behavior
+
+The above example (or something very similar) should be able to run without deadlocks. As shown in the example, calling `multiprocessing.set_start_method('spawn')` or `multiprocessing.set_start_method('forkserver')` in the user program will fix the problem, but it might be nicer if this were automatically handled by the cudaq module. Any solution would need to be tested against the above example and more complicated use cases, both in regular Python and in Jupyter notebooks.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: latest (4f18ce846 was used for my testing)
+- **Python version**: 3.10
+- **C++ compiler**: 
+- **Operating system**: Ubuntu 22.04
+
+
+### Suggestions
+
+Suggestions listed above.

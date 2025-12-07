@@ -1,0 +1,4 @@
+The llvm-lit tests for the `remote-mqpu` target showed some instability on CI. 
+
+Intermittently, there is a runtime error throwed: `bind: port already in use`. It could be due to a race condition when multiple parallel tests try to check and claim a random port number. The heuristic to avoid this collision seems not reliable enough. 
+

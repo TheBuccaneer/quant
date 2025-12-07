@@ -1,0 +1,37 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+The IR that is produced when targeting these backend makes use of runtime functions and other instructions that are not supported by these backends. 
+
+### Steps to reproduce the bug
+
+To be documented - we are also missing documentation for how to submit to quantum backends.
+
+### Expected behavior
+
+See the [Base Profile specification](https://github.com/qir-alliance/qir-spec/blob/main/specification/under_development/profiles/Base_Profile.md), and the sections on Classical Instructions and Runtime Functions in particular for details regarding what exactly is supported. 
+
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**:  latest main (sha 7d56f1822c4791b7e1dfa1baba9e008daffa363b)
+- **Python version**:  N/A
+- **C++ compiler**:  N/A
+- **Operating system**:  N/A
+
+
+### Suggestions
+
+A full fix of this issue should include
+- validation infrastructure to check spec compliance of QIR - [QAT](https://github.com/qir-alliance/qat) provides this, and we should consider taking a dependency on it for testing even if we don't want to add it as a product dependency.
+- scheduled pipelines that run integration tests on third party backends
+- unit tests to validate that we give comprehensive errors when certain kernels cannot be executed on a specific backend.

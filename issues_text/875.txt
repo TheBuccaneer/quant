@@ -1,0 +1,9 @@
+```cpp
+__qpu__ void foo() {
+  cudaq::qreg q(3);
+  auto& first = q.front();
+  auto & last = q.back();
+  x(first, last);
+}
+```
+The above code is currently producing a controlled X operation when, according to the language specification, it should be an X applied to the two qubits. The code in `ConvertExpr.cpp` does not currently check for the `cudaq::ctrl` modifier when invoking `buildOp` (like it does for the `cudaq::adj` modifier). 

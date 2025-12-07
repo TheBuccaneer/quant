@@ -1,0 +1,44 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+The computation of spin operators is incorrect. This bug affects cudaq.observe. A specific example where it is incorrect is that spin_op = (cudaq.spin.z(0) + cudaq.spin.z(1)) * cudaq.spin.x(0) should produce the matrix 
+      [[ 0,  2,  0,  0],
+       [ 0,  0,  0,  0],
+       [ 0,  0,  0,  0],
+       [ 0,  0, -2,  0]]
+I can give more similar cases, but they are likely all the same bug. A good testbed is a new set of features that will be added in the near future.
+
+### Steps to reproduce the bug
+
+spin_op = (cudaq.spin.z(0) + cudaq.spin.z(1)) * cudaq.spin.x(0)
+spin_op.to_matrix()
+
+### Expected behavior
+
+The produced matrix should be 
+      [[ 0,  2,  0,  0],
+       [ 0,  0,  0,  0],
+       [ 0,  0,  0,  0],
+       [ 0,  0, -2,  0]]
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: 0.8.0 and previous
+- **Python version**: N/A
+- **C++ compiler**: N/A
+- **Operating system**: N/A
+
+
+### Suggestions
+
+Interestingly enough, the matrix for cudaq.spin.x(0) * (cudaq.spin.z(0) + cudaq.spin.z(1)) is correct. 

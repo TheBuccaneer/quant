@@ -1,0 +1,63 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [X] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+The `nvq++` compiler is generating IR that always executes the instructions involved in ternary operations. It should generate conditional IR instead. That is - for the `a ? b : c` expression, it should evaluate `a`, and then based on the result of `a`, it should then evaluate `b` OR `c`, not both.
+
+### Steps to reproduce the bug
+
+The following kernel generates invalid Quake. Note how the resulting IR performs 3 measurements even though only `mz(q1)` OR `mz(q2)` should actually be exectuted.
+
+```cpp
+struct kernel {
+  void operator()() __qpu__ {
+    cudaq::qubit q0, q1, q2;
+    auto measureResult = mz(q0) ? mz(q1) : mz(q2);
+  }
+};
+```
+Generated IR:
+```llvm
+module attributes {quake.mangled_name_map = {__nvqpp__mlirgen__kernel = "_ZN6kernelclEv"}} {
+  func.func @__nvqpp__mlirgen__kernel() attributes {"cudaq-entrypoint", "cudaq-kernel"} {
+    %true = arith.constant true loc(#loc2)
+    %0 = quake.alloca !quake.ref loc(#loc3)
+    %1 = quake.alloca !quake.ref loc(#loc4)
+    %2 = quake.alloca !quake.ref loc(#loc5)
+    %bits = quake.mz %0 : (!quake.ref) -> i1 loc(#loc2)
+    %bits_0 = quake.mz %1 : (!quake.ref) -> i1 loc(#loc6)
+    %bits_1 = quake.mz %2 : (!quake.ref) -> i1 loc(#loc7)
+    %3 = arith.xori %bits, %true : i1 loc(#loc2)
+    %4 = arith.andi %bits, %bits_0 : i1 loc(#loc2)
+    %5 = arith.andi %3, %bits_1 : i1 loc(#loc2)
+    %6 = arith.ori %4, %5 : i1 loc(#loc2)
+    %7 = cc.alloca i1 loc(#loc8)
+    cc.store %6, %7 : !cc.ptr<i1> loc(#loc8)
+    return loc(#loc1)
+  } loc(#loc1)
+} loc(#loc)
+```
+
+### Expected behavior
+
+In the above example, `mz(q0)` should obviously be executed, but ONLY one of `mz(q1)` or `mz(q2)` should be executed.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: main
+- **Python version**: N/A
+- **C++ compiler**: 16.0.6
+- **Operating system**: Ubuntu 22.04
+
+
+### Suggestions
+
+A PR with a fix is forthcoming.

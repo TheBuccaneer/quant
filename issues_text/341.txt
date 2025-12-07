@@ -1,0 +1,64 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [X] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+When trying to build a kernels that uses `std::acos`:
+`test-3.cpp` in #323
+```cpp
+#include <cudaq.h>
+#include <iostream>
+
+__qpu__ void init_state() {
+  double theta = 2. * std::acos(1. / std::sqrt(3));
+  cudaq::qreg qubits(2);
+  ry(theta, qubits[0]);
+  h<cudaq::ctrl>(qubits[0], qubits[1]);
+  x(qubits[1]);
+};
+
+int main() {
+  auto result = cudaq::sample(1000, init_state);
+  for (auto &&[bits, counts] : result) {
+    std::cout << bits << '\n';
+  }
+  return 0;
+}
+```
+
+We get an linker error:
+```
+usr/bin/ld: test-3.o: in function `__nvqpp__mlirgen__function_init_state._Z10init_statev':
+(.text+0x24): undefined reference to `acos'
+/usr/bin/ld: test-3.o: in function `function_init_state._Z10init_statev.thunk':
+(.text+0xc4): undefined reference to `acos'
+clang-16: error: linker command failed with exit code 1 (use -v to see invocation)
+```
+
+### Steps to reproduce the bug
+
+Try to compile the above program using 
+
+`bin/nvq++ -v ../test/NVQPP/test-3.cpp  -o test-3 --target quantinuum --emulate`
+
+### Expected behavior
+
+If we can't handle this function, we should return an error.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: main
+- **C++ compiler**: gcc-12
+- **Operating system**: Ubuntu 22.04 (x86-64, docker)
+
+
+### Suggestions
+
+_No response_

@@ -1,0 +1,54 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+If you have too many controlled rotation gates (cr1, crx, etc.), the simulation will segfault. This happens with _at least_ the following targets: `nvidia`, `nvidia-fp64`, and `qpp-cpu`, so the problem is likely outside of the backend-specific code.
+
+The problem seems to happen with both Python and C++ CUDA-Q programs (when compiling with `--enable-mlir`). I was unable to reproduce the problem in C++ when NOT using `--enable-mlir`.
+
+### Steps to reproduce the bug
+
+Create a test program like this:
+
+```python
+import cudaq
+
+@cudaq.kernel
+def kernel():
+    qvec = cudaq.qvector(2)
+    for _ in range(2**19):               # the problem does not occur with 2**18
+        r1.ctrl(1., qvec[0], qvec[1])
+
+print(cudaq.sample(kernel))
+```
+
+And then run it:
+```bash
+$ python3 test.py
+Segmentation fault
+```
+
+### Expected behavior
+
+The program should run successfully without a segfault.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: problem exists in latest, 0.7.1, and 0.7. I did not test earlier.
+- **Python version**: 
+- **C++ compiler**: 
+- **Operating system**: 
+
+
+### Suggestions
+
+_No response_

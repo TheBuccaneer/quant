@@ -1,0 +1,28 @@
+```cpp
+__qpu__ void super() {
+  cudaq::qreg q(1);
+  h(q[0]);
+  mz(q[0]);
+}
+
+int main() {
+  cudaq::sample(super).dump();
+}
+```
+```bash
+nvq++ --target quantinuum -v test.cpp
+```
+```bash
+/opt/llvm/bin/clang++ -DNVQPP_TARGET_BACKEND_CONFIG="quantinuum;emulate;false" -o nvqppGenTargetBackend.N5OPvb.o -c -x c++ /workspaces/cuda-quantum/builds/gcc-12-debug/targets/backendConfig.cpp
+/workspaces/cuda-quantum/builds/gcc-12-debug/bin/cudaq-quake --emit-llvm-file ../scratch/test.cpp -o test.qke
+/workspaces/cuda-quantum/builds/gcc-12-debug/bin/cudaq-opt --pass-pipeline=builtin.module(canonicalize,lambda-lifting,canonicalize,apply-op-specialization,kernel-execution,inline{default-pipeline=func.func(indirect-to-direct-calls)},func.func(quake-add-metadata),device-code-loader{use-quake=1},expand-measurements,func.func(lower-to-cfg),canonicalize,cse) test.qke -o test.qke.tBJe2t
+/workspaces/cuda-quantum/builds/gcc-12-debug/bin/cudaq-translate --convert-to=qir test.qke.tBJe2t -o test.ll.vKo44X
+/workspaces/cuda-quantum/builds/gcc-12-debug/bin/fixup-linkage.pl test.qke test.ll
+/opt/llvm/bin/llc --relocation-model=pic --filetype=obj -O2 test.ll.vKo44X -o test.qke.o
+/opt/llvm/bin/llc --relocation-model=pic --filetype=obj -O2 test.ll -o test.classic.o
+/opt/llvm/bin/clang++ -L/workspaces/cuda-quantum/builds/gcc-12-debug/lib -L/workspaces/cuda-quantum/builds/gcc-12-debug/lib/plugins -L/usr/lib/gcc/x86_64-linux-gnu/12 -L/usr/lib/x86_64-linux-gnu -L/usr/lib -L/lib/x86_64-linux-gnu -L/lib -L/usr/local/gdrcopy/lib64 -L/usr/local/cuda/lib64/stubs -r test.qke.o test.classic.o nvqppGenTargetBackend.N5OPvb.o -o test.o
+/usr/bin/ld: test.classic.o: in function `super()':
+test.cpp:(.text+0x0): multiple definition of `super()'; test.qke.o:LLVMDialectModule:(.text+0x80): first defined here
+clang-16: error: linker command failed with exit code 1 (use -v to see invocation)
+failed: "/opt/llvm/bin/clang++ -L/workspaces/cuda-quantum/builds/gcc-12-debug/lib -L/workspaces/cuda-quantum/builds/gcc-12-debug/lib/plugins -L/usr/lib/gcc/x86_64-linux-gnu/12 -L/usr/lib/x86_64-linux-gnu -L/usr/lib -L/lib/x86_64-linux-gnu -L/lib -L/usr/local/gdrcopy/lib64 -L/usr/local/cuda/lib64/stubs -r test.qke.o test.classic.o nvqppGenTargetBackend.N5OPvb.o -o test.o"
+```

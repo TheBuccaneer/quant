@@ -1,0 +1,5 @@
+The ChemistryTester is compiled and linked to the QPP FP64 simulator. However, the creation of the Hamiltonian goes through Python and PySCF, which initializes the python bindings and sets the default target, which on a local environment with the nvidia target and gpus, is the nvidia target. In the new experimental/stateHandling branch, this shows up as a precision mismatch. 
+
+Fix is to provide a more robust solution for turning off target modification for a specific section of the code. 
+
+Note that the python bindings for PySCF will go away in a future release and be replaced with a more robust solution.

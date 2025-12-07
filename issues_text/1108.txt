@@ -1,0 +1,72 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [X] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+The kernel keeps crashing even when executing this simple 2-qubit GHZ state (from our webpage) in a jupyter notebook using sample_async and nvidia-mqpu
+
+When I place this code in a separate python script decorate with mpi and execute with mpi-run I get  the following error
+
+> terminate called after throwing an instance of 'std::runtime_error'
+>   what():  [custatevec] %out of memory in addQubitsToState (line 202)
+> [gorby:2315095] *** Process received signal ***
+> [gorby:2315095] Signal: Aborted (6)
+> [gorby:2315095] Signal code:  (-6) 
+> 
+
+
+
+
+
+### Steps to reproduce the bug
+
+``` import cudaq
+
+cudaq.set_target("nvidia-mqpu")
+target = cudaq.get_target()
+num_qpus = target.num_qpus()
+print("Number of QPUs:", num_qpus)
+
+kernel, runtime_param = cudaq.make_kernel(int)
+qubits = kernel.qalloc(runtime_param)
+# Place qubits in superposition state.
+kernel.h(qubits)
+# Measure.
+kernel.mz(qubits)
+
+count_futures = []
+for qpu in range(num_qpus):
+    count_futures.append(cudaq.sample_async(kernel, 2, qpu_id=qpu))
+
+for counts in count_futures:
+    print(counts.get()) ```
+
+
+### Expected behavior
+
+expected behavior = GHZ sample results printed
+
+Replacing 
+`count_futures.append(cudaq.sample_async(kernel, 2, qpu_id=qpu))`
+with 
+`count_futures.append(cudaq.sample_async(kernel, 2+qpu, qpu_id=qpu))`
+avoids the error
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: container 40733b768160 
+- **Python version**:  3.10.12
+- **C++ compiler**:  unknown
+- **Operating system**: linux  
+
+
+### Suggestions
+
+[https://github.com/NVIDIA/cuda-quantum/blob/main/python/runtime/cudaq/algorithms/py_sample.cpp#L102](https://github.com/NVIDIA/cuda-quantum/blob/main/python/runtime/cudaq/algorithms/py_sample.cpp#L102)

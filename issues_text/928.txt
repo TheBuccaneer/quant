@@ -1,0 +1,66 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [x] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+With pedantic checking enabled:
+```console
+% nvq++ -v --target iqm --iqm-machine Adonis --emulate $SRC/test/NVQPP/cudaq_observe.cpp
+% ./a.out
+error: 'quake.swap' op wires are a linear type and must have exactly one use
+```
+This error occurs after the `qubit-mapping` pass is run.
+
+The MLIR is
+```c++
+"builtin.module"() ({
+  "func.func"() ({
+    %0 = "arith.constant"() {value = 1.5707963267948966 : f64} : () -> f64
+    %1 = "arith.constant"() {value = 3.1415926535897931 : f64} : () -> f64
+    %2 = "arith.constant"() {value = 0.000000e+00 : f64} : () -> f64
+    %3 = "arith.constant"() {value = 5.900000e-01 : f64} : () -> f64
+    %4 = "quake.null_wire"() : () -> !quake.wire
+    %5 = "quake.null_wire"() : () -> !quake.wire
+    %6 = "quake.null_wire"() : () -> !quake.wire
+    %7 = "quake.phased_rx"(%1, %2, %4) {operand_segment_sizes = array<i32: 2, 0, 1>} : (f64, f64, !quake.wire) -> !quake.wire
+    %8 = "quake.phased_rx"(%3, %0, %5) {operand_segment_sizes = array<i32: 2, 0, 1>} : (f64, f64, !quake.wire) -> !quake.wire
+    %9 = "quake.phased_rx"(%0, %0, %7) {operand_segment_sizes = array<i32: 2, 0, 1>} : (f64, f64, !quake.wire) -> !quake.wire
+    %10 = "quake.phased_rx"(%1, %2, %9) {operand_segment_sizes = array<i32: 2, 0, 1>} : (f64, f64, !quake.wire) -> !quake.wire
+    %11:2 = "quake.swap"(%8, %6) {operand_segment_sizes = array<i32: 0, 0, 2>} : (!quake.wire, !quake.wire) -> (!quake.wire, !quake.wire)
+    %12:2 = "quake.z"(%11#1, %10) {operand_segment_sizes = array<i32: 0, 1, 1>} : (!quake.wire, !quake.wire) -> (!quake.wire, !quake.wire)
+    %13 = "quake.phased_rx"(%0, %0, %12#1) {operand_segment_sizes = array<i32: 2, 0, 1>} : (f64, f64, !quake.wire) -> !quake.wire
+    %14 = "quake.phased_rx"(%1, %2, %13) {operand_segment_sizes = array<i32: 2, 0, 1>} : (f64, f64, !quake.wire) -> !quake.wire
+    "quake.sink"(%14) : (!quake.wire) -> ()
+    "quake.sink"(%12#0) : (!quake.wire) -> ()
+    "func.return"() : () -> ()
+  }) {"cudaq-entrypoint", "cudaq-kernel", function_type = () -> (), mapping_v2p = [0, 2], sym_name = "__nvqpp__mlirgen__ansatz"} : () -> ()
+}) : () -> ()
+```
+We can see that there is no use of the wire `%11#0`, which is a violation of wire values being used exactly once.
+
+### Steps to reproduce the bug
+
+See code in test cudaq_observe.cpp
+
+### Expected behavior
+
+All values of type `!quake.wire` type are expected to be used exactly once.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: proto-0.6.0-developer
+- **Python version**: 
+- **C++ compiler**: 
+- **Operating system**: 
+
+
+### Suggestions
+
+_No response_

@@ -1,0 +1,92 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [X] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+There seems to be more things a play in `test/NVQPP/sudoku_2x2-1.cpp` (#323). In the following code, the optimizer is unable to unroll the loop. I tried to isolate the cause by creating kernels that only had a similar loop, but on simpler cases the loop was successfully unrolled.
+
+```cpp
+#include <cudaq.h>
+#include <algorithm>
+#include <iostream>
+
+__qpu__ void reflect_uniform(cudaq::qreg<> &qubits) {
+  h(qubits);
+  x(qubits);
+  z<cudaq::ctrl>(qubits[0], qubits[1], qubits[2], qubits[3]);
+  x(qubits);
+  h(qubits);
+}
+
+__qpu__ void oracle(cudaq::qreg<> &cs, cudaq::qubit &target) {
+  x<cudaq::ctrl>(cs[0], !cs[1], !cs[2], cs[3], target);
+  x<cudaq::ctrl>(!cs[0], cs[1], cs[2], !cs[3], target);
+}
+
+__qpu__ void grover() {
+  cudaq::qreg qubits(4);
+  cudaq::qubit ancilla;
+
+  // Initialization
+  x(ancilla);
+  h(ancilla);
+  h(qubits); // uniform initialization
+
+  // Don't work?:
+  for (int i = 0; i < 2; ++i) {
+    oracle(qubits, ancilla);
+    reflect_uniform(qubits);
+  }
+  mz(qubits);
+};
+
+int main() {
+  auto result = cudaq::sample(1000, grover);
+  // Didn't work:
+  // std::vector<std::string> strings = result.sequential_data();
+  std::vector<std::string> strings;
+  for (auto &&[bits, count] : result) {
+    strings.push_back(bits);
+  }
+  std::sort(strings.begin(), strings.end(), [&](auto& a, auto& b) {
+    return result.count(a) > result.count(b);
+  });
+  std::cout << strings[0] << '\n';
+  std::cout << strings[1] << '\n';
+  return 0;
+}
+```
+
+
+### Steps to reproduce the bug
+
+Compile the above program and try to run it. It will report:
+
+```
+loc("sudoku_2x2-1.cpp":38:3): error: failed to legalize operation 'cc.loop' that was explicitly marked illegal
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  Remote rest platform Quake lowering failed.
+FileCheck error: '<stdin>' is empty.
+```
+
+### Expected behavior
+
+I expected the compiler to unroll this loop and correctly execute the program.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: main
+- **C++ compiler**: gcc 12
+- **Operating system**: Ubuntu 22.04 (x86-64, docker)
+
+
+### Suggestions
+
+_No response_

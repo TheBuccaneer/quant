@@ -1,0 +1,77 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+When running a test program, the synthesizer produces the following error:
+```
+terminate called after throwing an instance of 'std::bad_alloc'
+  what():  std::bad_alloc
+Aborted
+```
+
+### Steps to reproduce the bug
+
+Compile and run the following code using `nvq++ --target nvqc path/to/file.cpp`:
+```cpp
+#include <ctime>
+#include <cudaq.h>
+#include <cudaq/algorithm.h>
+#include <cudaq/optimizers.h>
+#include <random>
+
+struct kernel {
+  auto operator()(const int n_qubits, const std::vector<double> &parameters) __qpu__ {
+    cudaq::qvector qubits(n_qubits);
+    for (size_t i = 0; i < n_qubits; i++)
+      rx(parameters[i], qubits[i]);
+  }
+};
+
+std::vector<double> initial_parameters(int n_parameters, int seed) {
+  std::default_random_engine generator(seed);
+  std::uniform_real_distribution<float> distribution(0.0, 1.0);
+  std::vector<double> parameters(n_parameters);
+  for (size_t i = 0; i < n_parameters; i++)
+    parameters[i] = distribution(generator);
+  return parameters;
+}
+
+int main() {
+
+  const int n_qubits = 26;
+  const int n_parameters =  n_qubits;
+  std::vector<double> parameters = initial_parameters(n_parameters, 13);
+  auto h = cudaq::spin::z(0);
+  auto exp_val = cudaq::observe(kernel{}, h, n_qubits, parameters);
+  printf("Expectation Value: %f \n", exp_val.expectation());
+
+  return 0;
+}
+```
+
+### Expected behavior
+
+The program should run without errors.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: 8dd93ad46
+- **Python version**: 
+- **C++ compiler**: 
+- **Operating system**: 
+
+
+### Suggestions
+
+I believe the problem has something to do with `offset` not being correct in this line of code: https://github.com/NVIDIA/cuda-quantum/blob/8dd93ad466cd3058350d5b2a0c5518cd86aa1f17/lib/Optimizer/Transforms/QuakeSynthesizer.cpp#L387.
+
+I think that `offset` was incremented by 4 to skip past the 32-bit value, but the `vector` is actually beginning at `offset=8` instead of `offset=4`.

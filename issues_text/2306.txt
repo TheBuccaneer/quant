@@ -1,0 +1,77 @@
+### Required prerequisites
+
+- [x] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [x] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [x] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [x] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+The NVIDIA GH200 Grace Hopper Superchip is promoted as being capable of utilizing the entire system memory for GPU tasks ([NVIDIA blog](https://developer.nvidia.com/blog/revolutionizing-data-center-efficiency-with-the-nvidia-grace-family/)). However, CUDA-Q does not use the full system memory when specifying the `nvidia` target.
+
+### Steps to reproduce the bug
+
+Create the following source file `ghz.cpp`:
+```cpp
+#include <cudaq.h>
+
+// Define a quantum kernel with a runtime parameter
+struct ghz {
+    auto operator()(const int N) __qpu__ {
+
+        // Dynamically sized vector of qubits
+        cudaq::qvector q(N);
+        h(q[0]);
+        for (int i = 0; i < N - 1; i++) {
+            x<cudaq::ctrl>(q[i], q[i + 1]);
+        }
+        mz(q);
+    }
+};
+
+int main(int argc, char *argv[]) {
+    int qubits_count = 2;
+    if (argc > 1) {
+        qubits_count = atoi(argv[1]);
+    }
+    auto counts = cudaq::sample(/*shots=*/1000, ghz{}, qubits_count);
+
+    if (!cudaq::mpi::is_initialized() || cudaq::mpi::rank() == 0) {
+        counts.dump();
+    }
+
+    return 0;
+}
+```
+Compile it as follows:
+`nvq++ ghz.cpp -o ghz.out --target nvidia`
+And then run it:
+33 qubits: `./ghz.out 33` ✅ `nvidia-smi` reports a VRAM usage of about 66400MiB
+34 qubits: `./ghz.out 34` ❌:
+```
+terminate called after throwing an instance of 'ubackend::RuntimeError'
+  what():  requested size is too big
+Aborted (core dumped)
+```
+
+### Expected behavior
+
+I expect the GPU to be able to use system memory when necessary and simulate up to 35/36 qubits. Memory quickly becomes a limit in quantum simulations and a possible way to increase simulated qubits would be appreciated.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: Nightly on Docker container
+- **Operating system**: Ubuntu 22.04.2 LTS
+
+
+### Suggestions
+
+I was looking at a Grace Hopper [presentation from John Linford](https://www.stonybrook.edu/commcms/ookami/_pdf/20240523_Developing_GH_SW_Public.pdf) and noticed two details:
+1) The unified memory reportedly works on CUDA 12, but CUDA-Q is still using cuQuantum libraries for CUDA 11 as far as I know (or, in other words, I have not been able to run it without some specific CUDA 11 dependencies installed; see #1718 and #1096).
+2) Slide 66 reports that the regular `cudaMalloc` is not enough and suggests using `cudaMallocManaged `or `malloc`/`mmap`. I had a look at the cuQuantum repository and I saw some occurences of [`cudaMalloc`](https://github.com/search?q=repo%3ANVIDIA%2FcuQuantum+cudaMalloc&type=code) in the code, but none of [`cudaMallocManaged`](https://github.com/search?q=repo%3ANVIDIA%2FcuQuantum+cudaMallocManaged&type=code).
+
+Do you think GH200 systems will ever be able to fully utilize their memory for quantum simulation using CUDA-Q/cuQuantum? Would this hypothetical approach affect too much simulation performance?

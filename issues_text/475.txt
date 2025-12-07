@@ -1,0 +1,1 @@
+We shouldn't eliminate quake measurement ops even when they are in the value semantics. Measurements destroy the state of the qubit being measured and always produce a classical value, so they should be considered to always have side-effects.

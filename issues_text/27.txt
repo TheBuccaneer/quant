@@ -1,0 +1,8 @@
+The multi gpu multi node backend from the docs [here](https://nvidia.github.io/cuda-quantum/using/simulators.html#:~:text=cudaq.set_qpu(%27cuquantum_mgmn%27)) gives the following error 
+
+```
+cudaq.set_qpu('cuquantum_mgmn')
+
+RuntimeError: Invalid qpu name: cuquantum_mgmn
+
+```

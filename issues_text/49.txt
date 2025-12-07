@@ -1,0 +1,16 @@
+# Background
+The CUDA Quantum language specification allows one to program at the general qudit level. Most work so far has been at the `qudit<2> == qubit` level. This has influenced some of the function names / functionality for the `cudaq::ExecutionManager`. We need to do a little bit of refactoring to better accommodate backends and simulators that allow general qudit manipulation. 
+
+The main thing that needs updating for `ExecutionManager` is that the apply method treats controls and targets just by their integer index (`size_t`). This is fine when we assume qubits are the primary unit of quantum information, but if we want `ExecutionManager` subtypes for qudit simulations, there is no way to get the number of levels for the qudit. 
+
+The proposal here is to add a new type `QuditInfo` that enapsulates the qudit index and the number of levels, and update the ExecutionManager API to use this type for describing control and target qudits. 
+
+Also, the class has `returnQubit` and `resetQubit` named methods. These should be updated to `returnQudit` and `returnQubit`.
+
+# Testing
+To adequately test this, we need to implement the `ExecutionManager` with a very simple qudit simulation capability. Then we can implement our qudit instruction set (functions that make calls to the current `ExecutionManager`), and write a CUDA Quantum kernel that invokes this. 
+
+# Future
+In the future we should provide a concrete qudit simulator that implements the `ExecutionManager` API. 
+
+We also need to refactor how the `sample_result` type works. This is being discussed in the next CUDA Quantum language specification meeting. Basically, instead of the `sample_result` storing binary results, it needs to be able to store general integer results in order to accommodate `cudaq::sample` for general qudit systems. 

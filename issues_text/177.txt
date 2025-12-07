@@ -1,0 +1,23 @@
+Error in `extdevdeps / Caching`: 
+
+```bash 
+/usr/bin/docker buildx build --build-arg base_image= --build-arg toolchain=llvm --build-arg llvm_commit=c0b45fef155fbe3f17f9a6f99074682c69545488 --cache-from type=local,src=/tmp/.buildcache-devdeps-ext-llvm --cache-from type=registry,ref=ghcr.io/nvidia/buildcache-cuda-quantum-devdeps-ext-llvm:main --cache-from type=registry,ref=ghcr.io/nvidia/buildcache-cuda-quantum-devdeps-ext-llvm:main --file ./docker/build/devdeps.ext.Dockerfile --iidfile /tmp/docker-build-push-lBQMRi/iidfile --label org.opencontainers.image.title=cuda-quantum --label org.opencontainers.image.description=C++ and Python support for the CUDA Quantum programming model for heterogeneous quantum-classical workflows --label org.opencontainers.image.url=https://github.com/NVIDIA/cuda-quantum --label org.opencontainers.image.source=https://github.com/NVIDIA/cuda-quantum --label org.opencontainers.image.version=llvm-main-ext --label org.opencontainers.image.created=2023-05-17T20:32:45.891Z --label org.opencontainers.image.revision=52cc6f46caf86c4047876317a491520daf0ddd85 --label org.opencontainers.image.licenses=NOASSERTION --label org.opencontainers.image.title=cuda-quantum-devdeps --label org.opencontainers.image.description=Dev tools for building and testing CUDA Quantum --output type=docker,dest=/tmp/devdeps.ext.tar --platform linux/amd64 --tag ghcr.io/nvidia/cuda-quantum-devdeps:llvm-main-ext --metadata-file /tmp/docker-build-push-lBQMRi/metadata-file .
+#1 [internal] load .dockerignore
+#1 transferring context: 2B done
+#1 DONE 0.1s
+
+#2 [internal] load build definition from devdeps.ext.Dockerfile
+#2 transferring dockerfile: 15.42kB done
+#2 DONE 0.1s
+WARNING: local cache import at /tmp/.buildcache-devdeps-ext-llvm not found due to err: could not read /tmp/.buildcache-devdeps-ext-llvm/index.json: open /tmp/.buildcache-devdeps-ext-llvm/index.json: no such file or directory
+devdeps.ext.Dockerfile:167
+--------------------
+ 165 |     # Build the final image that has CUDA Quantum and all its dev dependencies installed, as well as
+ 166 |     # OpenMPI, its dependencies, and additional tools for developing CUDA Quantum backends and extensions.
+ 167 | >>> FROM $base_image
+ 168 |     SHELL ["/bin/bash", "-c"]
+ 169 |     
+--------------------
+ERROR: failed to solve: base name ($base_image) should not be blank
+Error: buildx failed with: ERROR: failed to solve: base name ($base_image) should not be blank
+```

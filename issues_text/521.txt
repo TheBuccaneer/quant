@@ -1,0 +1,27 @@
+Take the following kernel 
+```cpp
+struct ansatz {
+  auto operator()() __qpu__ {
+    cudaq::qreg<2> q;
+    x(q[0]);
+    ry(.59, q[1]);
+    x<cudaq::ctrl>(q[1], q[0]);
+  }
+};
+```
+if I try to map this to the value-semantic model, all the operations will get removed since there is no measure nodes. 
+```bash
+bin/cudaq-quake test.cpp | bin/cudaq-opt --canonicalize --factor-quantum-alloc --canonicalize --memtoreg --canonicalize
+```
+```mlir
+module attributes {quake.mangled_name_map = {__nvqpp__mlirgen__ansatz = "_ZN6ansatzclEv"}} {
+  func.func @__nvqpp__mlirgen__ansatz() attributes {"cudaq-entrypoint", "cudaq-kernel"} {
+    %0 = quake.null_wire
+    %1 = quake.null_wire
+    return
+  }
+  func.func private @_ZN6ansatzclEv(!cc.ptr<i8>)
+}
+```
+
+With measures, everything works as expected. 

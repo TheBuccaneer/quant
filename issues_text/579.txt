@@ -1,0 +1,61 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [x] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+When you assign qubit measurements to variables (`auto r0 = mz(qubits[0])`) and compiled with `--emulate` (and subsequently run your program), the compiler generates additional `registerName` attributes in the MLIR. These additional attributes seem to be causing downstream issues primarily because user code often expects to find results answers in a `__global__` register. I think the compiler should still populate the `__global__` register even when the user saves the results into variables in the `__qpu__` kernels.
+
+### Steps to reproduce the bug
+
+Normally one can run the sudoku_2x2 test program like this:
+```bash
+nvq++ --target quantinuum --emulate test/NVQPP/integration/sudoku_2x2.cpp
+./a.out
+```
+But if you modify the sudoku_2x2.cpp program as follows, recompile, and re-run, the program will segfault.
+```patch
+diff --git a/test/NVQPP/integration/sudoku_2x2.cpp b/test/NVQPP/integration/sudoku_2x2.cpp
+index 3e53610..2d61c2a 100644
+--- a/test/NVQPP/integration/sudoku_2x2.cpp
++++ b/test/NVQPP/integration/sudoku_2x2.cpp
+@@ -43,7 +43,10 @@ __qpu__ void grover() {
+ // TODO: Extend measurement support for submissions to IonQ,
+ // see https://github.com/NVIDIA/cuda-quantum/issues/512.
+ #ifndef IONQ_TARGET
+-  mz(qubits);
++  auto r0 = mz(qubits[0]);
++  auto r1 = mz(qubits[1]);
++  auto r2 = mz(qubits[2]);
++  auto r3 = mz(qubits[3]);
+ #endif
+ };
+```
+Note that this program will produce nearly identical LLVM IR as the original program. However, if you compile and re-run, here are the results.
+```bash
+root@docker-desktop:/workspaces/cuda-quantum# nvq++ --target quantinuum --emulate test/NVQPP/integration/sudoku_2x2.cpp 
+root@docker-desktop:/workspaces/cuda-quantum# ./a.out 
+Segmentation fault
+```
+
+### Expected behavior
+
+The program should not segfault, and ideally the program behavior should be identical, especially since the generated LLVM IR is nearly identical.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: main
+- **Python version**: N/A
+- **C++ compiler**: main
+- **Operating system**: 22.04.2 LTS (Jammy Jellyfish)
+
+
+### Suggestions
+
+I think the `__global__` register should be synthesized from the measurements regardless of whether or not the individual measurements were saved into variables in the QPU kernel. I will submit a PR with a suggested solution.

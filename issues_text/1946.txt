@@ -1,0 +1,66 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [X] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+```
+import cudaq
+
+kernel = cudaq.make_kernel()
+qubits = kernel.qalloc(2)
+kernel.x(qubits[0])
+kernel.h(qubits[1])
+kernel.exp_pauli(0.5, qubits, 'XY')
+
+print(cudaq.draw(kernel))
+```
+
+Using cudaq version with hash `e1d340b7d5bbcf5ec97230be416ba02c8a453b39` the code snippet above does not throw an error (although it only prints the x and h gate, doesn't print anything for exp_pauli)
+
+Using the most recent version with hash `a674f66c922ff60f4b8f7cad730a321d73c84d88` the code snippet throws the following error: `RuntimeError: [custatevec] %initialization error in applyExpPauli (line 569)`
+
+If the `print(cudaq.draw(kernel))` is replaced with `cudaq.sample(kernel)` the code completes successfully.  In other words, i've isolated this to the `draw` function when `exp_pauli` is in the kernel.  This was reported by @hosseinberg.
+
+### Steps to reproduce the bug
+
+import cudaq
+
+kernel = cudaq.make_kernel()
+qubits = kernel.qalloc(2)
+kernel.x(qubits[0])
+kernel.h(qubits[1])
+kernel.exp_pauli(0.5, qubits, 'XY')
+
+print(cudaq.draw(kernel))
+
+### Expected behavior
+
+Print the circuit with the exp_pauli gate expansion included.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Error is new/functionality was never there before
+
+### Environment
+
+source-sha: a674f66c922ff60f4b8f7cad730a321d73c84d88
+cuda-quantum-image: nvcr.io/nvidia/nightly/cuda-quantum@sha256:0b49326508307b1315da3edbe1874227026113c0f1952da72fd59360e2e5d3a4
+cuda-quantum-dev-image: ghcr.io/nvidia/cuda-quantum-dev@sha256:22e596895f45ede61b7031d4187bc7e64c1398c031f3c0f80410053454239d01
+cuda-quantum-devdeps-image: ghcr.io/nvidia/cuda-quantum-devdeps@sha256:fd564e53e18265a6877854eb239f1ee430778eab035b3606c034b70a1086511a
+platforms: linux/arm64,linux/amd64
+nvidia-mgpu-repo: cuda-quantum/cuquantum-mgpu.git
+nvidia-mgpu-commit: 59b8ed189989d6d2d944e41d8fbc5881b289c83c
+
+asset-name: image_publishing.txt
+release-id: 9971709394_image_publishing
+artifacts-url: https://api.github.com/repos/NVIDIA/cuda-quantum/actions/runs/9966005679/artifacts
+data-commit: 0d8f95bcbda57c87dd2e68cd49fe75e11b45f301
+gitlab-pipeline: https://gitlab-master.nvidia.com/nvhpc/cuda-quantum/-/pipelines/16668003
+
+### Suggestions
+
+_No response_

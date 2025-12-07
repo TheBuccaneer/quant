@@ -1,0 +1,69 @@
+### Required prerequisites
+
+- [x] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [x] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [x] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+```
+import cudaq
+
+my_list=[[0,1],[2,3,4]]
+
+@cudaq.kernel
+def kernel(my_list:list[list[int]]):
+    q=cudaq.qvector(5)
+    
+    for list in my_list:
+        for idx in list:
+            x(q[idx])
+
+counts=cudaq.sample(kernel,my_list)
+print(counts)
+```
+running the above code gives this error:
+RuntimeError: error: Cannot infer CUDA-Q type from provided 
+Python type (!cc.stdvec<!cc.stdvec<i64>>)
+
+### Steps to reproduce the bug
+
+```
+import cudaq
+
+my_list=[[0,1],[2,3,4]]
+
+@cudaq.kernel
+def kernel(my_list:list[list[int]]):
+    q=cudaq.qvector(5)
+    
+    for list in my_list:
+        for idx in list:
+            x(q[idx])
+
+counts=cudaq.sample(kernel,my_list)
+print(counts)
+```
+
+The issue seems to be with actually calling the kernel. Doing a print(kernel) works, and seems to return valid MLIR
+
+### Expected behavior
+
+The kernel should be correctly compiled and apply x gate on all qubits and have 11111 state when print counts.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA-Q version**: 0.9.1
+- **Python version**: 3.10
+- **C++ compiler**: 
+- **Operating system**: Linux
+
+
+### Suggestions
+
+_No response_

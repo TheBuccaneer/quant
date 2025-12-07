@@ -1,0 +1,36 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+The nvq++ driver wrongly reports arguments as ignored. The problem is that this argument is not handle by the driver script, `nvq++`, but by the scripts which configure the target, `<install_dir>/targets/quantinuum.config`. 
+
+### Steps to reproduce the bug
+
+```console
+# bin/nvq++ qubit.cpp -o qubit.x --target quantinuum --quantinuum-url http://localhost:62454
+argument --quantinuum-url is ignored
+argument http://error:62454 is ignored
+```
+
+### Expected behavior
+
+Do not report the argument as being ignored.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: main
+- **C++ compiler**: gcc-12
+- **Operating system**: Ubuntu (AArch64)
+
+
+### Suggestions
+
+_No response_

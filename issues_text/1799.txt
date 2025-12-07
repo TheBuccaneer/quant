@@ -1,0 +1,99 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [X] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+When using nested loops where the inner loop doesn't start at 0, the circuit compilation can produce incorrect circuits.
+
+Note that the ultimate root cause of this issue is https://github.com/llvm/llvm-project/issues/94520, but there are more details below.
+
+Also note that the current manifestation of the bug was accidentally fixed in #1692, so **the latest from main will not show this bad behavior**, but see the "suggestions" for more details.
+
+### Steps to reproduce the bug
+
+The issue can best be seen with the following test case (thanks to @poojarao8 for the clean example):
+
+Using `nvcr.io/nvidia/quantum/cuda-quantum:0.7.1`...
+
+```python
+import cudaq
+
+N = 4 # Number of qubits
+
+@cudaq.kernel
+def ansatz():
+    qr = cudaq.qvector(N)
+    
+    for j in range(N-1):
+        for k in range(j+1,N):
+            x.ctrl(qr[j], qr[k])
+    
+print("Circuit from the decorator (INCORRECT)")
+print(cudaq.draw(ansatz))
+
+ansatz = cudaq.make_kernel()
+qr = ansatz.qalloc(N)
+
+for j in range(N-1):
+    for k in range(j+1,N):
+        ansatz.cx(qr[j], qr[k])
+      
+print("Circuit from the builder (CORRECT)")
+print(cudaq.draw(ansatz))
+```
+```bash
+cudaq@b4d004c1f8e8:~$ python3 test.py
+Circuit from the decorator (INCORRECT)
+
+q0 : ──●────────────
+     ╭─┴─╮
+q1 : ┤ x ├──●───────
+     ╰───╯╭─┴─╮
+q2 : ─────┤ x ├──●──
+          ╰───╯╭─┴─╮
+q3 : ──────────┤ x ├
+               ╰───╯
+
+Circuit from the builder (CORRECT)
+
+q0 : ──●────●────●─────────────────
+     ╭─┴─╮  │    │
+q1 : ┤ x ├──┼────┼────●────●───────
+     ╰───╯╭─┴─╮  │  ╭─┴─╮  │
+q2 : ─────┤ x ├──┼──┤ x ├──┼────●──
+          ╰───╯╭─┴─╮╰───╯╭─┴─╮╭─┴─╮
+q3 : ──────────┤ x ├─────┤ x ├┤ x ├
+               ╰───╯     ╰───╯╰───╯
+```
+
+### Expected behavior
+
+The expected behavior is shown above.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: 0.7.1
+- **Python version**: 
+- **C++ compiler**: 
+- **Operating system**: 
+
+
+### Suggestions
+
+This was actually fixed with #1692 (**which will be part of 0.8.0**), despite #1692 having no intention of fixing this bug. That PR simply reordered some of the QIR passes, and subsequent research determined that the reorder was masking an underlying LLVM/MLIR issue. The underlying root cause was reported here: https://github.com/llvm/llvm-project/issues/94520.
+
+Since the issue still exists in LLVM upstream as of 19.0, I think we need to perform some or all of the mitigation steps in CUDA-Q. The _exact_ list that we choose to implement is up for debate.
+
+- [ ] Add canonicalizer pass after every lower-to-cfg pass. (The upstream LLM problem doesn't seem to occur with canonicalized code.)
+- [ ] Add canonicalizer pass before every cc-loop-normalize pass. (The upstream LLM problem doesn't seem to occur with canonicalized code.)
+- [ ] Disable region simplification in calls to `applyPatternsAndFoldGreedily` by doing `applyPatternsAndFoldGreedily(..., {.enableRegionSimplification = false})`.
+- [x] Fix the underlying LLVM bug and/or patch upstream LLVM. (This eliminates the need for 1-3.)
+- [ ] Create UCCSD tests that check for specific answers using some sort of golden truth data.

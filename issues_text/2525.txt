@@ -1,0 +1,141 @@
+### Required prerequisites
+
+- [x] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [x] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [x] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [x] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+1. I create an initial state
+2. Expand Hilbert space associated with that initial state via an ancilla qubit
+3. Apply a Hadamard gate on that ancilla qubit
+4. Perform a **cudaq.control()** on the |1> subspace of the anilla w/ an **exp_pauli()**
+
+The circuit perform the **exp_pauli()** on both the |0> and the |1> subspaces on the state. If I instead, perform a **cudaq.control()** with a different gate, say **Ry()**, I get the correct result.
+
+### Steps to reproduce the bug
+
+```
+import numpy as np
+import cudaq
+
+@cudaq.kernel
+def kernel_initial_state(angles: list[float]):
+    qreg = cudaq.qvector(len(angles))
+    for i in range(len(angles)):
+        rx(angles[i], qreg[i])
+
+@cudaq.kernel
+def U_exp_pauli(qubits: cudaq.qview):
+    exp_pauli(23.1, qubits, 'XIY')
+
+@cudaq.kernel
+def kernel_ancilla_exp_pauli(angles: list[float]):
+    ancilla = cudaq.qubit()
+    qreg = cudaq.qvector(len(angles))
+    for i in range(len(angles)):
+        rx(angles[i], qreg[i])
+    h(ancilla)
+    cudaq.control(U_exp_pauli, ancilla, qreg)
+
+@cudaq.kernel
+def rotate_y(qubit: cudaq.qview):
+    ry(0.88, qubit)
+
+@cudaq.kernel
+def kernel_ancilla_rotation(angles: list[float]):
+    ancilla = cudaq.qubit()
+    qreg = cudaq.qvector(len(angles))
+    for i in range(len(angles)):
+        rx(angles[i], qreg[i])
+    h(ancilla)
+    cudaq.control(rotate_y, ancilla, qreg)
+
+@cudaq.kernel
+def kernel_noancilla_rotation(angles: list[float]):
+    qreg = cudaq.qvector(len(angles))
+    for i in range(len(angles)):
+        rx(angles[i], qreg[i])
+    rotate_y(qreg)
+
+cudaq.set_target('qpp-cpu')
+angles = [0.34, 1.2, 1.6]
+
+# create the initial state (using the initial state)
+initial = np.array(cudaq.get_state(kernel_initial_state, angles))
+
+# create the initial state + ancilla, hadamard, then perform a
+# controlled rotation on the |1> subspace of the ancilla
+full = np.array(cudaq.get_state(kernel_ancilla_rotation, angles))
+
+# create the initial state and perform a rotation (for comparison with full)
+rotation = np.array(cudaq.get_state(kernel_noancilla_rotation, angles))
+
+# create the initial state + ancilla, hadamard, then perform a
+# controlled exp_pauli on the |1> subspace of the ancilla
+epauli = np.array(cudaq.get_state(kernel_ancilla_exp_pauli, angles))
+```
+
+### Expected behavior
+
+```
+In [6]: initial
+Out[6]:
+array([[ 0.56672786+0.j        ],
+       [ 0.        -0.0972827j ],
+       [ 0.        -0.38771939j],
+       [-0.06655468+0.j        ],
+       [ 0.        -0.58352485j],
+       [-0.10016602+0.j        ],
+       [-0.39921083+0.j        ],
+       [ 0.        +0.06852726j]])
+
+In [7]: math.sqrt(2) * full
+Out[7]:
+array([ 0.56672786+0.j        ,  0.32682867+0.367261j  ,
+        0.        -0.0972827j ,  0.2248775 +0.098624j  ,
+        0.        -0.38771939j,  0.35225249-0.16414908j,
+       -0.06655468+0.j        ,  0.12570385-0.1479032j ,
+        0.        -0.58352485j,  0.36656888-0.3413044j ,
+       -0.10016602+0.j        ,  0.09529393-0.23130447j,
+       -0.39921083+0.j        , -0.17526736-0.35501292j,
+        0.        +0.06852726j, -0.15352539-0.12464053j])
+
+In [8]: rotation
+Out[8]:
+array([ 0.32682867+0.367261j  ,  0.2248775 +0.098624j  ,
+        0.35225249-0.16414908j,  0.12570385-0.1479032j ,
+        0.36656888-0.3413044j ,  0.09529393-0.23130447j,
+       -0.17526736-0.35501292j, -0.15352539-0.12464053j])
+
+In [9]: math.sqrt(2) * epauli
+Out[9]:
+array([-0.16291758+0.j        , -0.16291758+0.j        ,
+        0.        +0.56572201j,  0.        +0.56572201j,
+        0.        +0.11145791j,  0.        +0.11145791j,
+        0.38703125+0.j        ,  0.38703125+0.j        ,
+        0.        +0.17298495j,  0.        +0.17298495j,
+        0.55197061+0.j        ,  0.55197061+0.j        ,
+        0.11834537+0.j        ,  0.11834537+0.j        ,
+        0.        -0.37762341j,  0.        -0.37762341j])
+ ```
+
+I would expect in the `math.sqrt(2) * epauli` to display the initial state on the left and the `exp_pauli(theta, initial_state)` on the right as in the `Ry() / math.sqrt(2) * full` example
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA-Q version**: 
+- **Python version**: 
+- **C++ compiler**: 
+- **Operating system**: 
+
+This is developed with the `nvcr.io/nvidia/quantum/cuda-quantum:cu12-0.9.1` container
+
+### Suggestions
+
+_No response_

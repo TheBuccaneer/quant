@@ -1,0 +1,56 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+When targeting quantinuum, the compiler seems to fail lowering `if` statements. 
+
+### Steps to reproduce the bug
+
+Let `foo.cpp` be:
+```cpp
+#include <cudaq.h>
+
+__qpu__ void foo(bool value) {
+  cudaq::qubit q;
+  if (value)
+    x(q);
+  mz(q);
+}
+
+int main() {
+  auto result = cudaq::sample(100, foo, true);
+  result.dump();
+  return 0;
+}
+```
+
+Compiling with: `nvq++ -v foo.cpp -o foo --target quantinuum --emulate` and then executing it, `./foo`, we get:
+```console
+llvm/ADT/ilist_iterator.h:138: llvm::ilist_iterator<OptionsT, IsReverse, IsConst>::reference llvm::ilist_iterator<OptionsT, IsReverse, IsConst>::operator*() const [with OptionsT = llvm::ilist_detail::node_options<mlir::Block, true, false, void>; bool IsReverse = true; bool IsConst = false; reference = mlir::Block&]: Assertion `!NodePtr->isKnownSentinel()' failed.
+Aborted (core dumped)
+```
+
+I also tried `if (true)`. I get the same error.
+
+### Expected behavior
+
+Get the correct result: `{ 1:100 }` (when value is `true`), `{ 0:100 }` otherwise.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: main
+- **C++ compiler**: gcc 12
+- **Operating system**: Ubuntu 22.04 (docker)
+
+
+### Suggestions
+
+_No response_

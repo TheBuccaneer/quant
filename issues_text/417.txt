@@ -1,0 +1,3 @@
+Now if you want to test the python bindings from the build directory, you have to run make install in order for the python folder hierarchy to be in the $BUILD/python directory. 
+
+Ideally, one can just run make and then run the tests, and not have to install everything. 

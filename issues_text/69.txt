@@ -1,0 +1,19 @@
+contrived example 
+```python
+op = cudaq.SpinOperator()
+for i in range(2):
+    op += cudaq.spin.z(i)
+print(op)
+
+kernel = cudaq.make_kernel()
+q = kernel.qalloc(2)
+kernel.rx(np.pi/2., q[0])
+kernel.ry(np.pi, q[1])
+
+result = cudaq.observe(kernel, op)
+e = result.expectation_z(cudaq.spin.z(1))
+print(e)
+assert e == -1 # assert its close to 1 at least.
+```
+
+The above does not work unless you set the shots_count kwarg.

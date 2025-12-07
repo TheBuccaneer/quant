@@ -1,0 +1,12 @@
+When a `Y` rotation needs to be applied, I get a segmentation fault on line 38 of `QuakeObserveAnsatz`. When I dig into it, it appears that the `MLIRContext*` from the input `Location` to `builder.create<arith::ConstantFloatOp>(loc, ...)` is `null`. The reproducer is 
+
+```bash 
+bin/cudaq-opt -pass-pipeline='builtin.module(func.func(canonicalize,cse,quake-observe-ansatz{term-bsf=1,1,1,1}),canonicalize)' ../test/Quake/observeAnsatz.qke
+```
+
+I think I will need some help from @schweitzpgi @boschmitt to track down what's happening here. 
+
+This does not happen for a Clang build of CUDA Quantum / LLVM. 
+
+Extra notes: 
+`Builders.h:461`, `location.getContext()` is passed to `getCheckRegisteredInfo<OpTy>(...)`. The `MLIRContext` pointer returned there is null. I'm not sure how it is getting cleared out / deleted. 

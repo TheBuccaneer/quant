@@ -1,0 +1,34 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [X] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+Upon validating the libc++ support, I realized that the execution on GPU-accelerated backends on OpenSUSE simply seems to hang. It succeeds at some point, but clearly only after something timed out. 
+
+### Steps to reproduce the bug
+
+The issue is reproduceable following the validation our pipelines do (build docker/releases/installer.Dockerfile, then docker/test/installer/linux.Dockerfile with the arguments defined by .github/workflows/config/validation_config.json), then try running on the nvidia backend. 
+
+### Expected behavior
+
+The execution should start immediately and be as fast as other operating systems. 
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: 0.5.0 - 0.7.1
+- **Python version**: N/A
+- **C++ compiler**: CUDA-Q built with GCC 11
+- **Operating system**: OpenSUSE 15
+
+
+### Suggestions
+
+The issue is fixed by the changes made in https://github.com/NVIDIA/cuda-quantum/pull/1603.

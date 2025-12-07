@@ -1,0 +1,5 @@
+The following operation is invalid.
+```mlir
+   quake.mz %1 name "" : (!quake.ref) -> i1    // this is going to be made illegal
+```
+because the name is empty. The python kernel builder needs to be updated to avoid generating these.

@@ -1,0 +1,28 @@
+```bash 
+echo 'module attributes {quake.mangled_name_map = {__nvqpp__mlirgen__callXGate = "__nvqpp__mlirgen__callXGate_entryPointRewrite"}} {
+  func.func @__nvqpp__mlirgen__callXGate(%arg0: !cc.callable<(!quake.ref) -> ()>) attributes {"cudaq-entrypoint"} {
+    %0 = quake.alloca !quake.veq<2>
+    %1 = quake.extract_ref %0[0] : (!quake.veq<2>) -> !quake.ref
+    %2 = cc.callable_func %arg0 : (!cc.callable<(!quake.ref) -> ()>) -> ((!quake.ref) -> ())
+    call_indirect %2(%1) : (!quake.ref) -> ()
+    return
+  }
+}' | bin/cudaq-opt --kernel-execution
+```
+will produce a thunk function like this 
+```mlir
+func.func @callXGate.thunk(%arg0: !cc.ptr<i8>, %arg1: i1) -> !cc.struct<{!cc.ptr<i8>, i64}> {
+    %0 = cc.cast %arg0 : (!cc.ptr<i8>) -> !cc.ptr<!cc.struct<{i64}>>
+    %1 = cc.load %0 : !cc.ptr<!cc.struct<{i64}>>
+    %c0_i64 = arith.constant 0 : i64
+    %2 = cc.cast %c0_i64 : (i64) -> !cc.ptr<!cc.struct<{i64}>>
+    %3 = cc.compute_ptr %2[1] : (!cc.ptr<!cc.struct<{i64}>>) -> !cc.ptr<!cc.struct<{i64}>>
+    %4 = cc.cast %3 : (!cc.ptr<!cc.struct<{i64}>>) -> i64
+    %5 = cc.compute_ptr %arg0[%4] : (!cc.ptr<i8>, i64) -> !cc.ptr<i8>
+    %6 = cc.undef !cc.callable<(!quake.ref) -> ()>
+    call @__nvqpp__mlirgen__callXGate(%6) : (!cc.callable<(!quake.ref) -> ()>) -> ()
+    %7 = call @__nvqpp_zeroDynamicResult() : () -> !cc.struct<{!cc.ptr<i8>, i64}>
+    return %7 : !cc.struct<{!cc.ptr<i8>, i64}>
+  }
+```
+Notice the `cc.undef` but there is no store of the function pointer there. 

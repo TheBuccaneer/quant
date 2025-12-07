@@ -1,0 +1,103 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [X] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+When using the Python version on Quantum Cloud, the exponentiation operator ** gives the error:
+        error: failed to legalize operation 'math.ipowi'
+        RuntimeError: Remote rest platform: applying IR passes failed.
+
+The workaround is to apply multiplication N times in a loop
+
+
+### Steps to reproduce the bug
+
+Here is a simple code example which, when run gives an error.
+Commenting the offending line, and uncommenting the WORKAROUND lines enables this to run on quantum cloud with the --target nvqc argument passed.
+
+        #######################################################
+        
+        # PYTHON KERNEL - EXPONENTIATION BUG - QUANTUM CLOUD
+        
+        import cudaq
+        
+        # Inverse Quantum Fourier Transform
+        @cudaq.kernel
+        def iqft(register: cudaq.qview):
+            M_PI = 3.1415926
+            
+            N = register.size()
+            for i in range(N / 2):
+                swap(register[i], register[N - i - 1])
+            
+            for i in range(N - 1):
+                h(register[i])
+                j = i + 1
+                for y in range(i, -1, -1):
+                
+                    denom = 2 ** (j - y)       # DEVNOTE: Issue ??? This does not work on Quantum Cloud
+                    
+                    '''
+                    X = j - y                   # this WORKAROUND works
+                    denom = 1
+                    for i in range(X):
+                        denom *= 2
+                    '''
+                    
+                    theta = -M_PI / denom
+                    r1.ctrl(theta, register[j], register[y]);
+                  
+            h(register[N - 1])
+         
+        @cudaq.kernel
+        def bug_cloud_exp():
+        
+            # Allocate a number of qubits
+            counting_qubits = cudaq.qvector(4)
+        
+            # Place some bits into test state
+            h(counting_qubits)
+        
+            # Apply inverse quantum Fourier transform
+            iqft(counting_qubits)
+            
+            # Measure to gather sampling statistics
+            # (excludes the auxillary qubit).
+            mz(counting_qubits)
+            
+            
+        #######################
+        # MAIN
+         
+        if __name__ == "__main__":
+        
+            print(f"Python Kernel Bug - Exponentiation - Quantum Cloud")
+            
+            result = cudaq.sample(bug_cloud_exp)
+            
+            print(f"result: {result}")
+
+
+### Expected behavior
+
+There should be no error when using the ** operator.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: 0.7.1
+- **Python version**: 3.10.12
+
+
+
+### Suggestions
+
+This is an important bug as the exponentiation operator is critical to many kernels such as QFT
+The WOARKAROUND is OK, but this will frustrate users initially

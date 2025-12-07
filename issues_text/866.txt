@@ -1,0 +1,52 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+IQM machine names are represented by arbitrary strings and can contain spaces. Machine names are interpreted as QPU architectures during compilation and later when running against a particular station. `nvq++` should be able to handle such machine names.
+
+### Steps to reproduce the bug
+
+1. Locate an IQM QC station with a space in the architecture name (unfortunately there is no such station available publicly at the moment), for example let's imagine that `curl https://variant.qc.iqm.fi/cocos/quantum-architecture` returns:
+```json
+"quantum_architecture": {
+	"name": "Adonis Variant",
+	...
+}
+```
+
+2. Compile a program targeting that architecture with `nvq++`:
+```sh
+nvq++ -g -v -target iqm --iqm-machine "Adonis Variant" -v ./iqm_example.cpp -o example
+```
+
+3. Execute the compiles program against `https://variant.qc.iqm.fi`:
+```sh
+IQM_SERVER_URL=https://variant.qc.iqm.fi ./example
+```
+
+4. CUDA Quantum runtime exception `IQM QPU architecture mismatch: Adonis != Adonis Variant` is raised
+
+
+### Expected behavior
+
+The program is successfully submitted for execution
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: nvq++ Version pre-0.5.0-developer
+- **Python version**: Python 3.10.12 (from the dev container)
+- **C++ compiler**: clang version 16.0.0 (https://github.com/llvm/llvm-project c0b45fef155fbe3f17f9a6f99074682c69545488) (from the dev container)
+- **Operating system**: macOS 13.6
+
+
+### Suggestions
+
+Most probably this can apply to machine names from other vendors as well, so `--*-machine` CLI arguments for remote rest QPUs should be handled as quoted strings.

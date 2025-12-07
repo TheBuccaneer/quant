@@ -1,0 +1,51 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+If the qubits to be measured are specified in a list, that is, mz(  [  q[], ..,q[]  ]  ), the correct number of digits in the bitstrings is output upon sampling. But if you don't specify them as a list but simply as comma separated args, no matter how many args there are, only a single digit bitstring is output. 
+
+
+### Steps to reproduce the bug
+
+```
+import cudaq
+
+@cudaq.kernel
+def my_kernel():
+    q = cudaq.qvector(5)
+    x(q[2])
+    #mz([q[0], q[2]]) #2-digit bitstring
+    mz(q[0], q[1], q[2]) # 1-digit bitstring
+
+result = cudaq.sample(my_kernel)
+print(result)
+```
+
+### Expected behavior
+
+To address this issue, we can go down either of these routes:
+
+1. Raise an error when qubits are provided in a comma-separated format, prompting the user to input qubits in a list format for consistency.
+or 
+2. Make modification to ensure that the output format for comma-separated qubits is consistent with the list format.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: 
+- **Python version**: 
+- **C++ compiler**: 
+- **Operating system**: 
+
+
+### Suggestions
+
+_No response_

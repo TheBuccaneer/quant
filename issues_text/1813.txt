@@ -1,0 +1,64 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+When I set the error probably to 1 using the cudaq.DepolarizationChannel to a given gate and measure the output, I expect the expectation value to be 0 in any basis. I observe a consistent <Z> of 0.338 after applying an x gate with an error rate of 1.  Further testing with a Rx gate with varying angles that Z expectation correlates with the rotation angle, even with a depolarization rate of 1. 
+
+### Steps to reproduce the bug
+
+```
+cudaq.set_target('density-matrix-cpu')
+
+def rabi_noisy(time,shots):
+
+    kernel=cudaq.make_kernel()
+
+## set depolarization channel to 1 for rx gate
+    noise_model=cudaq.NoiseModel()
+    noise_model.add_channel("rx",[0],cudaq.DepolarizationChannel(1))
+
+## vary the rx rotation angle
+    qubits=kernel.qalloc(1)
+    kernel.rx(time,qubits[0])
+    kernel.mz(qubits[0])
+    counts=cudaq.sample(kernel,shots_count=shots,noise_model=noise_model)
+    exp_z=counts.expectation()
+    return exp_z
+
+
+angles = [x*0.1 for x in range(0,62)]
+shots=10000
+
+exp_z=[]
+
+for angle in angles:
+    exp_z.append(rabi_noisy(angle,shots))
+```
+![image](https://github.com/NVIDIA/cuda-quantum/assets/127429095/977833cf-76bf-46e1-974e-0b40f8044869)
+
+
+
+### Expected behavior
+
+The <Z> expectation should be 0 for all Rx angles with DepolarizationChannel(1)
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: 0.7.1
+- **Python version**: 3.10.12
+- **C++ compiler**: 
+- **Operating system**: macos Sonoma 14.5
+
+
+### Suggestions
+
+_No response_

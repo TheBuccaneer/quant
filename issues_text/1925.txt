@@ -1,0 +1,41 @@
+* The `tensornet` and `tensornet` simulators may not be available in the CI environment. A Python test which attempts to check the availability as shown below, causes the `Validate wheel` and `Validate installer` stages to crash.
+
+(Added following in `python/tests/kernel/test_sample_kernel.py`)
+
+```
+@pytest.mark.parametrize("target", [
+    'density-matrix-cpu', 'nvidia', 'nvidia-fp64', 'nvidia-mqpu',
+    'nvidia-mqpu-fp64', 'qpp-cpu', 'tensornet', 'tensornet-mps'
+])
+def test_simulators(target):
+    """Test simulation on all available simulation targets."""
+
+    def can_set_target(name):
+        target_installed = True
+        try:
+            cudaq.set_target(name)
+        except RuntimeError:
+            target_installed = False
+        return target_installed
+
+    if can_set_target(target):
+        test_simple_sampling_qpe()
+        cudaq.reset_target()
+    else:
+        pytest.skip("target not available")
+
+    cudaq.reset_target()
+```
+
+Runs: locally in dev-image.
+`Validate wheel` stage 
+ - runs successfully on Fedora (arm64 and amd64), Debian (amd64)
+ - crashes on Ubuntu (amd64), RedHat (amd64), OpenSuse (amd64)
+
+`Validate installer` stage
+- only works on Debian (amd64)
+- crashes on Ubuntu (arm64 and amd64), RedHat (arm64 and amd64), OpenSuse (amd64), Fedora (arm64 and amd64)
+
+PR to showcase this behavior: https://github.com/NVIDIA/cuda-quantum/pull/1923/
+
+CI: https://github.com/NVIDIA/cuda-quantum/actions/runs/9914417384?pr=1923

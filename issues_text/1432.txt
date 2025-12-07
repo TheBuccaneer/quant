@@ -1,0 +1,4 @@
+              We're going to have another issue, that the call graph won't solve. Specifically, a kernel may reference constant data, which also will need to appear in the excised module.
+
+_Originally posted by @schweitzpgi in https://github.com/NVIDIA/cuda-quantum/issues/1372#issuecomment-2009687491_
+            

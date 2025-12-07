@@ -1,0 +1,46 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+There is a runtime error when passing a single qubit that's been allocated with `kernel.qalloc()` to `cudaq.from_state`. The bug goes away when allocating a single qubit in a qvec `kernel.qalloc(1)`.
+
+### Steps to reproduce the bug
+
+```
+import cudaq
+import numpy as np
+
+state = np.array([0,1])
+
+kernel = cudaq.make_kernel()
+qubit = kernel.qalloc()
+# ok with:
+# qubit = kernel.qalloc(1)
+
+cudaq.from_state(kernel, qubit, state)
+> RuntimeError: [from_state] cannot infer size of input quantum register, please specify the number of qubits via the from_state() final argument.
+```
+
+### Expected behavior
+
+Expect the `from_state` function to accept a single qubit that's not necessarily nested in a qvec. Or, we should pack the qubit in a temporary qvec behind the scenes.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**: 
+- **Python version**: 
+- **C++ compiler**: 
+- **Operating system**: 
+
+
+### Suggestions
+
+_No response_

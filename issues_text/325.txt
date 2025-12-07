@@ -1,0 +1,22 @@
+```c++
+#include <cudaq.h>
+
+struct S1 {
+  void operator()(bool b) __qpu__;
+};
+
+struct S2 {
+  void operator()(bool b) __qpu__;
+};
+
+void S1::operator()(bool b) {
+  cudaq::qubit q;
+  S2 s2;
+  s2(b);
+}
+
+void S2::operator()(bool b) {
+  cudaq::qubit q;
+}
+```
+Bridge is creating a malformed cc.alloca operation.

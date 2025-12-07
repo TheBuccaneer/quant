@@ -1,0 +1,5 @@
+In the REST remote platform test suite, the `get_state_async` test case resulted in sporadic hang when running the full `llvm-lit` test suite. 
+
+It ran successfully in isolation and the failure rate (when running as a full `lit` test suite) is quite small; hence it is difficult to debug. The test was skipped and needs further investigation. 
+
+Related to: https://github.com/NVIDIA/cuda-quantum/pull/1012#pullrequestreview-1816490655

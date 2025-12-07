@@ -1,0 +1,68 @@
+### Required prerequisites
+
+- [x] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [x] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [x] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+When using exp_pauli(pauli string) in a kernel, cudaq.observe(...) and cudaq.sample(...) calls result in the error: 
+```
+RuntimeError: cudaErrorIllegalAddress
+RuntimeError: cudaErrorIllegalAddress
+RuntimeError: cudaErrorIllegalAddress
+terminate called after throwing an instance of 'ubackend::RuntimeError'
+  what():  cudaErrorIllegalAddress
+```
+if the Python script is started with multiple ranks/GPUs (mpirun -n 4 python ...). Single qubit gates and CX gates work without problems, even if the number of qubits exceeds the memory of one GPU and several GPUs are required. The error also does not occur with only one rank/GPU (mpirun -n 1 python ...).
+
+### Steps to reproduce the bug
+
+Create exp_pauli.py script:
+```
+import cudaq
+from cudaq import spin
+from time import perf_counter_ns
+
+
+cudaq.set_target("nvidia", option="mgpu")
+rank = cudaq.mpi.rank()
+
+
+@cudaq.kernel
+def kernel(qubit_count: int):
+    qubits = cudaq.qvector(qubit_count)
+    exp_pauli(0.1, qubits, "IIIIYXYYIIIIIIIIIIIIIIIIIIIIII")
+
+qubit_count=30
+op = cudaq.spin.z(0)
+
+t0 = perf_counter_ns()
+result = cudaq.observe(kernel, op, qubit_count)
+t = (perf_counter_ns() - t0) * 1e-9
+if rank == 0:
+    print(f"time: {t:.3f} sec")
+```
+
+Start the script with several Ranks/GPUs:
+`mpirun -n 4 python exp_pauli.py`
+
+### Expected behavior
+
+Output of the time the cudaq.observe(...) call took
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA-Q version**: 0.8 and 0.9 both tested
+- **Python version**: 3.11
+- **Operating system**: Linux
+
+
+### Suggestions
+
+_No response_

@@ -1,0 +1,147 @@
+### Required prerequisites
+
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [ ] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+Since it seems that cudaq.from_state() function doesn't work correctly, I made the following code to test cudaq.from_state():
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Steps to reproduce the bug
+
+```
+import cudaq
+import numpy as np
+
+def main():
+    qc = cudaq.make_kernel()
+    qr = qc.qalloc(4)
+
+    psi0_list = [-8.32045644e-17-8.90888763e-20j, -1.03601322e-17-4.47087881e-17j, -2.15333550e-17+1.30326534e-16j, 8.71688857e-02+1.47625478e-01j, 2.84452598e-16-2.04288994e-16j, -4.84060082e-01-8.19783350e-01j, 9.02894336e-02+1.52910304e-01j, -6.39974562e-17+1.07964618e-16j, 1.33111503e-16+4.86229405e-17j,  9.02894336e-02+1.52910304e-01j, -1.73288055e-02-2.93473201e-02j,  2.20931787e-17-9.36645781e-17j, 2.29425514e-03+3.88545190e-03j, -7.44241453e-17+1.85423718e-16j, -2.11836598e-16+5.41151020e-16j,  6.59700092e-17-9.11582920e-18j]
+    psi0 = np.array(psi0_list)
+
+    cudaq.from_state(qc, qr, psi0)
+    psi = cudaq.get_state(qc)
+
+    print(f'psi: {psi}')
+    print(f'np.inner(psi, np.conjugate(psi0)): {np.inner(psi, np.conjugate(psi0))}')
+    print(f'np.linalg.norm(np.inner(psi, np.conjugate(psi0))): {np.linalg.norm(np.inner(psi, np.conjugate(psi0)))}')
+
+if __name__ == '__main__':
+    main()
+
+```
+
+# Output
+psi: 2.07782e-17-1.26498e-18j 1.31988e-33+4.42978e-33j 3.28998e-18-6.10936e-18j 0.143081+0.0944437j 6.84596e-17+8.74027e-17j -0.0216218+0.950844j -0.00954028-0.182289j 6.13566e-15-5.25258e-15j 0.130984+0.124653j -6.87235e-18+2.68913e-17j 7.30323e-15-2.22874e-14j 5.98876e-29-3.1875e-29j 0.00287869-0.00337475j 3.92844e-18+8.12333e-19j 0+0j -0.000523755+0.000640495j
+
+np.inner(psi, np.conjugate(psi0)): (-0.7713473234796359-0.5058996935573853j)
+np.linalg.norm(np.inner(psi, np.conjugate(psi0))): 0.9224484773583045
+
+### Expected behavior
+
+In the above experiment, I called cudaq.from_state(psi0).
+After that, I just called cudaq.get_state().
+
+So I expected 1 or -1 for the inner product between psi0 and psi. But the inner product was (-0.7713473234796359-0.5058996935573853j).
+
+I also checked the norms of psi0 and psi as follows:
+
+np.linalg.norm(psi0) 
+0.9999999995652816
+
+np.linalg.norm(psi)
+0.9999997175385762
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Not a regression
+
+### Environment
+
+- **CUDA Quantum version**:  Docker image "ghcr.io/1tnguyen/cuda-quantum:mpich-231710"
+- **Python version**: 3.10.12
+- **C++ compiler**: 
+- **Operating system**: 
+PRETTY_NAME="Ubuntu 22.04.3 LTS"
+NAME="Ubuntu"
+VERSION_ID="22.04"
+VERSION="22.04.3 LTS (Jammy Jellyfish)"
+VERSION_CODENAME=jammy
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=jammy
+
+
+
+### Suggestions
+
+
+# Qiskit Test
+
+For more comparison, I did the above computation with psi0 in Qiskit as follows:
+
+qr = QuantumRegister(4)
+cr = ClassicalRegister(4)
+qc = QuantumCircuit(qr,cr)
+qc.initialize(psi0)  
+backend_sim = Aer.get_backend('statevector_simulator')
+job = execute(qc, backend_sim)
+result = job.result()
+qiskit_out = result.get_statevector(qc)
+
+qiskit_out 
+Statevector([-8.32045644e-17-8.90888763e-20j,
+             -1.03601322e-17-4.47087881e-17j,
+             -2.15333550e-17+1.30326534e-16j,
+              8.71688857e-02+1.47625478e-01j,
+              2.84452598e-16-2.04288994e-16j,
+             -4.84060082e-01-8.19783350e-01j,
+              9.02894336e-02+1.52910304e-01j,
+             -6.39974562e-17+1.07964618e-16j,
+              1.33111503e-16+4.86229405e-17j,
+              9.02894336e-02+1.52910304e-01j,
+             -1.73288055e-02-2.93473201e-02j,
+              2.20931787e-17-9.36645781e-17j,
+              2.29425514e-03+3.88545190e-03j,
+             -7.44241453e-17+1.85423718e-16j,
+             -2.11836598e-16+5.41151020e-16j,
+              6.59700092e-17-9.11582920e-18j],
+            dims=(2, 2, 2, 2))
+
+
+np.inner(qiskit_out, np.conjugate(psi0))
+(0.9999999991305633+0j)
+
+np.linalg.norm(np.inner(qiskit_out, np.conjugate(psi0)))
+0.9999999991305633
+
+
+Qiskit made (0.9999999991305633+0j) for the inner product between psi0 and qiskit_out as expected.

@@ -1,0 +1,53 @@
+### Required prerequisites
+
+- [X] Consult the [security policy](https://github.com/NVIDIA/cuda-quantum/security/policy). If reporting a security vulnerability, do not report the bug using this form. Use the process described in the policy to report the issue.
+- [X] Make sure you've read the [documentation](https://nvidia.github.io/cuda-quantum/latest). Your issue may be addressed there.
+- [X] Search the [issue tracker](https://github.com/NVIDIA/cuda-quantum/issues) to verify that this hasn't already been reported. +1 or comment there if it has.
+- [X] If possible, make a PR with a failing test to give us a starting point to work on!
+
+### Describe the bug
+
+There is a bug introduced in PR #1603 that is causing state initialization from vectors to behave incorrectly. This causes incorrect simulation results on the `nvidia-*` targets.
+
+### Steps to reproduce the bug
+
+The following example that tries to initialize 20 qubits (`q`) from a state vector after declaring an initial qubit `p` demonstrates the problem.
+```python
+import cudaq
+
+@cudaq.kernel
+def kernel(vec : list[complex]):
+    p = cudaq.qubit()
+    q = cudaq.qvector(vec)
+    mz(p)
+    mz(q)
+
+v = [0. + 0j] * (1024*1024)
+v[1024*1024-1] = 1.
+print(cudaq.sample(kernel, v))
+```
+When run on a system with Nvidia GPUs, it produces the following result.
+```bash
+$ python3 test.py
+{ 111111111111111111111:1000 }
+```
+
+### Expected behavior
+
+The above result is incorrect. It should be `011111111111111111111` since qubit `p` should have been initialized to the `|0>` state.
+
+### Is this a regression? If it is, put the last known working version (or commit) here.
+
+Yes, it was first broken in ad367c1bc
+
+### Environment
+
+- **CUDA Quantum version**: 0.8.0 (occurred right before the release)
+- **Python version**: N/A
+- **C++ compiler**: N/A
+- **Operating system**: N/A
+
+
+### Suggestions
+
+PR is forthcoming.
