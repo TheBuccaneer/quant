@@ -1,0 +1,117 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: `0.13.3`
+- **Python version**: 3.10.12
+- **Operating system**: Ubuntu 22.04.3 LTS
+
+### What is the current behavior?
+
+
+
+### Steps to reproduce the problem
+
+```
+python3 -m venv aer-test
+source aer-test/bin/activate
+pip list
+> Package    Version
+> ---------- -------
+> pip        22.0.2
+> setuptools 59.6.0
+
+pip install qiskit-aer==0.13.3
+> see output below
+```
+
+### What is the expected behavior?
+
+These steps succeed for `qiskit-aer==0.13.2`
+
+### Suggested solutions
+
+
+```
+Collecting qiskit-aer==0.13.3
+  Using cached qiskit-aer-0.13.3.tar.gz (6.5 MB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Collecting qiskit>=0.45.0
+  Using cached qiskit-0.46.0-py3-none-any.whl (9.6 kB)
+Collecting psutil>=5
+  Using cached psutil-5.9.8-cp36-abi3-manylinux_2_12_x86_64.manylinux2010_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (288 kB)
+Collecting scipy>=1.0
+  Using cached scipy-1.12.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (38.4 MB)
+Collecting numpy>=1.16.3
+  Using cached numpy-1.26.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (18.2 MB)
+Collecting qiskit-terra==0.46.0
+  Using cached qiskit_terra-0.46.0-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (6.3 MB)
+Collecting stevedore>=3.0.0
+  Using cached stevedore-5.1.0-py3-none-any.whl (49 kB)
+Collecting sympy>=1.3
+  Using cached sympy-1.12-py3-none-any.whl (5.7 MB)
+Collecting dill>=0.3
+  Using cached dill-0.3.8-py3-none-any.whl (116 kB)
+Collecting typing-extensions
+  Using cached typing_extensions-4.9.0-py3-none-any.whl (32 kB)
+Collecting ply>=3.10
+  Using cached ply-3.11-py2.py3-none-any.whl (49 kB)
+Collecting symengine>=0.11
+  Using cached symengine-0.11.0-cp310-cp310-manylinux_2_12_x86_64.manylinux2010_x86_64.whl (39.4 MB)
+Collecting python-dateutil>=2.8.0
+  Using cached python_dateutil-2.8.2-py2.py3-none-any.whl (247 kB)
+Collecting rustworkx>=0.13.0
+  Using cached rustworkx-0.14.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.2 MB)
+Collecting six>=1.5
+  Using cached six-1.16.0-py2.py3-none-any.whl (11 kB)
+Collecting pbr!=2.1.0,>=2.0.0
+  Using cached pbr-6.0.0-py2.py3-none-any.whl (107 kB)
+Collecting mpmath>=0.19
+  Using cached mpmath-1.3.0-py3-none-any.whl (536 kB)
+Building wheels for collected packages: qiskit-aer
+  Building wheel for qiskit-aer (pyproject.toml): started
+  Building wheel for qiskit-aer (pyproject.toml): finished with status 'error'
+Failed to build qiskit-aer
+```
+
+My shell seems to crash depending on how I run this, but in some cases I can also get it to spit out this error
+
+```
+      -- Looking for sgemm_ - not found
+      CMake Error at /tmp/pip-build-env-t_rglaqc/overlay/lib/python3.10/site-packages/cmake/data/share/cmake-3.28/Modules/FindPackageHandleStandardArgs.cmake:230 (message):
+        Could NOT find BLAS (missing: BLAS_LIBRARIES)
+      Call Stack (most recent call first):
+        /tmp/pip-build-env-t_rglaqc/overlay/lib/python3.10/site-packages/cmake/data/share/cmake-3.28/Modules/FindPackageHandleStandardArgs.cmake:600 (_FPHSA_FAILURE_MESSAGE)
+        /tmp/pip-build-env-t_rglaqc/overlay/lib/python3.10/site-packages/cmake/data/share/cmake-3.28/Modules/FindBLAS.cmake:1383 (find_package_handle_standard_args)
+        CMakeLists.txt:256 (find_package)
+      
+      
+      -- Configuring incomplete, errors occurred!
+      Traceback (most recent call last):
+        File "/tmp/pip-build-env-t_rglaqc/overlay/lib/python3.10/site-packages/skbuild/setuptools_wrap.py", line 666, in setup
+          env = cmkr.configure(
+        File "/tmp/pip-build-env-t_rglaqc/overlay/lib/python3.10/site-packages/skbuild/cmaker.py", line 357, in configure
+          raise SKBuildError(msg)
+      
+      An error occurred while configuring with CMake.
+        Command:
+          /tmp/pip-build-env-t_rglaqc/overlay/lib/python3.10/site-packages/cmake/data/bin/cmake /tmp/pip-install-fb_fi3tz/qiskit-aer_36fe7efef1ae44a6a2cd262afa78d9de -G Ninja -DCMAKE_MAKE_PROGRAM:FILEPATH=/tmp/pip-build-env-t_rglaqc/overlay/lib/python3.10/site-packages/ninja/data/bin/ninja --no-warn-unused-cli -DCMAKE_INSTALL_PREFIX:PATH=/tmp/pip-install-fb_fi3tz/qiskit-aer_36fe7efef1ae44a6a2cd262afa78d9de/_skbuild/linux-x86_64-3.10/cmake-install -DPYTHON_VERSION_STRING:STRING=3.10.12 -DSKBUILD:INTERNAL=TRUE -DCMAKE_MODULE_PATH:PATH=/tmp/pip-build-env-t_rglaqc/overlay/lib/python3.10/site-packages/skbuild/resources/cmake -DPYTHON_EXECUTABLE:PATH=/root/dev/pec-runtime/aer-test/bin/python3 -DPYTHON_INCLUDE_DIR:PATH=/usr/include/python3.10 -DPython_EXECUTABLE:PATH=/root/dev/pec-runtime/aer-test/bin/python3 -DPython_ROOT_DIR:PATH=/root/dev/pec-runtime/aer-test -DPython_FIND_REGISTRY:STRING=NEVER -DPython_INCLUDE_DIR:PATH=/usr/include/python3.10 -DPython_NumPy_INCLUDE_DIRS:PATH=/tmp/pip-build-env-t_rglaqc/overlay/lib/python3.10/site-packages/numpy/core/include -DPython3_EXECUTABLE:PATH=/root/dev/pec-runtime/aer-test/bin/python3 -DPython3_ROOT_DIR:PATH=/root/dev/pec-runtime/aer-test -DPython3_FIND_REGISTRY:STRING=NEVER -DPython3_INCLUDE_DIR:PATH=/usr/include/python3.10 -DPython3_NumPy_INCLUDE_DIRS:PATH=/tmp/pip-build-env-t_rglaqc/overlay/lib/python3.10/site-packages/numpy/core/include -DCMAKE_MAKE_PROGRAM:FILEPATH=/tmp/pip-build-env-t_rglaqc/overlay/lib/python3.10/site-packages/ninja/data/bin/ninja -DCMAKE_BUILD_TYPE:STRING=Release
+        Source directory:
+          /tmp/pip-install-fb_fi3tz/qiskit-aer_36fe7efef1ae44a6a2cd262afa78d9de
+        Working directory:
+          /tmp/pip-install-fb_fi3tz/qiskit-aer_36fe7efef1ae44a6a2cd262afa78d9de/_skbuild/linux-x86_64-3.10/cmake-build
+      Please see CMake's output for more information.
+      
+      [end of output]
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+  ERROR: Failed building wheel for qiskit-aer
+Failed to build qiskit-aer
+ERROR: Could not build wheels for qiskit-aer, which is required to install pyproject.toml-based projects
+```

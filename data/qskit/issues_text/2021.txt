@@ -1,0 +1,43 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:
+- **Python version**:
+- **Operating system**:
+
+### What is the current behavior?
+
+`measure_sampler` has big sequential part though sampling is parallelized.
+
+https://github.com/Qiskit/qiskit-aer/blob/180a0b6431498998c236927aa53d3324b4819860/src/simulators/circuit_executor.hpp#L1090-L1113
+
+### Steps to reproduce the problem
+
+```
+from qiskit_aer import AerSimulator
+from qiskit.circuit.library import QuantumVolume
+from qiskit import transpile
+
+simulator = AerSimulator()
+c = QuantumVolume(20)
+c.h(c.qubits[:])
+c.measure_all()
+
+c = transpile(c, simulator)
+
+for shots in [10, 100, 1000, 10000, 100000, 1000000, 10000000]:
+    res = simulator.run(c, shots=shots).result()
+    print("shots=", shots, res.metadata)
+```
+
+Most of execution time of `shots==10000000` is serial execution.
+
+### What is the expected behavior?
+
+Most of sampling should be parallelized.
+
+### Suggested solutions
+
+Parallelize the above codes. 

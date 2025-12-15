@@ -1,0 +1,58 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+-**Qiskit version**: 1.0.2
+- **Qiskit Aer version**: 0.14.0.1
+- **Python version**: 3.12.1
+- **Operating system**: Windows 11
+
+### What is the current behavior?
+When I run the below code:
+ ```
+from qiskit import QuantumCircuit, transpile
+from qiskit.visualization import plot_histogram
+from qiskit_aer import AerSimulator
+
+num_qubits = 64
+
+simulator = AerSimulator(method='stabilizer')
+
+sampler = Sampler(backend=backend)
+
+circ = QuantumCircuit(num_qubits, num_qubits)
+
+# Create EPR state
+circ.h(0)
+for i in range (0, num_qubits-1):
+    circ.cx(i, i+1)
+circ.measure_all()
+
+tcirc = transpile(circ, backend=simulator)
+result = simulator.run(tcirc, shots=4096).result()
+print(f"Counts {result.get_counts()}")
+```
+I get correct counts if the number of qubits in the circuit is 64 or less. 
+```
+Counts {'0000000000000000000000000000000000000000000000000000000000000000 0000000000000000000000000000000000000000000000000000000000000000': 1995, '1111111111111111111111111111111111111111111111111111111111111111 0000000000000000000000000000000000000000000000000000000000000000': 2005}
+```
+
+But if I increase the number of qubits to 65 the simulator returns incorrect result:
+```
+Counts {'10000000000000000000000000000000000000000000000000000000000000000 00000000000000000000000000000000000000000000000000000000000000000': 1003, '01111111111111111111111111111111111111111111111111111111111111111 00000000000000000000000000000000000000000000000000000000000000000': 1012, '00000000000000000000000000000000000000000000000000000000000000000 00000000000000000000000000000000000000000000000000000000000000000': 991, '11111111111111111111111111111111111111111111111111111111111111111 00000000000000000000000000000000000000000000000000000000000000000': 994}
+```
+
+Notice the '1' in the all zero state for the 65th qubit (the left-most value). This should not be happening. The circuit that I am simulating is for an EPR (or Bell) state and so I should only be seeing two state which are maximally entangled. And this occurs for both 'stabilizer' and 'matrix_product_state' methods.
+
+### Steps to reproduce the problem
+Run the above code first for 64 qubits to see the expected correct result. Then run it for >65 qubits and check the counts you will see the incorrect result.
+
+
+### What is the expected behavior?
+The circuit that I am simulating is for an EPR (or Bell) state and so I should only be seeing only two state which are maximally entangled. And I am exceeding the max_qubits limit then I should be getting an error for that but instead the simulator gives incorrect result.
+
+
+
+### Suggested solutions
+
+

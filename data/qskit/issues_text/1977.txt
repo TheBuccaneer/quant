@@ -1,0 +1,98 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.13.0
+- **Python version**: 3.9.16
+- **Operating system**: MacOS
+
+### What is the current behavior?
+When using method="statevector" with AerSimulator, a circuit with an `initialize` of |00> (i.e. [1,0,0,0]) returns a different statevector than the same circuit without explicitly initializing the |00> state.
+
+
+### Steps to reproduce the problem
+```python3
+import qiskit
+from qiskit_aer import AerSimulator
+
+circuits = dict()
+
+circuits["zero"] = qiskit.QuantumCircuit(2)
+circuits["zero"].initialize([1., 0., 0., 0.])
+
+circuits["X"] = qiskit.QuantumCircuit(2)
+circuits["X"].x(0)
+
+circuits["zero+X"] = circuits["zero"].compose(circuits["X"])
+
+def transpile_run_and_return_statevector(circ):
+    aersim = AerSimulator(method="statevector")
+    transpiled_circ = qiskit.transpile(circ, aersim)
+    transpiled_circ.save_statevector()
+    sim_results = aersim.run(transpiled_circ).result()
+    print(f"Circuit:\n{transpiled_circ}")
+    print(f"Statevector:\n{sim_results.get_statevector(transpiled_circ)}")
+
+for name, circ in circuits.items():
+    print(f"For circuit {name}\n")
+    transpile_run_and_return_statevector(circ)
+    print("\n\n")
+```
+results in 
+```
+For circuit zero
+
+Circuit:
+     ┌──────────────────────┐ statevector 
+q_0: ┤0                     ├──────░──────
+     │  Initialize(1,0,0,0) │      ░      
+q_1: ┤1                     ├──────░──────
+     └──────────────────────┘      ░      
+Statevector:
+Statevector([1.+0.j, 0.+0.j, 0.+0.j, 0.+0.j],
+            dims=(2, 2))
+
+
+
+For circuit X
+
+Circuit:
+global phase: π/2
+     ┌────────────────┐ statevector 
+q_0: ┤ U3(π,-π/2,π/2) ├──────░──────
+     └────────────────┘      ░      
+q_1: ────────────────────────░──────
+                             ░      
+Statevector:
+Statevector([3.74939946e-33+6.123234e-17j, 1.00000000e+00+0.000000e+00j,
+             0.00000000e+00+0.000000e+00j, 0.00000000e+00+0.000000e+00j],
+            dims=(2, 2))
+
+
+
+For circuit zero+X
+
+Circuit:
+global phase: π/2
+     ┌──────────────────────┐┌────────────────┐ statevector 
+q_0: ┤0                     ├┤ U3(π,-π/2,π/2) ├──────░──────
+     │  Initialize(1,0,0,0) │└────────────────┘      ░      
+q_1: ┤1                     ├────────────────────────░──────
+     └──────────────────────┘                        ░      
+Statevector:
+Statevector([6.123234e-17+0.j, 6.123234e-17-1.j, 0.000000e+00+0.j,
+             0.000000e+00+0.j],
+            dims=(2, 2))
+
+
+```
+
+
+### What is the expected behavior?
+Circuits "X" and "zero+X" should return the same statevector (i.e. [0, 1, 0, 0]) but "zero+X" returns [0,-1j,0,0]. 
+
+
+### Suggested solutions
+I don't know the code well enough to determine where this bug is coming from. But it is new as of 0.13.0
+

@@ -1,0 +1,164 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.17.1
+- **Python version**: 3.13.5
+- **Operating system**: Rocky Linux 8.4
+
+### What is the current behavior?
+Did not show any error, and the program stops itself.
+
+### Steps to reproduce the problem
+1. Compile the program with MPI and CUDA support
+2. Install the wheel file
+3. Create this program:
+```python
+import time, argparse
+from qiskit import QuantumCircuit, transpile
+from qiskit_aer import AerSimulator
+from qiskit.quantum_info import Statevector
+import numpy as np
+# from qiskit.utils import algorithm_globals
+
+# Parse command-line arguments
+parser = argparse.ArgumentParser(description="GV algorithm with MPI (Qiskit Aer).")
+parser.add_argument('--nqubits', type=int, default=15,
+                    help='Number of qubits (target length)')
+parser.add_argument('--device', choices=['CPU','GPU'], default='CPU',
+                    help='Simulation device: CPU or GPU')
+args = parser.parse_args()
+
+# Set consistent random seed across MPI processes
+# algorithm_globals.random_seed = 12345
+
+n = args.nqubits
+device = args.device
+target = ''.join('0' if i % 2 == 0 else '1' for i in range(n))
+# Example: n=5 -> target="01010"
+target = target[:n]
+
+# Build GV circuit
+# We'll use one ancilla for the multi-controlled operations.
+qc = QuantumCircuit(n+1)
+# (1) Create uniform superposition on main qubits
+qc.h(range(n))
+# Prepare ancilla in |-> state
+qc.x(n); qc.h(n)
+
+# (2) Oracle: flip phase of |target> on main qubits using the ancilla trick
+# Flip qubits with bit=0 in target, then multi-control NOT on ancilla
+for i, bit in enumerate(reversed(target)):
+    if bit == '0':
+        qc.x(i)
+qc.mcx(list(range(n)), n)       # multi-controlled X: flips ancilla if all main qubits are |1>
+for i, bit in enumerate(reversed(target)):
+    if bit == '0':
+        qc.x(i)
+# Undo ancilla preparation
+qc.h(n); qc.x(n)
+
+# (3) Diffusion (inversion about mean) on main qubits (ignoring ancilla)
+qc.h(range(n))
+qc.x(range(n))
+# Use ancilla to flip the |11...1> state (which corresponds to the all-|0> state before the Xs)
+qc.x(n); qc.h(n)
+qc.mcx(list(range(n)), n)       # multi-controlled NOT on ancilla
+qc.h(n); qc.x(n)
+qc.x(range(n))
+qc.h(range(n))
+
+# Save statevector for later inspection
+qc.save_statevector()
+
+# Transpile and run on Aer
+sim = AerSimulator(method='statevector', device=device)
+# (Optional) enable blocking for large multi-GPU runs (adjust blocking_qubits as needed)
+sim.set_options(blocking_enable=True, blocking_qubits=max(0, n-4))
+
+qc = transpile(qc, sim)
+start = time.time()
+result = sim.run(qc).result()
+end = time.time()
+
+# Only let rank 0 report results to avoid duplicates
+resdict = result.to_dict()
+mpi_rank = resdict['metadata'].get('mpi_rank', 0)
+
+if mpi_rank == 0:
+    # Extract final statevector amplitudes and probabilities
+    state = result.get_statevector(qc)
+    found_state = str(max(state.to_dict().items(), key=lambda x: np.abs(x[1]))[0])[1:]
+    print(f"Target string: {target}")
+    print(f"Measured max-probability state: {found_state}")
+    print("Match:", target == found_state)
+    print(f"Simulation device: {device}, MPI processes: {resdict['metadata'].get('num_mpi_processes',1)}")
+    print(f"Execution time: {end-start:.3f} seconds")
+```
+4. run the program with nvhpc 24.11(bundled with cuda 12.6) loaded
+`mpirun -np 4 python test.py --nqubits 16 --device GPU`
+5. This is the output of above command:
+```
+--------------------------------------------------------------------------
+mpirun has exited due to process rank 2 with PID 0 on
+node un-ln01 exiting improperly. There are three reasons this could occur:
+
+1. this process did not call "init" before exiting, but others in
+the job did. This can cause a job to hang indefinitely while it waits
+for all processes to call "init". By rule, if one process calls "init",
+then ALL processes must call "init" prior to termination.
+
+2. this process called "init", but exited without calling "finalize".
+By rule, all processes that call "init" MUST call "finalize" prior to
+exiting or it will be considered an "abnormal termination"
+
+3. this process called "MPI_Abort" or "orte_abort" and the mca parameter
+orte_create_session_dirs is set to false. In this case, the run-time cannot
+detect that the abort call was an abnormal termination. Hence, the only
+error message you will receive is this one.
+
+This may have caused other processes in the application to be
+terminated by signals sent by mpirun (as reported here).
+
+You can avoid this message by specifying -quiet on the mpirun command line.
+--------------------------------------------------------------------------
+```
+Which as you can see, there's no error message from qiskit or python.
+### What is the expected behavior?
+When I run the simulation that has qubit less than 16, it works:
+`mpirun -np 4 python test.py --nqubits 15 --device GPU`
+```
+Target string: 010101010101010
+Measured max-probability state: 010101010101010
+Match: True
+Simulation device: GPU, MPI processes: 4
+Execution time: 3.305 seconds
+--------------------------------------------------------------------------
+mpirun has exited due to process rank 2 with PID 0 on
+node un-ln01 exiting improperly. There are three reasons this could occur:
+
+1. this process did not call "init" before exiting, but others in
+the job did. This can cause a job to hang indefinitely while it waits
+for all processes to call "init". By rule, if one process calls "init",
+then ALL processes must call "init" prior to termination.
+
+2. this process called "init", but exited without calling "finalize".
+By rule, all processes that call "init" MUST call "finalize" prior to
+exiting or it will be considered an "abnormal termination"
+
+3. this process called "MPI_Abort" or "orte_abort" and the mca parameter
+orte_create_session_dirs is set to false. In this case, the run-time cannot
+detect that the abort call was an abnormal termination. Hence, the only
+error message you will receive is this one.
+
+This may have caused other processes in the application to be
+terminated by signals sent by mpirun (as reported here).
+
+You can avoid this message by specifying -quiet on the mpirun command line.
+--------------------------------------------------------------------------
+```
+
+### Suggested solutions
+
+

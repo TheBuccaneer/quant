@@ -1,0 +1,82 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.15.1
+- **Python version**: 3.10.12
+- **Operating system**:  `Linux 5.15.0-119-generic #129-Ubuntu SMP Fri Aug 2 19:25:20 UTC 2024`
+
+`nvidia-smi --version` output:
+```
+NVIDIA-SMI version  : 550.90.07
+NVML version        : 550.90
+DRIVER version      : 550.90.07
+CUDA Version        : 12.4
+```
+
+### What is the current behavior?
+
+Using `runtime_parameter_bind_enable=True` with `batched_gpu_shots=True` gives incorrect measurement results when running with multiple GPUs.
+
+For example, the MWE below sets up a scenario where we would expect the measurement results to match the `parameter_binds` provided to `backend.run`, and we can see that this is the case when only one GPU is used, but it stops working with two GPUs. Instead, it returns all the same measurement outcome for half of the experiments:
+
+```
+(jpenv) ubuntu@410ddw2f9x:~$ CUDA_VISIBLE_DEVICES=0 python mwe2.py
+original = [0, 1, 0, 1, 0, 1, 0, 1], measured = [0, 1, 0, 1, 0, 1, 0, 1]
+
+(jpenv) ubuntu@410ddw2f9x:~$ CUDA_VISIBLE_DEVICES=0,1 python mwe2.py
+original = [0, 1, 0, 1, 0, 1, 0, 1], measured = [0, 1, 0, 1, 0, 0, 0, 0]
+Traceback (most recent call last):
+  File "/home/ubuntu/mwe2.py", line 33, in <module>
+    assert parameter_bits == actual_bits
+AssertionError
+```
+
+I've tried scaling this up to 8 GPUs and even fewer results were correct, so it seems maybe only the experiments run on the 1st GPU get recorded correctly.
+
+### Steps to reproduce the problem
+
+```python
+import qiskit
+import qiskit_aer
+import math
+
+q = qiskit.QuantumRegister(1)
+c = qiskit.ClassicalRegister(1)
+circ = qiskit.QuantumCircuit(q, c)
+
+pv = qiskit.circuit.ParameterVector('cv', length=1)
+circ.rx(pv[0], q[0])
+circ.measure(q[0], c[0])
+
+parameter_bits = [0, 1] * 4
+
+binds = { pv[0]: [math.pi * b for b in parameter_bits] }
+
+backend = qiskit_aer.AerSimulator(
+    method = "statevector",
+    device = "GPU",
+    batched_shots_gpu = True,
+    runtime_parameter_bind_enable = True
+)
+
+job = backend.run(circ, parameter_binds=[binds], shots=1)
+result = job.result()
+
+actual_bits = [None] * len(parameter_bits)
+for i in range(len(parameter_bits)):
+    counts = result.get_counts(i)
+    actual_bits[i] = next(iter(counts.int_outcomes().keys()))
+
+print(f"parameter_bits = {parameter_bits}, actual_bits = {actual_bits}")
+assert parameter_bits == actual_bits
+```
+
+### What is the expected behavior?
+
+I would expect the measurement results to be the same regardless of how many GPUs are used. At most maybe I would expect the experiments not to be returned in order if using multiple GPUs but you can see above that even this is not the case.
+
+### Suggested solutions
+
+

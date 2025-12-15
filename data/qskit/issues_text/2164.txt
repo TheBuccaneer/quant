@@ -1,0 +1,52 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.14.2
+- **Python version**: 3.12.3
+- **Operating system**: Arch Linux
+
+### What is the current behavior?
+
+stabilizer method fails with SamplerV2 even though it works with V1 Sampler.
+
+### Steps to reproduce the problem
+
+```python
+import numpy as np
+from qiskit.circuit.library import EfficientSU2
+from qiskit_aer.primitives import Sampler, SamplerV2
+
+n_qubits = 8
+circuit = EfficientSU2(n_qubits)
+circuit.measure_all()
+rng = np.random.default_rng(1234)
+params = rng.choice(
+    [0, np.pi / 2, np.pi, 3 * np.pi / 2],
+    size=circuit.num_parameters,
+)
+
+# works
+sampler = Sampler(backend_options=dict(method="stabilizer"))
+job = sampler.run(circuit.decompose(), params, shots=10)
+quasis = job.result().quasi_dists[0]
+
+# throws error
+samplerv2 = SamplerV2(options=dict(backend_options=dict(method="stabilizer")))
+pub = (circuit.decompose(), params, 10)
+job = samplerv2.run([pub])
+result = job.result()
+```
+```
+
+QiskitError: 'ERROR:  [Experiment 0] Circuit EfficientSU2 contains invalid instructions {"gates": {ry}} for "stabilizer" method.Circuit EfficientSU2 contains invalid parameters  for "stabilizer" method. ,  ERROR: Circuit EfficientSU2 contains invalid instructions {"gates": {ry}} for "stabilizer" method.Circuit EfficientSU2 contains invalid parameters  for "stabilizer" method.'
+```
+
+### What is the expected behavior?
+
+Should work
+
+### Suggested solutions
+
+

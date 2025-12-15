@@ -1,0 +1,42 @@
+### Informations
+
+- **Qiskit Aer version**: 0.17.1
+- **Python version**: 3.12.5
+- **Operating system**: WSL
+
+### What is the current behavior?
+`SamplerV2` fails to simulate with `ERROR: Failed to load circuits: Invalid parameterization: instruction param position out of range`.
+
+### Steps to reproduce the problem
+```python
+from qiskit.circuit import QuantumCircuit, Parameter
+from qiskit_aer.primitives import SamplerV2
+import numpy as np
+
+qc = QuantumCircuit(2, 2)
+qc.rz(Parameter("p1"), 0)
+qc.measure(0, 0)
+qc.rz(Parameter("p2"), 1)
+qc.measure(1, 1)
+
+sampler = SamplerV2()
+sampler.run([(qc, np.random.random(len(qc.parameters)), 1000)]).result()[0]
+```
+
+Changing the order of the instructions:
+```python
+qc = QuantumCircuit(2, 2)
+qc.rz(Parameter("p1"), 0)
+qc.rz(Parameter("p2"), 1)
+qc.measure(0, 0)
+qc.measure(1, 1)
+```
+successfully simulates. Removing the parameters in favor of floats also successfully simulates. Assigning the parameters and using `AerSimulator` also successfully simualtes.
+
+### What is the expected behavior?
+The circuit should successfully simulate giving all `00`.
+
+
+### Suggested solutions
+
+

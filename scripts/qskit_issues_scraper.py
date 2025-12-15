@@ -15,7 +15,7 @@ def scrape_github_issues():
     while True:
         url = "https://api.github.com/search/issues"
         params = {
-            'q': 'repo:NVIDIA/cuda-quantum is:issue label:bug created:2023-01-01..2025-11-19',
+            'q': 'repo:Qiskit/qiskit-aer is:issue label:bug created:2023-01-01..2025-11-19',
             'per_page': per_page,
             'page': page
         }
@@ -37,7 +37,7 @@ def scrape_github_issues():
             issue_number = str(issue['number'])
             
             all_issues.append({
-                'Project': 'NVIDIA/cuda-quantum',
+                'Project': 'Qiskit/qiskit-aer',
                 'IssueID': issue_number,
                 'URL': issue['html_url'],
                 'Title': issue['title'],

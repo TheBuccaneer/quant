@@ -1,0 +1,44 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+[Benny](https://github.com/Bennybenassius) and I found this bug.
+
+### Informations
+
+- **Qiskit Aer version**: 0.15.0 
+- **Python version**: 3.11.6 
+- **Operating system**: Ubuntu 23.10
+
+### What is the current behavior?
+Running on `AerSimulator` stalls
+
+### Steps to reproduce the problem
+Create a conditional that is guaranteed to be true, but does nothing.
+
+``` Python
+qc = QuantumCircuit(3)
+qc.h(0)
+r = ClassicalRegister(1, "r")
+qc.add_register(r)
+
+with qc.if_test((r,0)):
+    pass
+
+qc.measure_active()
+
+print(qc)
+
+s = AerSimulator()
+c = s.run(qc).result().get_counts()
+print(c)
+```
+
+This also affects other control flow constructs that have the same characteristic. 
+
+### What is the expected behavior?
+
+Do nothing to the circuit, run the original circuit as normal and return a result
+
+### Suggested solutions
+
+This may be an issue on qiskit's side, but maybe add a `true_body` of identity when creating the `IfElseOp`, and other relevant ops for the other control flow statements.

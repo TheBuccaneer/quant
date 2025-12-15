@@ -1,0 +1,106 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.17.0
+- **Python version**: 3.12.11
+- **Operating system**: Ubuntu 22.04
+
+### What is the current behavior?
+
+```python
+from qiskit import transpile
+import qiskit.qasm3
+
+program = """
+    OPENQASM 3.0;
+    include "stdgates.inc";
+ 
+    input float[64] a;
+    qubit[3] q;
+    bit[2] mid;
+    bit[3] out;
+ 
+    let aliased = q[0:1];
+ 
+    gate my_gate(a) c, t {
+      gphase(a / 2);
+      ry(a) c;
+      cx c, t;
+    }
+    gate my_phase(a) c {
+      ctrl @ inv @ gphase(a) c;
+    }
+ 
+    my_gate(a * 2) aliased[0], q[{1, 2}][0];
+    measure q[0] -> mid[0];
+    measure q[1] -> mid[1];
+ 
+    while (mid == "00") {
+      reset q[0];
+      reset q[1];
+      my_gate(a) q[0], q[1];
+      my_phase(a - pi/2) q[1];
+      mid[0] = measure q[0];
+      mid[1] = measure q[1];
+    }
+ 
+    if (mid[0]) {
+      let inner_alias = q[{0, 1}];
+      reset inner_alias;
+    }
+ 
+    out = measure q;
+"""
+circuit = qiskit.qasm3.loads(program)
+# circuit.draw("mpl")
+
+from qiskit_aer import Aer
+
+sim = Aer.get_backend("aer_simulator")
+circuit = transpile(circuit, sim)
+result = sim.run(circuit).result()
+
+```
+
+This program outputs 
+
+```
+Traceback (most recent call last):
+  File "/home/zhaoyilun/llm4qad/temp/qasm3_test.py", line 51, in <module>
+    result = sim.run(circuit).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/zhaoyilun/llm4qad/.venv/lib/python3.12/site-packages/qiskit_aer/jobs/utils.py", line 38, in _wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/zhaoyilun/llm4qad/.venv/lib/python3.12/site-packages/qiskit_aer/jobs/aerjob.py", line 96, in result
+    return self._future.result(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/zhaoyilun/.local/share/uv/python/cpython-3.12.11-linux-x86_64-gnu/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/zhaoyilun/.local/share/uv/python/cpython-3.12.11-linux-x86_64-gnu/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/home/zhaoyilun/.local/share/uv/python/cpython-3.12.11-linux-x86_64-gnu/lib/python3.12/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/zhaoyilun/llm4qad/.venv/lib/python3.12/site-packages/qiskit_aer/backends/aerbackend.py", line 462, in _execute_circuits_job
+    raise AerError("circuits have parameters but parameter_binds is not specified.")
+qiskit_aer.aererror.AerError: 'circuits have parameters but parameter_binds is not specified.'
+```
+
+
+### Steps to reproduce the problem
+
+run the above test program
+
+### What is the expected behavior?
+
+no error raised
+
+### Suggested solutions
+
+I would like to know the current capacity of qiskit_aer in simulating openqasm3 imported qiskit quantum circuit. I've searched the documentation but did not find relevant documentations.
+
+

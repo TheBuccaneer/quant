@@ -1,0 +1,50 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.11.2
+- **Python version**: 3.9
+- **Operating system**: OSX
+
+### What is the current behavior?
+Qiskit Aer does not handle isolated qubits (ie., not in a register)
+
+
+### Steps to reproduce the problem
+```python
+from qiskit import Aer, QuantumCircuit, execute
+from qiskit.circuit import Qubit, Clbit
+
+sim = Aer.get_backend("qasm_simulator")
+
+bits = [Qubit(), Clbit(), Clbit()]
+qc = QuantumCircuit(bits)
+qc.x(bits[0])
+qc.measure(bits[0], bits[1])
+qc.measure(bits[0], bits[2])
+
+
+result = execute(
+    qc, backend=sim
+).result()
+```
+
+Gives
+```
+Simulation failed and returned the following error message:
+ERROR: Failed to load qobj: Invalid Qobj experiment: not enough memory slots.
+```
+
+
+### What is the expected behavior?
+Completes with 
+
+```
+{'1 1': 1024}
+```
+
+### Suggested solutions
+As of https://github.com/Qiskit/qiskit-terra/blob/b4bc559228c3898817978c3d8c3fc97372beecad/qiskit/circuit/bit.py#L65
+Qiskit Terra allows clbits to not be in registers (or be in multiple registers!). This seems to break result handling.
+

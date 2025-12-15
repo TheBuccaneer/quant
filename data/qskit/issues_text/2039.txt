@@ -1,0 +1,41 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.13.2
+- **Python version**: 3.11
+- **Operating system**: MacOS
+
+### What is the current behavior?
+
+```python
+from qiskit_aer import Aer
+
+for backend in Aer.backends():
+    print(backend)
+```
+```
+AerSimulator('aer_simulator')
+AerSimulator('aer_simulator')
+AerSimulator('aer_simulator')
+AerSimulator('aer_simulator')
+AerSimulator('aer_simulator')
+AerSimulator('aer_simulator')
+AerSimulator('aer_simulator')
+AerSimulator('aer_simulator')
+QasmSimulator('qasm_simulator')
+StatevectorSimulator('statevector_simulator')
+UnitarySimulator('unitary_simulator')
+```
+
+### What is the expected behavior?
+
+```
+AerSimulator('aer_simulator')
+QasmSimulator('qasm_simulator')
+StatevectorSimulator('statevector_simulator')
+UnitarySimulator('unitary_simulator')
+```
+
+

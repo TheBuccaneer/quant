@@ -1,0 +1,73 @@
+## Analyse der Qiskit-Aer GitHub Issues: GPU-Relevanz und Erkenntnisse
+Die Analyse von **235 GitHub Issues** aus dem Qiskit-Aer Repository (Zeitraum Januar 2023 bis November 2025) liefert aufschlussreiche Erkenntnisse zur GPU-Unterstützung und den damit verbundenen Herausforderungen.
+
+### Zentrale Erkenntnisse
+**1. GPU-Issues bilden einen wachsenden Anteil**
+
+Von allen analysierten Issues sind **36 (15,3%) GPU-relevant**. Diese Zahl zeigt einen deutlich steigenden Trend:
+- **2023**: 12,3% der Issues betreffen GPU
+- **2024**: 17,4% GPU-relevant
+- **2025**: 18,9% GPU-relevant
+
+Dies signalisiert, dass die GPU-Integration zunehmend genutzt wird, aber auch mehr Probleme verursacht.
+
+**2. GPU-Issues werden langsamer gelöst**
+
+Die Schließungsraten offenbaren ein klares Muster:
+- **GPU-Issues**: 52,8% geschlossen
+- **Non-GPU-Issues**: 59,3% geschlossen
+- **Differenz**: 6,5 Prozentpunkte zugunsten von Non-GPU
+
+GPU-Probleme sind demnach komplexer und schwieriger zu beheben, was auf die zusätzliche Komplexität durch CUDA, cuQuantum und Hardware-Abhängigkeiten hindeutet.
+
+**3. Hauptprobleme bei GPU-Issues**
+Die Kategorisierung der GPU-Issues zeigt drei dominante Problemfelder:
+
+**Configuration (75% der GPU-Issues)**
+- Device-Erkennung schlägt fehl (`"GPU" is not supported`)
+- Falsche Backend-Konfiguration (`device='GPU'`, `cuStateVec_enable`)
+- GPU-Detection trotz vorhandener Hardware funktioniert nicht
+
+**CUDA/cuQuantum Integration (72%)**
+- cuStateVec, cuTensorNet und cuQuantum Library-Probleme
+- CUDA-Toolkit-Versionskompatibilität (v11 vs. v12)
+- NVIDIA Thrust Dependencies
+
+**Build/Compilation (19%)**
+- CMake-Konfiguration mit GPU-Support
+- Linking-Fehler bei CUDA-Libraries
+- Toolchain-Kompatibilität (gcc/CUDA-Kombinationen)
+
+**4. Technische Schlüsselwörter dominieren**
+
+Die Häufigkeitsanalyse der Keywords in GPU-Issue-Begründungen zeigt:
+- **gpu**: 86 Nennungen
+- **cuda**: 20 Nennungen
+- **device**: 20 Nennungen
+- **build**: 10 Nennungen
+- **cuquantum**: 8 Nennungen
+
+Dies unterstreicht, dass die Probleme primär in der GPU-Hardware-Integration, CUDA-Umgebung und Build-Prozessen liegen.
+
+**5. Performance- und Runtime-Probleme sind unterrepräsentiert**
+
+Überraschenderweise machen Performance-Issues nur **4 von 36** GPU-Issues aus. Die meisten Probleme drehen sich um grundlegende Funktionalität (Configuration, Build), nicht um Optimierung. Dies deutet darauf hin, dass viele Nutzer bereits an der initialen Einrichtung scheitern, bevor sie Performance-Tuning betreiben können.
+
+### Praktische Implikationen
+**Für Entwickler:**
+- GPU-Support benötigt bessere Dokumentation zur Konfiguration
+- Device-Detection-Mechanismen müssen robuster werden
+- Build-System sollte klarere Fehlermeldungen bei fehlenden CUDA-Dependencies liefern
+
+**Für Forscher:**
+- GPU-Bugs sind systematischer Natur und betreffen oft Umgebungskonfiguration
+- Multi-GPU und MPI+CUDA-Setups sind besonders anfällig
+- Reproduzierbarkeit von GPU-Bugs ist eingeschränkt durch Hardware-Abhängigkeiten
+
+**Für die Qualitätssicherung:**
+- Static Analysis könnte 19% der GPU-Build-Probleme frühzeitig erkennen
+- Configuration-Validierung vor Runtime würde 75% der Probleme abfangen
+- Bessere Test-Coverage für GPU-Codepfade ist erforderlich
+
+### Fazit
+Die Analyse zeigt, dass **GPU-Integration in Qiskit-Aer ein wachsendes, aber problematisches Feature** ist. Der steigende Anteil GPU-relevanter Issues (von 12% auf 19%) bei gleichzeitig niedrigerer Lösungsrate (53% vs. 59%) deutet auf fundamentale Herausforderungen hin. Die Hauptprobleme liegen weniger in algorithmischen Bugs als vielmehr in **Build-System-Integration, Device-Configuration und CUDA-Ecosystem-Kompatibilität** – Bereichen, die durch bessere Tooling, Dokumentation und automatisierte Validierung adressiert werden könnten.

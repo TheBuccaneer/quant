@@ -1,0 +1,40 @@
+### Informations
+
+- **Qiskit Aer version**: 0.16
+- **Python version**: 3.11
+- **Operating system**: FreeBSD 14.2
+- **Compiler**: clang-18
+
+### What is the current behavior?
+```
+In file included from /usr/ports/science/qiskit-aer/work/qiskit-aer-0.16/qiskit_aer/backends/wrappers/bindings.cc:15:
+In file included from /usr/ports/science/qiskit-aer/work/qiskit-aer-0.16/qiskit_aer/backends/wrappers/aer_controller_binding.hpp:34:
+In file included from /usr/ports/science/qiskit-aer/work/qiskit-aer-0.16/src/controllers/aer_controller.hpp:49:
+In file included from /usr/ports/science/qiskit-aer/work/qiskit-aer-0.16/src/noise/noise_model.hpp:34:
+In file included from /usr/ports/science/qiskit-aer/work/qiskit-aer-0.16/src/noise/quantum_error.hpp:21:
+In file included from /usr/ports/science/qiskit-aer/work/qiskit-aer-0.16/src/simulators/superoperator/superoperator_state.hpp:26:
+In file included from /usr/ports/science/qiskit-aer/work/qiskit-aer-0.16/src/simulators/superoperator/superoperator.hpp:19:
+In file included from /usr/ports/science/qiskit-aer/work/qiskit-aer-0.16/src/simulators/density_matrix/densitymatrix.hpp:19:
+In file included from /usr/ports/science/qiskit-aer/work/qiskit-aer-0.16/src/simulators/unitary/unitarymatrix.hpp:19:
+/usr/ports/science/qiskit-aer/work/qiskit-aer-0.16/src/simulators/statevector/qubitvector.hpp:733:24: error: no member named 'size_' in 'QubitVector<data_t>'
+  733 |   if (data_size_ != qv.size_) {
+      |                     ~~ ^
+/usr/ports/science/qiskit-aer/work/qiskit-aer-0.16/src/simulators/statevector/qubitvector.hpp:736:52: error: no member named 'num_states_' in 'QubitVector<data_t>'
+  736 |                         " != " + std::to_string(qv.num_states_);
+      |                                                 ~~ ^
+2 errors generated.
+
+
+
+### Steps to reproduce the problem
+Regular build.
+
+
+### What is the expected behavior?
+
+n/a
+
+
+### Suggested solutions
+n/a
+

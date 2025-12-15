@@ -1,0 +1,102 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.12.0
+- **Python version**: 3.9
+- **Operating system**: SUSE Linux Enterprise Server 15 SP1 
+
+### What is the current behavior?
+We build qiskit-aer with MPI support (intelMPI) on an HPC system.
+Currently we are trying to run this simple test script 
+
+```python
+from qiskit import *
+from qiskit.circuit.library import QuantumVolume
+from qiskit.providers.aer import *
+from qiskit.utils import algorithm_globals
+
+consistent_seed_to_all_processes = 12345
+algorithm_globals.random_seed = consistent_seed_to_all_processes
+
+sim = AerSimulator(method='statevector', device='CPU', blocking_qubits=5)
+
+shots = 100
+depth = 3
+qubits = 3
+circuit = transpile(QuantumVolume(qubits, depth, seed=2),
+                    backend=sim,
+                    optimization_level=0)
+
+print(circuit)
+
+circuit.measure_all()
+result = execute(circuit, sim, shots=shots,
+                 blocking_enable=True, blocking_qubits=5).result()
+
+dict = result.to_dict()
+print(dict.keys())
+meta = dict['metadata']
+myrank = meta['mpi_rank']
+print(myrank)
+```
+
+with the following resource:
+- 1 node
+- 16 MPI tasks
+
+What we experience is a Segmentation Fault error from some or all the tasks (the discriminating factor is not clear) at the end of the script, see the partial output below
+
+```
+[...]
+     ┌──────────┐┌──────────┐┌──────────┐
+q_0: ┤0         ├┤0         ├┤0         ├
+     │  su4_837 ││          ││          │
+q_1: ┤1         ├┤  su4_262 ├┤  su4_110 ├
+     └──────────┘│          ││          │
+q_2: ────────────┤1         ├┤1         ├
+                 └──────────┘└──────────┘
+dict_keys(['backend_name', 'backend_version', 'date', 'header', 'qobj_id', 'job_id', 'status', 'success', 'results', 'metadata', 'time_taken'])
+13
+[...]
+===================================================================================
+=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
+=   RANK 0 PID 51068 RUNNING AT i23r02c05s12
+=   KILLED BY SIGNAL: 9 (Killed)
+===================================================================================
+[...]
+===================================================================================
+=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
+=   RANK 14 PID 51082 RUNNING AT i23r02c05s12
+=   KILLED BY SIGNAL: 11 (Segmentation fault)
+===================================================================================
+```
+
+### Steps to reproduce the problem
+
+We built and installed `qiskit-aer` in an Anaconda 3 (2021.05) environment with the following dependencies:
+- `cmake 3.21.4`
+- `gcc 11.2.0`
+- `openblas 0.3.18` build with `gcc 11`
+- `intelMPI 3.1` build by `gcc`
+- `mpi4py` Python module
+- `py-pybind11` Python module
+
+and running
+```sh
+python ./setup.py bdist_wheel -- -DAER_MPI=True -DBUILD_TESTS=True
+pip install dist/qiskit_aer-*.whl
+```
+
+Then we run the script as follow
+```bash
+srun -n 16 python 1_mpi_test_CPU.py
+```
+### What is the expected behavior?
+
+We expect the script to end with no Segmentation Fault errors.
+
+### Suggested solutions
+
+None so far

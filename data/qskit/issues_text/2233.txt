@@ -1,0 +1,49 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.15.0
+- **Python version**: 3,12
+- **Operating system**: Windows
+
+### What is the current behavior?
+
+Using the `Result` from the Aer simulator results in deprecation warnings (for example when using `copy.deepcopy` or `marginal_counts`. The warning generated is 
+```
+C:\develop\Python312\Lib\copy.py:434: DeprecationWarning: The class ``qiskit.qobj.common.QobjDictField`` is deprecated as of qiskit 1.2. It will be removed in the 2.0 release. The `Qobj` class and related functionality are part of the deprecated `BackendV1` workflow,  and no longer necessary for `BackendV2`. If a user workflow requires `Qobj` it likely relies on deprecated functionality and should be updated to use `BackendV2`.
+```
+
+Also see https://github.com/Qiskit/qiskit/issues/13084
+
+### Steps to reproduce the problem
+
+A minimal example:
+```
+import copy
+import qiskit
+from qiskit.circuit import QuantumCircuit
+from qiskit_aer import AerSimulator
+import qiskit_aer
+print(qiskit.__version__)
+print(qiskit_aer.__version__)
+
+import warnings
+warnings.simplefilter('default')
+
+qc = QuantumCircuit(1, 1)
+qc.measure_all()
+
+backend = AerSimulator()
+result = backend.run(qc, shots=100, memory=False).result()
+copy.deepcopy(result);
+```
+
+### What is the expected behavior?
+
+No warnings should be generated
+
+### Suggested solutions
+
+
+

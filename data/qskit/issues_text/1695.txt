@@ -1,0 +1,24 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:
+- **Python version**:
+- **Operating system**:
+
+### What is the current behavior?
+
+Qiskit Neko Integration Test always fail because of `ModuleNotFoundError: No module named'qiskit_aer.backends.controller_wrappers'`.
+
+### Steps to reproduce the problem
+
+Run CI.
+
+### What is the expected behavior?
+
+Pass CI tests.
+
+### Suggested solutions
+
+This issue was happened previously because python tries to load `qiskit_aer` from the current working directory and not from the installed directory.

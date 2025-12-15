@@ -1,0 +1,48 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.13.0
+- **Python version**: 3.11.4
+- **Operating system**: Linux
+
+### What is the current behavior?
+Noise Model doesn't work well if the circuit has a CZ gate along with if_test operators.
+
+
+### Steps to reproduce the problem
+**Noise Model**
+```
+nm = NoiseModel()
+qerror = pauli_error([('X', 1.0)])
+nm.add_all_qubit_quantum_error(qerror, ['x'])
+```
+
+**Circuit**
+```
+qc = QuantumCircuit(2,1)
+qc.cz(0,1)
+qc.x([0,1])
+qc.measure(0,0)
+with qc.if_test((0,1)):
+    qc.id(0)
+qc.measure_all()
+```
+
+**Obtaining Counts**
+```
+backend = AerSimulator(noise_model=nm)
+results = execute(qc, backend).result()
+results.get_counts()
+```
+The output is `{'10 0': 1024}`
+
+### What is the expected behavior?
+For given quantum error, the expected outcome must be `{'00 0': 1024}`
+
+### Suggested solutions
+It works fine, if I remove the CZ or the if_test block.
+I tried same with CX and CY gates, which do not pose any such problems. I also transpiled the circuit with basis including 'cz' but still doesn't improve.
+
+

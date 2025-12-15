@@ -1,0 +1,37 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.13.0
+- **Python version**: Python 3.10.7
+- **Operating system**: windows 11
+
+### What is the current behavior?
+
+When trying to transpile a circuit containing reset gate I get the following error:
+
+HighLevelSynthesis was unable to synthesize Instruction(name='reset', num_qubits=1, num_clbits=0, params=[]).
+
+### Steps to reproduce the problem
+
+Using the following circuit I found to be able to produce the error.
+
+```
+qr= QuantumRegister(2)
+qc = QuantumCircuit(qr)
+qc.reset(qr)
+noise_model = NoiseModel()
+sim = AerSimulator(method='matrix_product_state', noise_model=noise_model)
+transpiled_qc = transpile(qc, sim, optimization_level=0)
+res = sim.run(transpiled_qc, shots=10).result()
+```
+
+### What is the expected behavior?
+
+It should transpile successfully. Current workaround I found is removing the noise modell from the simulation.
+
+### Suggested solutions
+
+
+

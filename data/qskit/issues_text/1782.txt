@@ -1,0 +1,205 @@
+### Environment
+
+- **Qiskit Terra version**: 
+  - qiskit==0.34.1
+- **Python version**: 
+  - 3.10
+- **Operating system**: 
+- macOS 13.3.1
+
+
+### What is happening?
+
+I install `qiskit` with this `requirements.txt` on my Mac Book Pro, it always fails
+```
+ ->   cat requirements.txt
+qiskit==0.34.1
+matplotlib==3.5.1
+pylatexenc==2.10
+sympy==1.9
+kaleidoscope==0.0.13
+ipywidgets==7.6.5
+
+```
+
+### How can we reproduce the issue?
+
+I install `qiskit` with this `requirements.txt`
+```
+ ->   cat requirements.txt
+qiskit==0.34.1
+matplotlib==3.5.1
+pylatexenc==2.10
+sympy==1.9
+kaleidoscope==0.0.13
+ipywidgets==7.6.5
+
+ -> conda create -n ibmQ-3.10 python=3.10
+ -> conda install -n ibmQ-3.10 pip
+ -> conda activate ibmQ-3.1
+->  pip3 install --prefer-binary --use-pep517 -r requirements.txt
+```
+
+the error says 
+
+```
+Building wheels for collected packages: qiskit-aer
+  Building wheel for qiskit-aer (pyproject.toml) ... error
+  error: subprocess-exited-with-error
+
+  × Building wheel for qiskit-aer (pyproject.toml) did not run successfully.
+  │ exit code: 1
+  ╰─> [138 lines of output]
+      /private/var/folders/c9/fvq8821n0bv2mljl5c6kqnbc0000gn/T/pip-build-env-z2tgkjlt/overlay/lib/python3.10/site-packages/skbuild/setuptools_wrap.py:617: _DeprecatedInstaller: setuptools.installer and fetch_build_eggs are deprecated. Requirements should be satisfied by a PEP 517 installer. If you are using pip, you can try `pip install --use-pep517`.
+        dist.fetch_build_eggs(setup_requires)
+
+
+      --------------------------------------------------------------------------------
+      -- Trying 'Ninja' generator
+      --------------------------------
+      ---------------------------
+      ----------------------
+      -----------------
+      ------------
+      -------
+      --
+      Not searching for unused variables given on the command line.
+      -- The C compiler identification is AppleClang 14.0.3.14030022
+      -- Detecting C compiler ABI info
+      -- Detecting C compiler ABI info - done
+      -- Check for working C compiler: /Library/Developer/CommandLineTools/usr/bin/cc - skipped
+      -- Detecting C compile features
+      -- Detecting C compile features - done
+      -- The CXX compiler identification is AppleClang 14.0.3.14030022
+      -- Detecting CXX compiler ABI info
+      -- Detecting CXX compiler ABI info - done
+      -- Check for working CXX compiler: /Library/Developer/CommandLineTools/usr/bin/c++ - skipped
+      -- Detecting CXX compile features
+      -- Detecting CXX compile features - done
+      -- Configuring done (7.7s)
+      -- Generating done (0.0s)
+      -- Build files have been written to: /private/var/folders/c9/fvq8821n0bv2mljl5c6kqnbc0000gn/T/pip-install-9x0m2ctw/qiskit-aer_43617e587b9b4975b4d3e102c877fe81/_cmake_test_compile/build
+      --
+      -------
+      ------------
+      -----------------
+      ----------------------
+      ---------------------------
+      --------------------------------
+      -- Trying 'Ninja' generator - success
+      --------------------------------------------------------------------------------
+
+      Configuring Project
+        Working directory:
+          /private/var/folders/c9/fvq8821n0bv2mljl5c6kqnbc0000gn/T/pip-install-9x0m2ctw/qiskit-aer_43617e587b9b4975b4d3e102c877fe81/_skbuild/macosx-10.16-x86_64-3.10/cmake-build
+        Command:
+          /private/var/folders/c9/fvq8821n0bv2mljl5c6kqnbc0000gn/T/pip-build-env-z2tgkjlt/overlay/lib/python3.10/site-packages/cmake/data/bin/cmake /private/var/folders/c9/fvq8821n0bv2mljl5c6kqnbc0000gn/T/pip-install-9x0m2ctw/qiskit-aer_43617e587b9b4975b4d3e102c877fe81 -G Ninja --no-warn-unused-cli -DCMAKE_INSTALL_PREFIX:PATH=/private/var/folders/c9/fvq8821n0bv2mljl5c6kqnbc0000gn/T/pip-install-9x0m2ctw/qiskit-aer_43617e587b9b4975b4d3e102c877fe81/_skbuild/macosx-10.16-x86_64-3.10/cmake-install -DPYTHON_VERSION_STRING:STRING=3.10.10 -DSKBUILD:INTERNAL=TRUE -DCMAKE_MODULE_PATH:PATH=/private/var/folders/c9/fvq8821n0bv2mljl5c6kqnbc0000gn/T/pip-build-env-z2tgkjlt/overlay/lib/python3.10/site-packages/skbuild/resources/cmake -DPYTHON_EXECUTABLE:PATH=/Users/davidyoung/anaconda3/envs/ibmQ-3.10/bin/python -DPYTHON_INCLUDE_DIR:PATH=/Users/davidyoung/anaconda3/envs/ibmQ-3.10/include/python3.10 -DPYTHON_LIBRARY:PATH=/Users/davidyoung/anaconda3/envs/ibmQ-3.10/lib/libpython3.10.dylib -DPython_EXECUTABLE:PATH=/Users/davidyoung/anaconda3/envs/ibmQ-3.10/bin/python -DPython_ROOT_DIR:PATH=/Users/davidyoung/anaconda3/envs/ibmQ-3.10 -DPython_FIND_REGISTRY:STRING=NEVER -DPython_INCLUDE_DIR:PATH=/Users/davidyoung/anaconda3/envs/ibmQ-3.10/include/python3.10 -DPython_LIBRARY:PATH=/Users/davidyoung/anaconda3/envs/ibmQ-3.10/lib/libpython3.10.dylib -DPython_NumPy_INCLUDE_DIRS:PATH=/private/var/folders/c9/fvq8821n0bv2mljl5c6kqnbc0000gn/T/pip-build-env-z2tgkjlt/overlay/lib/python3.10/site-packages/numpy/core/include -DPython3_EXECUTABLE:PATH=/Users/davidyoung/anaconda3/envs/ibmQ-3.10/bin/python -DPython3_ROOT_DIR:PATH=/Users/davidyoung/anaconda3/envs/ibmQ-3.10 -DPython3_FIND_REGISTRY:STRING=NEVER -DPython3_INCLUDE_DIR:PATH=/Users/davidyoung/anaconda3/envs/ibmQ-3.10/include/python3.10 -DPython3_LIBRARY:PATH=/Users/davidyoung/anaconda3/envs/ibmQ-3.10/lib/libpython3.10.dylib -DPython3_NumPy_INCLUDE_DIRS:PATH=/private/var/folders/c9/fvq8821n0bv2mljl5c6kqnbc0000gn/T/pip-build-env-z2tgkjlt/overlay/lib/python3.10/site-packages/numpy/core/include -DCMAKE_MAKE_PROGRAM:FILEPATH=/private/var/folders/c9/fvq8821n0bv2mljl5c6kqnbc0000gn/T/pip-build-env-z2tgkjlt/overlay/lib/python3.10/site-packages/ninja/data/bin/ninja -DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=10.16 -DCMAKE_OSX_ARCHITECTURES:STRING=x86_64 -DCMAKE_BUILD_TYPE:STRING=Release
+
+      Not searching for unused variables given on the command line.
+      -- The CXX compiler identification is AppleClang 14.0.3.14030022
+      -- The C compiler identification is AppleClang 14.0.3.14030022
+      -- Detecting CXX compiler ABI info
+      -- Detecting CXX compiler ABI info - done
+      -- Check for working CXX compiler: /Library/Developer/CommandLineTools/usr/bin/c++ - skipped
+      -- Detecting CXX compile features
+      -- Detecting CXX compile features - done
+      -- Detecting C compiler ABI info
+      -- Detecting C compiler ABI info - done
+      -- Check for working C compiler: /Library/Developer/CommandLineTools/usr/bin/cc - skipped
+      -- Detecting C compile features
+      -- Detecting C compile features - done
+      -- Performing Test flag_supported
+      -- Performing Test flag_supported - Success
+      -- Performing Test flag_supported
+      -- Performing Test flag_supported - Success
+      -- Performing Test flag_supported
+      -- Performing Test flag_supported - Success
+      -- Performing Test flag_supported
+      -- Performing Test flag_supported - Success
+      -- Performing Test flag_supported
+      -- Performing Test flag_supported - Success
+      -- Performing Test flag_supported
+      -- Performing Test flag_supported - Success
+      -- Performing Test flag_supported
+      -- Performing Test flag_supported - Success
+      -- Performing Test flag_supported
+      -- Performing Test flag_supported - Success
+      -- Performing Test flag_supported
+      -- Performing Test flag_supported - Success
+      -- Performing Test flag_supported
+      -- Performing Test flag_supported - Success
+      -- Performing Test flag_supported
+      -- Performing Test flag_supported - Success
+      -- Performing Test flag_supported
+      -- Performing Test flag_supported - Success
+      -- Conan: Automatic detection of conan settings from cmake
+      In file included from <stdin>:1:
+      In file included from /Library/Developer/CommandLineTools/usr/bin/../include/c++/v1/string:519:
+      In file included from /Library/Developer/CommandLineTools/usr/bin/../include/c++/v1/__debug:14:
+      In file included from /Library/Developer/CommandLineTools/usr/bin/../include/c++/v1/iosfwd:98:
+      In file included from /Library/Developer/CommandLineTools/usr/bin/../include/c++/v1/__mbstate_t.h:29:
+      /Library/Developer/CommandLineTools/usr/bin/../include/c++/v1/wchar.h:123:15: fatal error: 'wchar.h' file not found
+      #include_next <wchar.h>
+                    ^~~~~~~~~
+      1 error generated.
+      -- Conan: Settings= -s;build_type=Release;-s;compiler=apple-clang;-s;compiler.version=14.0;-s;compiler.libcxx=libc++
+      -- Conan: checking conan executable
+      -- Conan: Found program /private/var/folders/c9/fvq8821n0bv2mljl5c6kqnbc0000gn/T/pip-build-env-z2tgkjlt/overlay/bin/conan
+      -- Conan: Version found Conan version 2.0.4
+
+      -- Conan executing: /private/var/folders/c9/fvq8821n0bv2mljl5c6kqnbc0000gn/T/pip-build-env-z2tgkjlt/overlay/bin/conan install . -s build_type=Release -s compiler=apple-clang -s compiler.version=14.0 -s compiler.libcxx=libc++ -e=CONAN_CMAKE_PROGRAM=/private/var/folders/c9/fvq8821n0bv2mljl5c6kqnbc0000gn/T/pip-build-env-z2tgkjlt/overlay/lib/python3.10/site-packages/cmake/data/bin/cmake -g=cmake --build=missing
+      usage: conan install [-h] [-f FORMAT] [-v [V]] [--name NAME]
+                           [--version VERSION] [--user USER] [--channel CHANNEL]
+                           [--requires REQUIRES] [--tool-requires TOOL_REQUIRES]
+                           [-b BUILD] [-r REMOTE | -nr] [-u] [-o OPTIONS_HOST]
+                           [-o:b OPTIONS_BUILD] [-o:h OPTIONS_HOST]
+                           [-pr PROFILE_HOST] [-pr:b PROFILE_BUILD]
+                           [-pr:h PROFILE_HOST] [-s SETTINGS_HOST]
+                           [-s:b SETTINGS_BUILD] [-s:h SETTINGS_HOST] [-c CONF_HOST]
+                           [-c:b CONF_BUILD] [-c:h CONF_HOST] [-l LOCKFILE]
+                           [--lockfile-partial] [--lockfile-out LOCKFILE_OUT]
+                           [--lockfile-packages] [--lockfile-clean] [-g GENERATOR]
+                           [-of OUTPUT_FOLDER] [--deploy DEPLOY] [--build-require]
+                           [path]
+      conan install: error: unrecognized arguments: -e=CONAN_CMAKE_PROGRAM=/private/var/folders/c9/fvq8821n0bv2mljl5c6kqnbc0000gn/T/pip-build-env-z2tgkjlt/overlay/lib/python3.10/site-packages/cmake/data/bin/cmake
+      ERROR: Exiting with code: 2
+      CMake Error at cmake/conan.cmake:402 (message):
+        Conan install failed='2'
+      Call Stack (most recent call first):
+        cmake/conan.cmake:497 (conan_cmake_install)
+        cmake/conan_utils.cmake:46 (conan_cmake_run)
+        cmake/dependency_utils.cmake:20 (setup_conan)
+        CMakeLists.txt:146 (setup_dependencies)
+
+
+      -- Configuring incomplete, errors occurred!
+      Traceback (most recent call last):
+        File "/private/var/folders/c9/fvq8821n0bv2mljl5c6kqnbc0000gn/T/pip-build-env-z2tgkjlt/overlay/lib/python3.10/site-packages/skbuild/setuptools_wrap.py", line 666, in setup
+          env = cmkr.configure(
+        File "/private/var/folders/c9/fvq8821n0bv2mljl5c6kqnbc0000gn/T/pip-build-env-z2tgkjlt/overlay/lib/python3.10/site-packages/skbuild/cmaker.py", line 358, in configure
+          raise SKBuildError(msg)
+
+      An error occurred while configuring with CMake.
+        Command:
+          /private/var/folders/c9/fvq8821n0bv2mljl5c6kqnbc0000gn/T/pip-build-env-z2tgkjlt/overlay/lib/python3.10/site-packages/cmake/data/bin/cmake /private/var/folders/c9/fvq8821n0bv2mljl5c6kqnbc0000gn/T/pip-install-9x0m2ctw/qiskit-aer_43617e587b9b4975b4d3e102c877fe81 -G Ninja --no-warn-unused-cli -DCMAKE_INSTALL_PREFIX:PATH=/private/var/folders/c9/fvq8821n0bv2mljl5c6kqnbc0000gn/T/pip-install-9x0m2ctw/qiskit-aer_43617e587b9b4975b4d3e102c877fe81/_skbuild/macosx-10.16-x86_64-3.10/cmake-install -DPYTHON_VERSION_STRING:STRING=3.10.10 -DSKBUILD:INTERNAL=TRUE -DCMAKE_MODULE_PATH:PATH=/private/var/folders/c9/fvq8821n0bv2mljl5c6kqnbc0000gn/T/pip-build-env-z2tgkjlt/overlay/lib/python3.10/site-packages/skbuild/resources/cmake -DPYTHON_EXECUTABLE:PATH=/Users/davidyoung/anaconda3/envs/ibmQ-3.10/bin/python -DPYTHON_INCLUDE_DIR:PATH=/Users/davidyoung/anaconda3/envs/ibmQ-3.10/include/python3.10 -DPYTHON_LIBRARY:PATH=/Users/davidyoung/anaconda3/envs/ibmQ-3.10/lib/libpython3.10.dylib -DPython_EXECUTABLE:PATH=/Users/davidyoung/anaconda3/envs/ibmQ-3.10/bin/python -DPython_ROOT_DIR:PATH=/Users/davidyoung/anaconda3/envs/ibmQ-3.10 -DPython_FIND_REGISTRY:STRING=NEVER -DPython_INCLUDE_DIR:PATH=/Users/davidyoung/anaconda3/envs/ibmQ-3.10/include/python3.10 -DPython_LIBRARY:PATH=/Users/davidyoung/anaconda3/envs/ibmQ-3.10/lib/libpython3.10.dylib -DPython_NumPy_INCLUDE_DIRS:PATH=/private/var/folders/c9/fvq8821n0bv2mljl5c6kqnbc0000gn/T/pip-build-env-z2tgkjlt/overlay/lib/python3.10/site-packages/numpy/core/include -DPython3_EXECUTABLE:PATH=/Users/davidyoung/anaconda3/envs/ibmQ-3.10/bin/python -DPython3_ROOT_DIR:PATH=/Users/davidyoung/anaconda3/envs/ibmQ-3.10 -DPython3_FIND_REGISTRY:STRING=NEVER -DPython3_INCLUDE_DIR:PATH=/Users/davidyoung/anaconda3/envs/ibmQ-3.10/include/python3.10 -DPython3_LIBRARY:PATH=/Users/davidyoung/anaconda3/envs/ibmQ-3.10/lib/libpython3.10.dylib -DPython3_NumPy_INCLUDE_DIRS:PATH=/private/var/folders/c9/fvq8821n0bv2mljl5c6kqnbc0000gn/T/pip-build-env-z2tgkjlt/overlay/lib/python3.10/site-packages/numpy/core/include -DCMAKE_MAKE_PROGRAM:FILEPATH=/private/var/folders/c9/fvq8821n0bv2mljl5c6kqnbc0000gn/T/pip-build-env-z2tgkjlt/overlay/lib/python3.10/site-packages/ninja/data/bin/ninja -DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=10.16 -DCMAKE_OSX_ARCHITECTURES:STRING=x86_64 -DCMAKE_BUILD_TYPE:STRING=Release
+        Source directory:
+          /private/var/folders/c9/fvq8821n0bv2mljl5c6kqnbc0000gn/T/pip-install-9x0m2ctw/qiskit-aer_43617e587b9b4975b4d3e102c877fe81
+        Working directory:
+          /private/var/folders/c9/fvq8821n0bv2mljl5c6kqnbc0000gn/T/pip-install-9x0m2ctw/qiskit-aer_43617e587b9b4975b4d3e102c877fe81/_skbuild/macosx-10.16-x86_64-3.10/cmake-build
+      Please see CMake's output for more information.
+
+      [end of output]
+
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+  ERROR: Failed building wheel for qiskit-aer
+Failed to build qiskit-aer
+ERROR: Could not build wheels for qiskit-aer, which is required to install pyproject.toml-based projects
+```
+
+### What should happen?
+
+it should be installed successfully
+
+### Any suggestions?
+
+_No response_

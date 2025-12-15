@@ -1,0 +1,56 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.12.2
+- **Python version**: 3.11
+- **Operating system**: Linux
+
+### What is the current behavior?
+
+"XX" and Pauli("XX") as an argument on `SparsePauliOp` has different results for `qiskit_aer.primitives`, while `qiskit.primitives` results are correct.
+
+### Steps to reproduce the problem
+
+```python
+from qiskit import QuantumCircuit
+from qiskit.primitives import Estimator as e1
+from qiskit_aer.primitives import Estimator as e2
+from qiskit.quantum_info import Pauli, SparsePauliOp
+
+
+qc = QuantumCircuit(3)
+qc.h(0)
+qc.rx(0.2, 0)
+qc.h(1)
+qc.ry(0.6, 1)
+qc.h(2)
+qc.rz(0.7, 2)
+pauli_sum1 = SparsePauliOp(["XYZ", "XXX"], coeffs=[0.5, 0.2j])
+pauli_sum2 = SparsePauliOp([Pauli("XYZ"), Pauli("XXX")], coeffs=[0.5, 0.2j])
+
+estimator1 = e1()
+estimator2 = e2(run_options={"approximation": True, "shots": None})
+print("qiskit.primitives")
+print(estimator1.run(qc, pauli_sum1).result().values)
+print(estimator1.run(qc, pauli_sum2).result().values)
+print()
+print("qiskit_aer.primitives")
+print(estimator2.run(qc, pauli_sum1).result().values)
+print(estimator2.run(qc, pauli_sum2).result().values)
+```
+Output:
+```
+qiskit.primitives
+[0.+0.1262503j]
+[0.+0.1262503j]
+
+qiskit_aer.primitives
+[-0.00195312+0.13476562j]
+[0.03710938+0.13125j]
+```
+
+### What is the expected behavior?
+
+They should all be the same number, but `qiskit_aer.primitives` output are inconsistent.

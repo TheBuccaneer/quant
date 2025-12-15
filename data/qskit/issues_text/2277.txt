@@ -1,0 +1,142 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.15.1
+- **Python version**: 3.13.1
+- **Operating system**: Windows Server 2022 (Github windows-latest runner)
+
+### What is the current behavior?
+
+No wheel appears to be available, so `pip install qiskit-aer` attempts to build, but fails with error `Conan: Unknown MSVC compiler version`. Note towards the top of the logs below that MSVC 19.42.34435.0 was found by cmake.
+
+Same pip install of qiskit-aer with same Python version works on Github ubuntu-latest and macos-latest runners.
+
+```
+Building wheel for qiskit-aer (pyproject.toml) did not run successfully.
+  exit code: 1
+  
+  [109 lines of output]
+  
+  
+  --------------------------------------------------------------------------------
+  -- Trying 'Ninja (Visual Studio 17 2022 x64 v144)' generator
+  --------------------------------
+  ---------------------------
+  ----------------------
+  -----------------
+  ------------
+  -------
+  --
+  Not searching for unused variables given on the command line.
+  CMake Deprecation Warning at CMakeLists.txt:1 (cmake_minimum_required):
+    Compatibility with CMake < 3.10 will be removed from a future version of
+    CMake.
+  
+    Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+    to tell CMake that the project requires at least <min> but has been updated
+    to work with policies introduced by <max> or earlier.
+  
+  
+  -- The C compiler identification is MSVC 19.42.34435.0
+  -- Detecting C compiler ABI info
+  -- Detecting C compiler ABI info - done
+  -- Check for working C compiler: C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC/14.42.34433/bin/Hostx86/x64/cl.exe - skipped
+  -- Detecting C compile features
+  -- Detecting C compile features - done
+  -- The CXX compiler identification is MSVC 19.42.34435.0
+  -- Detecting CXX compiler ABI info
+  -- Detecting CXX compiler ABI info - done
+  -- Check for working CXX compiler: C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC/14.42.34433/bin/Hostx86/x64/cl.exe - skipped
+  -- Detecting CXX compile features
+  -- Detecting CXX compile features - done
+  -- Configuring done (12.7s)
+  -- Generating done (0.0s)
+  -- Build files have been written to: C:/Users/runneradmin/AppData/Local/Temp/pip-install-rrvg2gdi/qiskit-aer_44a0b1c903fa4569840ba096668e3d4d/_cmake_test_compile/build
+  --
+  -------
+  ------------
+  -----------------
+  ----------------------
+  ---------------------------
+  --------------------------------
+  -- Trying 'Ninja (Visual Studio 17 2022 x64 v144)' generator - success
+  --------------------------------------------------------------------------------
+  
+  Configuring Project
+    Working directory:
+      C:\Users\runneradmin\AppData\Local\Temp\pip-install-rrvg2gdi\qiskit-aer_44a0b1c903fa4569840ba096668e3d4d\_skbuild\win-amd64-3.13\cmake-build
+    Command:
+      'C:\Users\runneradmin\AppData\Local\Temp\pip-build-env-3n5ii26p\overlay\Lib\site-packages\cmake\data\bin/cmake.exe' 'C:\Users\runneradmin\AppData\Local\Temp\pip-install-rrvg2gdi\qiskit-aer_44a0b1c903fa4569840ba096668e3d4d' -G Ninja -DCMAKE_MAKE_PROGRAM:FILEPATH=ninja -D_SKBUILD_FORCE_MSVC=1930 --no-warn-unused-cli '-DCMAKE_INSTALL_PREFIX:PATH=C:\Users\runneradmin\AppData\Local\Temp\pip-install-rrvg2gdi\qiskit-aer_44a0b1c903fa4569840ba096668e3d4d\_skbuild\win-amd64-3.13\cmake-install' -DPYTHON_VERSION_STRING:STRING=3.13.1 -DSKBUILD:INTERNAL=TRUE '-DCMAKE_MODULE_PATH:PATH=C:\Users\runneradmin\AppData\Local\Temp\pip-build-env-3n5ii26p\overlay\Lib\site-packages\skbuild\resources\cmake' '-DPYTHON_EXECUTABLE:PATH=C:\hostedtoolcache\windows\Python\3.13.1\x64\python.exe' '-DPYTHON_INCLUDE_DIR:PATH=C:\hostedtoolcache\windows\Python\3.13.1\x64\Include' '-DPYTHON_LIBRARY:PATH=C:\hostedtoolcache\windows\Python\3.13.1\x64\libs\python313.lib' '-DPython_EXECUTABLE:PATH=C:\hostedtoolcache\windows\Python\3.13.1\x64\python.exe' '-DPython_ROOT_DIR:PATH=C:\hostedtoolcache\windows\Python\3.13.1\x64' -DPython_FIND_REGISTRY:STRING=NEVER '-DPython_INCLUDE_DIR:PATH=C:\hostedtoolcache\windows\Python\3.13.1\x64\Include' '-DPython_LIBRARY:PATH=C:\hostedtoolcache\windows\Python\3.13.1\x64\libs\python313.lib' '-DPython3_EXECUTABLE:PATH=C:\hostedtoolcache\windows\Python\3.13.1\x64\python.exe' '-DPython3_ROOT_DIR:PATH=C:\hostedtoolcache\windows\Python\3.13.1\x64' -DPython3_FIND_REGISTRY:STRING=NEVER '-DPython3_INCLUDE_DIR:PATH=C:\hostedtoolcache\windows\Python\3.13.1\x64\Include' '-DPython3_LIBRARY:PATH=C:\hostedtoolcache\windows\Python\3.13.1\x64\libs\python313.lib' -DCMAKE_MAKE_PROGRAM:FILEPATH=ninja -DCMAKE_BUILD_TYPE:STRING=Release
+  
+  Not searching for unused variables given on the command line.
+  CMake Deprecation Warning at CMakeLists.txt:11 (cmake_minimum_required):
+    Compatibility with CMake < 3.10 will be removed from a future version of
+    CMake.
+  
+    Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+    to tell CMake that the project requires at least <min> but has been updated
+    to work with policies introduced by <max> or earlier.
+  
+  
+  -- The CXX compiler identification is MSVC 19.42.34435.0
+  -- The C compiler identification is MSVC 19.42.34435.0
+  -- Detecting CXX compiler ABI info
+  -- Detecting CXX compiler ABI info - done
+  -- Check for working CXX compiler: C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC/14.42.34433/bin/Hostx86/x64/cl.exe - skipped
+  -- Detecting CXX compile features
+  -- Detecting CXX compile features - done
+  -- Detecting C compiler ABI info
+  -- Detecting C compiler ABI info - done
+  -- Check for working C compiler: C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC/14.42.34433/bin/Hostx86/x64/cl.exe - skipped
+  -- Detecting C compile features
+  -- Detecting C compile features - done
+  -- Performing Test flag_supported
+  -- Performing Test flag_supported - Success
+  -- Performing Test flag_supported
+  -- Performing Test flag_supported - Success
+  -- Conan: Automatic detection of conan settings from cmake
+  CMake Error at cmake/conan.cmake:61 (message):
+    Conan: Unknown MSVC compiler version [1942]
+  Call Stack (most recent call first):
+    cmake/conan.cmake:178 (_get_msvc_ide_version)
+    cmake/conan.cmake:498 (conan_cmake_settings)
+    cmake/conan_utils.cmake:63 (conan_cmake_run)
+    cmake/dependency_utils.cmake:20 (setup_conan)
+    CMakeLists.txt:179 (setup_dependencies)
+  
+  
+  -- Configuring incomplete, errors occurred!
+  Traceback (most recent call last):
+    File "C:\Users\runneradmin\AppData\Local\Temp\pip-build-env-3n5ii26p\overlay\Lib\site-packages\skbuild\setuptools_wrap.py", line 660, in setup
+      env = cmkr.configure(
+          cmake_args,
+      ...<3 lines>...
+          languages=cmake_languages,
+      )
+    File "C:\Users\runneradmin\AppData\Local\Temp\pip-build-env-3n5ii26p\overlay\Lib\site-packages\skbuild\cmaker.py", line 354, in configure
+      raise SKBuildError(msg)
+  
+  An error occurred while configuring with CMake.
+    Command:
+      'C:\Users\runneradmin\AppData\Local\Temp\pip-build-env-3n5ii26p\overlay\Lib\site-packages\cmake\data\bin/cmake.exe' 'C:\Users\runneradmin\AppData\Local\Temp\pip-install-rrvg2gdi\qiskit-aer_44a0b1c903fa4569840ba096668e3d4d' -G Ninja -DCMAKE_MAKE_PROGRAM:FILEPATH=ninja -D_SKBUILD_FORCE_MSVC=1930 --no-warn-unused-cli '-DCMAKE_INSTALL_PREFIX:PATH=C:\Users\runneradmin\AppData\Local\Temp\pip-install-rrvg2gdi\qiskit-aer_44a0b1c903fa4569840ba096668e3d4d\_skbuild\win-amd64-3.13\cmake-install' -DPYTHON_VERSION_STRING:STRING=3.13.1 -DSKBUILD:INTERNAL=TRUE '-DCMAKE_MODULE_PATH:PATH=C:\Users\runneradmin\AppData\Local\Temp\pip-build-env-3n5ii26p\overlay\Lib\site-packages\skbuild\resources\cmake' '-DPYTHON_EXECUTABLE:PATH=C:\hostedtoolcache\windows\Python\3.13.1\x64\python.exe' '-DPYTHON_INCLUDE_DIR:PATH=C:\hostedtoolcache\windows\Python\3.13.1\x64\Include' '-DPYTHON_LIBRARY:PATH=C:\hostedtoolcache\windows\Python\3.13.1\x64\libs\python[313](https://github.com/C2QA/bosonic-qiskit/actions/runs/12299085017/job/34324041476#step:4:314).lib' '-DPython_EXECUTABLE:PATH=C:\hostedtoolcache\windows\Python\3.13.1\x64\python.exe' '-DPython_ROOT_DIR:PATH=C:\hostedtoolcache\windows\Python\3.13.1\x64' -DPython_FIND_REGISTRY:STRING=NEVER '-DPython_INCLUDE_DIR:PATH=C:\hostedtoolcache\windows\Python\3.13.1\x64\Include' '-DPython_LIBRARY:PATH=C:\hostedtoolcache\windows\Python\3.13.1\x64\libs\python313.lib' '-DPython3_EXECUTABLE:PATH=C:\hostedtoolcache\windows\Python\3.13.1\x64\python.exe' '-DPython3_ROOT_DIR:PATH=C:\hostedtoolcache\windows\Python\3.13.1\x64' -DPython3_FIND_REGISTRY:STRING=NEVER '-DPython3_INCLUDE_DIR:PATH=C:\hostedtoolcache\windows\Python\3.13.1\x64\Include' '-DPython3_LIBRARY:PATH=C:\hostedtoolcache\windows\Python\3.13.1\x64\libs\python313.lib' -DCMAKE_MAKE_PROGRAM:FILEPATH=ninja -DCMAKE_BUILD_TYPE:STRING=Release
+    Source directory:
+      C:\Users\runneradmin\AppData\Local\Temp\pip-install-rrvg2gdi\qiskit-aer_44a0b1c903fa4569840ba096668e3d4d
+    Working directory:
+      C:\Users\runneradmin\AppData\Local\Temp\pip-install-rrvg2gdi\qiskit-aer_44a0b1c903fa4569840ba096668e3d4d\_skbuild\win-amd64-3.13\cmake-build
+  Please see CMake's output for more information.
+```
+
+### Steps to reproduce the problem
+
+`pip install qiskit-aer` on Github windows-latest runner using Python 3.13.
+
+### What is the expected behavior?
+
+No build failure, qiskit-aer installs
+
+### Suggested solutions
+
+Python <= 3.12 works, but we'd like to test against 3.13. 
+

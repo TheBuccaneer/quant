@@ -1,0 +1,27 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.13.0
+- **Python version**:
+- **Operating system**:
+
+### What is the current behavior?
+From Aer 0.13.0 with BackendV2, transpiler returns circuit with unnecessary gate conversions.
+
+For example H gate is transpiled to P gate, X gate is transpiled to U3 gate reported in #1977 
+
+For extended stabilizer method, converting H to P is bad strategy, because H is Clifford gate but P is not that takes very long time to simulate.
+
+### Steps to reproduce the problem
+
+
+
+### What is the expected behavior?
+For the simulator backends, gate conversion is not necessary and should be ignored even when transpiler's optimization level is higher (if some of the backend model is not applied)
+
+
+### Suggested solutions
+This can be avoided by setting some parameters in backend target class (e.g. error rates) as default parameters for simulator backends.
+

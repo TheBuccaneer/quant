@@ -1,0 +1,22 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: dev
+- **Python version**: 3.11
+- **Operating system**: `ubuntu-latest` in CI
+
+### What is the current behavior?
+
+Since Oct 17, there are 24 failing tests when Qiskit dev is installed. There is a chance this is a Qiskit issue that introduced a regression in the stable API, I didn't check it. If so, please open an issue in Qiskit/qiskit
+
+### Steps to reproduce the problem
+
+Go to https://github.com/Qiskit/qiskit-aer/actions/workflows/unit-tests-latest-qiskit.yml?page=2 and see the errors.
+
+### What is the expected behavior?
+
+Aer should work with Qiskit dev branch, ie. main
+
+

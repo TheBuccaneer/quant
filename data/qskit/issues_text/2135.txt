@@ -1,0 +1,68 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.14.1
+- **Python version**: 3.11
+- **Operating system**: Mac
+
+### What is the current behavior?
+For CPU-bound tasks, one would want to use `ProcessPoolExecutor` over `ThreadPoolExecutor`, however it seems qiskit aer can't work with `ProcessPoolExecutor` anymore.  There is some earlier discussion of this i see [here](https://github.com/Qiskit/qiskit/issues/2707) in 2019, including @nonhermitian . I would think we would be able to use either. 
+
+
+### Steps to reproduce the problem
+```py
+from qiskit import *
+from qiskit_aer import * 
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+
+qc = QuantumCircuit(2)
+qc.cx(0,1)
+qc.measure_all()
+
+# Runs ok
+executor = ProcessPoolExecutor(max_workers=1) 
+simulator  = AerSimulator(executor=executor) 
+job = simulator.run(qc)
+job.result()
+```
+
+Fails with 
+```py
+---------------------------------------------------------------------------
+_RemoteTraceback                          Traceback (most recent call last)
+_RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "/Users/zlatkominev/anaconda3/envs/qiskit10/lib/python3.11/multiprocessing/queues.py", line 244, in _feed
+    obj = _ForkingPickler.dumps(obj)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/zlatkominev/anaconda3/envs/qiskit10/lib/python3.11/multiprocessing/reduction.py", line 51, in dumps
+    cls(buf, protocol).dump(obj)
+TypeError: cannot pickle '_thread.lock' object
+"""
+
+The above exception was the direct cause of the following exception:
+
+TypeError                                 Traceback (most recent call last)
+Cell In[66], [line 13](vscode-notebook-cell:?execution_count=66&line=13)
+     [11](vscode-notebook-cell:?execution_count=66&line=11) simulator  = AerSimulator(executor=executor) 
+     [12](vscode-notebook-cell:?execution_count=66&line=12) job = simulator.run(qc)
+---> [13](vscode-notebook-cell:?execution_count=66&line=13) job.result()
+     [15](vscode-notebook-cell:?execution_count=66&line=15) # # Runs ok
+     [16](vscode-notebook-cell:?execution_count=66&line=16) # aer_estimator_ideal = AerEstimator(options={"backend_options": dict(executor=executor)})
+     [17](vscode-notebook-cell:?execution_count=66&line=17) # job = aer_estimator_ideal.run([(qc, ['IZ'])])
+   (...)
+     [26](vscode-notebook-cell:?execution_count=66&line=26) # aer_estimator_ideal = AerEstimator(options={"backend_options": dict(executor=executor)})
+     [27](vscode-notebook-cell:?execution_count=66&line=27) # aer_estimator_ideal.run([(qc, ['IZ'], [0,10])]).result()
+```
+
+
+### What is the expected behavior?
+
+Both `ProcessPoolExecutor` over `ThreadPoolExecutor` should work
+
+### Suggested solutions
+
+

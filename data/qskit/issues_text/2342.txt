@@ -1,0 +1,63 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.17
+- **Python version**: 3.13.3
+- **Operating system**: Fedora 42
+
+### What is the current behavior?
+The inverse-controlled swap gate `qiskit.circuit.library.SwapGate().control(1, ctrl_state=0)` is simulated incorrectly. It appears that an X gate is applied to the first target qubit before and after the gate (`a` in the example below).
+
+
+### Steps to reproduce the problem
+```
+import qiskit
+import qiskit_aer
+
+ctl = qiskit.QuantumRegister(1, name='ctl')
+a = qiskit.QuantumRegister(1, name='a')
+b = qiskit.QuantumRegister(1, name='b')
+
+qc = qiskit.QuantumCircuit(ctl, a, b)
+
+# Set up superposition
+qc.h(ctl)
+qc.h(a)
+
+# First do an negated controlled swap:
+#   negctrl @ swap ctl, a, b
+qc.append(qiskit.circuit.library.SwapGate().control(1, ctrl_state=0), [ctl, a, b])
+
+# Then do an negated controlled swap again, this time inverting the control with X gates:
+#   x ctl; ctrl @ swap ctl, a, b; x ctl
+qc.x(ctl)
+qc.cswap(ctl, a, b)
+qc.x(ctl)
+
+# Undo setting up superposition
+qc.h(a)
+qc.h(ctl)
+
+qc.save_statevector()
+
+sim = qiskit_aer.AerSimulator(method='statevector', precision='double', device='CPU')
+res = sim.run(qc, shots=1).result()
+sv = res.data()['statevector']
+
+print(qc)
+print(list(sv))
+assert abs(sv[0]) > 0.999
+```
+
+The issue seems to affect multiple simulation methods, not just `statevector`.
+
+
+### What is the expected behavior?
+The assertion should pass: the block labelled (2) exactly undoes the block labelled (1). 
+
+
+### Suggested solutions
+Fix the simulation so that it interprets the inverse-controlled swap gate correctly.
+

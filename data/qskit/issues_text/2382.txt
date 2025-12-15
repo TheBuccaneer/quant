@@ -1,0 +1,111 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:  `v0.17.1` (aer-gpu: `v0.15.1`)
+- **Python version**: `3.11.13`
+- **Operating system**: Ubuntu 24.04 LTS
+
+### What is the current behavior?
+
+My colleague @F-a-b-r-i-z-i-o and I are trying to use the method `tensor_network` with `AerSimulator` to simulate a 9-qubit quantum circuit. The `AerSimulator` instance is then passed to `SamplerV2`. Below is the code where I initialize the objects:"
+
+```python
+  backend = AerSimulator(
+      method="tensor_network",
+      device="GPU",
+      cuStateVec_enable=True,
+  )
+  simulator = SamplerV2.from_backend(backend, default_shots=1024)
+```
+
+The simulation of the circuit is started with the following code:
+
+```python
+  job = simulator.run(
+      [
+          (
+              circuit.decompose(),
+              params,
+          )
+      ],
+      shots=1024,
+  )
+  res = job.result()[0]
+  counts = res.data.meas.get_counts()
+```
+
+When I start executing the circuit, I get the following error:
+
+```
+[2025-10-29 18:38:35:153:754][cuTensorNet][12532][Info][cutensornetCreate] cuTensorNet version: 20901, cuTENSOR version: 20301
+[2025-10-29 18:38:35:356:060][cuTensorNet][12532][Error][cutensornetContractionOptimize] exception: std::bad_alloc
+Simulation failed and returned the following error message:
+ERROR:  [Experiment 0] ERROR TensorNet::contractor in cutensornetContractionOptimize : CUTENSORNET_STATUS_INTERNAL_ERROR
+Traceback (most recent call last):
+  File "FreezeMeDaddy/main.py", line 71, in <module>
+    main()
+  File "FreezeMeDaddy/main.py", line 28, in main
+    best = simulated_annealing(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "FreezeMeDaddy/src/simulated_annealing.py", line 73, in _simulated_annealing
+    delta_e = neighbor.fitness - current.fitness
+              ^^^^^^^^^^^^^^^^
+  File "FreezeMeDaddy/src/Individual.py", line 86, in fitness
+    self.__fitness = self.__eval()
+                     ^^^^^^^^^^^^^
+  File "FreezeMeDaddy/src/Individual.py", line 165, in __eval
+    results = run_experiments(
+              ^^^^^^^^^^^^^^^^
+  File "FreezeMeDaddy/src/VQA/vqa_tsp.py", line 393, in run_experiments
+    all_logs = __sequential_execution(instance_name=instance_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "FreezeMeDaddy/src/VQA/vqa_tsp.py", line 341, in __sequential_execution
+    logs = vqa.run(
+           ^^^^^^^^
+  File "FreezeMeDaddy/src/VQA/vqa_tsp.py", line 177, in run
+    samples.append((x_rand, self._objective_function_avg(x_rand)))
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "FreezeMeDaddy/src/VQA/vqa_tsp.py", line 124, in _objective_function_avg
+    counts = self.simulate(params, n_shots)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "FreezeMeDaddy/src/VQA/vqa_tsp.py", line 99, in simulate
+    res = job.result()[0]
+          ^^^^^^^^^^^^
+  File "FreezeMeDaddy/.venv/lib/python3.11/site-packages/qiskit/primitives/primitive_job.py", line 51, in result
+    return self._future.result()
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "~/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/concurrent/futures/_base.py", line 456, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "~/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "~/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "FreezeMeDaddy/.venv/lib/python3.11/site-packages/qiskit_aer/primitives/sampler_v2.py", line 150, in _run
+    pub_results = self._run_pubs([pubs[i] for i in lst], shots)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "Fagiolone/FreezeMeDaddy/.venv/lib/python3.11/site-packages/qiskit_aer/primitives/sampler_v2.py", line 189, in _run_pubs
+    self._postprocess_pub(
+  File "Fagiolone/FreezeMeDaddy/.venv/lib/python3.11/site-packages/qiskit_aer/primitives/sampler_v2.py", line 223, in _postprocess_pub
+    arrays[item.creg_name][index] = ary
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+ValueError: could not broadcast input array from shape (0,3) into shape (500,3)
+
+```
+
+
+### Steps to reproduce the problem
+
+1. Instantiate a `AerSimulator` object with `method="tensor_network"`
+2. Instantiate a `SamplerV2` object and pass the `AerSimulator` as backend 
+3. Define a QC with 9 qubit
+4. Try to simulate QC execution using `SamplerV2.run()` method
+
+### What is the expected behavior?
+
+The QC execution should run without errors
+
+### Suggested solutions

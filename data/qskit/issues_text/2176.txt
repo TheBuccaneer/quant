@@ -1,0 +1,135 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+- **Qiskit Aer version**: 0.15.0
+- **Python version**: 3.11
+- **Operating system**: Windows 11
+
+### What is the current behavior?
+When building qiskit-aer with CUDA support from source, I expected the following code to work.
+```
+import matplotlib.pyplot as plt
+
+from qiskit import QuantumCircuit, transpile
+from qiskit.visualization import plot_histogram
+from qiskit_aer import AerError, AerSimulator
+
+print(AerSimulator().available_devices())
+print(AerSimulator().available_methods())
+
+# Initialize a GPU backend
+# Note that the cloud instance for tutorials does not have a GPU
+# so this will raise an exception.
+try:
+    # Create circuit
+    circ = QuantumCircuit(2)
+    circ.h(0)
+    circ.cx(0, 1)
+    circ.measure_all()
+
+    simulator_gpu = AerSimulator()
+    simulator_gpu.set_options(device="GPU", method="tensor_network")
+
+    circ = transpile(circ, simulator_gpu)
+
+    # Run and get counts
+    result = simulator_gpu.run(circ).result()
+    print(result)
+    counts = result.get_counts(circ)
+    plot_histogram(counts, title='Bell-State counts')
+    plt.show()
+
+except AerError as e:
+    print(e)
+```
+
+However, it produced the following error
+```
+(qiskit-aer-gpu) C:\PycharmProjects\VQC>python gpu_test.py
+('CPU', 'GPU')
+('automatic', 'statevector', 'density_matrix', 'stabilizer', 'matrix_product_state', 'extended_stabilizer', 'unitary', 'superop', 'tensor_network')
+Traceback (most recent call last):
+  File "C:\PycharmProjects\VQC\gpu_test.py", line 26, in <module>
+    result = simulator_gpu.run(circ).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\anaconda3\envs\qiskit-aer-gpu\Lib\site-packages\qiskit_aer\jobs\utils.py", line 42, in _wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\anaconda3\envs\qiskit-aer-gpu\Lib\site-packages\qiskit_aer\jobs\aerjob.py", line 114, in result
+    return self._future.result(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\anaconda3\envs\qiskit-aer-gpu\Lib\concurrent\futures\_base.py", line 456, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\anaconda3\envs\qiskit-aer-gpu\Lib\concurrent\futures\_base.py", line 401, in __get_result
+    raise self._exception
+  File "C:\anaconda3\envs\qiskit-aer-gpu\Lib\concurrent\futures\thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\anaconda3\envs\qiskit-aer-gpu\Lib\site-packages\qiskit_aer\backends\aerbackend.py", line 475, in _execute_circuits_job
+    output = self._execute_circuits(aer_circuits, noise_model, config)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\anaconda3\envs\qiskit-aer-gpu\Lib\site-packages\qiskit_aer\backends\aer_simulator.py", line 923, in _execute_circuits
+    ret = cpp_execute_circuits(self._controller, aer_circuits, noise_model, config)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\anaconda3\envs\qiskit-aer-gpu\Lib\site-packages\qiskit_aer\backends\backend_utils.py", line 450, in cpp_execute_circuits
+    return controller.execute(aer_circuits, noise_model, config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Invalid combination of simulation method and device, "tensor_network" only supports "device=GPU"
+```
+
+
+### Steps to reproduce the problem
+1. Install CUDA Toolkit from [here](https://developer.nvidia.com/cuda-12-4-0-download-archive?target_os=Windows&target_arch=x86_64&target_version=11&target_type=exe_local) with the following options:
+    - Operating System: Windows
+    - Architecture: x86_64
+    - Version: 11
+    - Installer Type: exe (local)
+
+2. Install Visual Studio 2019 with the "Desktop development with C++" workload using the default options.
+
+3. Run `git clone https://github.com/Qiskit/qiskit-aer.git` in any non-root directory, then run `cd qiskit-aer`.
+
+4. Replace the following code in the "aer_controller_binding.hpp" file (located at the "qiskit_aer/backends/wrappers" sub-directory):
+```
+template <typename T>
+void read_value(const py::tuple &t, size_t index, optional<T> &v) {
+  if (t[index].cast<py::tuple>()[0].cast<bool>())
+    v.value(t[index].cast<py::tuple>()[1].cast<T>());
+}
+
+template <typename T>
+void read_value(const py::tuple &t, size_t index, T &v) {
+  v = t[index].cast<T>();
+}
+```
+
+with this code:
+```
+template <typename T>
+void read_value(const py::tuple &t, size_t index, optional<T> &v) {
+  if (py::bool_(t[index].cast<py::tuple>()[0]))
+    v.value(py::cast<T>(py::class_<T>(t[index].cast<py::tuple>()[1])));
+}
+
+template <typename T>
+void read_value(const py::tuple &t, size_t index, T &v) {
+  v = py::cast<T>(t[index]);
+}
+```
+
+5. Run `pip3 install build`
+6. Run `pip3 install -r requirements-dev.txt`
+7. Run `python ./setup.py bdist_wheel -- -DAER_THRUST_BACKEND=CUDA -DCMAKE_CXX_COMPILER=c++17 --`
+8. Delete the "qiskit_aer" sub-directory.
+9. Run `pip install -U -c constraints.txt -r requirements-dev.txt dist/*.whl`, replacing "*" with the actual file name.
+
+
+### What is the expected behavior?
+The original code provided at the top of this issue should run and provide me with the Bell-state counts.
+
+
+### Suggested solutions
+Unfortunately, I have not found a possible workaround yet. I will add a comment under this issue if a workaround is found.
+

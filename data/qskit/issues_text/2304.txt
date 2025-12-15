@@ -1,0 +1,36 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.15.1 (same issue for 0.14.2)
+- **Python version**: 3.11
+- **Operating system**: macOS
+
+### What is the current behavior?
+
+The `AerSimulator(method="matrix_product_state")` backend is able to execute circuits with a large number of qubits, but calling `transpile` only works for circuits with <64 qubits. This seems to be due to the backend reporting a `Target` with only 63 qubits (maybe related to #2116?). This was reported by @stefan-woerner and @ElePT.
+
+### Steps to reproduce the problem
+
+```python
+from qiskit_aer import AerSimulator
+from qiskit import qpy, QuantumCircuit, transpile
+
+backend = AerSimulator(method="matrix_product_state")
+
+circuit = QuantumCircuit(64)
+circuit.measure_all()
+
+result = backend.run(circuit).result()  # works
+
+tqc = transpile(circuit, backend)  # fails
+```
+
+### What is the expected behavior?
+
+`transpile` should work 
+
+### Suggested solutions
+
+I'm not sure if it's viable to report a `Target` of enormous size... If not maybe some variadic properties or a simulation-specific `Target` is the right solution?

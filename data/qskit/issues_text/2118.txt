@@ -1,0 +1,49 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.14.1
+- **Python version**: 3.11.8
+- **Operating system**: MacOS
+
+### What is the current behavior?
+
+Kernel dies when using ECR basis gate in MPS simulator. 
+
+
+### Steps to reproduce the problem
+
+```python
+from qiskit import QuantumCircuit, transpile
+from qiskit_aer import AerSimulator
+
+qc = QuantumCircuit(2)
+qc.h(0)
+qc.cx(0, 1)
+qc.rz(0.5, 0)
+qc.measure_all()
+
+# Works with CX
+simulator = AerSimulator(method="matrix_product_state", basis_gates=["cx", "id", "rz", "sx"])
+qct = transpile(qc, simulator)
+display(qct.draw(output='mpl'))
+job = simulator.run(qct)
+
+# Kernel dies with ECR
+simulator = AerSimulator(method="matrix_product_state", basis_gates=["ecr", "id", "rz", "sx"])
+qct = transpile(qc, simulator)
+display(qct.draw(output='mpl'))
+job = simulator.run(qct)
+```
+
+Last line causes Kernel to die every time. 
+
+
+### What is the expected behavior?
+ Kernel should not die, simulation should be able to use CX or ECR basis gate, esp. as new devices all use ECR. 
+
+
+### Suggested solutions
+Unsure 
+

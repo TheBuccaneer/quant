@@ -1,0 +1,62 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.13.0
+- **Python version**: 3.11
+- **Operating system**: Fedora Linux 38
+
+### What is the current behavior?
+
+When trying to transpile a circuit with a `Reset` instruction with an `AerSimulator` backend with a noise model, the transpiler raises an exception about "reset" not being in the equivalence library.
+
+
+### Steps to reproduce the problem
+
+```python
+import numpy as np
+from qiskit import QuantumCircuit, transpile
+from qiskit_aer import AerSimulator
+from qiskit_aer.noise import NoiseModel
+
+
+
+noise_model = NoiseModel()
+# Uncomment this line for a successful transpilation
+# noise_model = NoiseModel(basis_gates=["id", "rz", "sx", "cx", "reset"])
+noise_model.add_readout_error(np.array([[0.9, 0.1], [0.1, 0.9]]), [0])
+
+backend = AerSimulator(noise_model=noise_model)
+
+qc = QuantumCircuit(1, 1)
+qc.reset(0)
+qc.measure(0, 0)
+transpile(qc, backend)
+```
+
+### What is the expected behavior?
+
+Successful transpilation
+
+### Suggested solutions
+
+This is a consequence of the conversion to `BackendV2`. Before the conversion, `AerSimulator` had no target object so [this code](https://github.com/Qiskit/qiskit/blob/8fe47fba405b31410e9a2f2e24ab4a65fcbedc4e/qiskit/transpiler/passes/basis/unroll_custom_definitions.py#L60-L62) would execute and insert `reset` into the list of allowed instructions. Now when the noise model is set as an option, this code sets the basis gates:
+
+https://github.com/Qiskit/qiskit-aer/blob/85831ee1bfb2480d335a7fdb43633a4b9244cc9d/qiskit_aer/backends/aer_simulator.py#L901-L902
+
+which takes the intersection of the default set with the basis gates of the noise model:
+
+https://github.com/Qiskit/qiskit-aer/blob/85831ee1bfb2480d335a7fdb43633a4b9244cc9d/qiskit_aer/backends/aer_simulator.py#L945-L947
+
+which defaults to just a small set of gates:
+
+https://github.com/Qiskit/qiskit-aer/blob/85831ee1bfb2480d335a7fdb43633a4b9244cc9d/qiskit_aer/noise/noise_model.py#L197-L201
+
+These cached basis gates get used to set the backend configuration basis gates:
+
+https://github.com/Qiskit/qiskit-aer/blob/85831ee1bfb2480d335a7fdb43633a4b9244cc9d/qiskit_aer/backends/aer_simulator.py#L868
+
+The `convert_to_target()` function which `AerSimulator` uses to generate the target object [uses the configuration basis gates](https://github.com/Qiskit/qiskit/blob/e181eabc04252d332448f49399de9b72ab86b375/qiskit/providers/backend_compat.py#L178-L180) to set the instructions in the target and so "reset" is not included.
+
+I am not sure if it makes sense to add `reset` to the default set for `NoiseModel` or if some other solution is preferred. My workaround for now is to use `NoiseModel(basis_gates=["id", "rz", "sx", "cx", "reset"])`.

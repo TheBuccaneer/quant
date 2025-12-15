@@ -1,0 +1,151 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.17.2
+- **Python version**: 3.9.23
+- **Operating system**: Ubuntu x86-64
+
+### What is the current behavior?
+
+I wish to use mps_lapack in matrix_product_state simulator method to speed-up the SVD as the system scales up. 
+
+First off, the standard version from pip wheels does not allow me for multithreading, setting `mps_lapack = True` does nothing, just stuck at 1 thread. 
+
+To fix this, I built it from source in a clean conda/micromamba environment, linked **only to MKL + OpenMP** (no OpenBLAS anywhere in `ldd`). This unlocked multi-threading, however errors in the SVD library are raised.
+
+```
+0.00465063 vs 0.00465063
+Simulation failed and returned the following error message:
+ERROR:  [Experiment 0] Error: Wrong SVD calculations: A != USV*
+Traceback (most recent call last):
+  File "/home/davido/TN/python/mps.py", line 88, in <module>
+    main()
+  File "/home/davido/TN/python/mps.py", line 83, in main
+    E = energy_of_circuit(simulator, circ, H_q, n_qubits, "E")
+  File "/home/davido/TN/python/mps.py", line 22, in energy_of_circuit
+    E = simulation.result().data(0)[f"{label}"].real
+  File "/home/davido/mm/envs/aer-mkl/lib/python3.9/site-packages/qiskit/result/result.py", line 174, in data
+    return self._get_experiment(experiment).data.to_dict()
+  File "/home/davido/mm/envs/aer-mkl/lib/python3.9/site-packages/qiskit/result/result.py", line 385, in _get_experiment
+    raise QiskitError(result_status, ", ", exp_status)
+qiskit.exceptions.QiskitError: 'ERROR:  [Experiment 0] Error: Wrong SVD calculations: A != USV* ,  ERROR: Error: Wrong SVD calculations: A != USV*'
+```
+
+This only happens if I allowed lapack with this build.
+
+
+### Steps to reproduce the problem
+
+```
+from qiskit_aer import AerSimulator
+
+simulator = AerSimulator(
+    method="matrix_product_state",
+    mps_lapack=True,               # <-- if this is False, issue disappears
+    mps_omp_threads=48,
+    mps_parallel_threshold=48,
+    max_parallel_threads=48,
+)
+```
+My exact simulation is:
+```
+#!/usr/bin/env python3
+import os
+import time
+import numpy as np
+import pyscf.gto, pyscf.scf, pyscf.cc
+from pyscf import lib
+import ffsim
+from ffsim import qiskit as fqs
+from ffsim.qiskit import jordan_wigner
+from qiskit import QuantumCircuit, QuantumRegister, transpile
+from qiskit_aer import AerSimulator
+from qiskit.quantum_info import SparsePauliOp
+from pathlib import Path
+from collections.abc import Mapping, Sequence
+import functools
+from ffsim.operators import FermionOperator
+
+def energy_of_circuit(sim: AerSimulator, circ: QuantumCircuit, H: SparsePauliOp, nqubits: int, label) -> float:
+    circ.save_expectation_value(H, range(nqubits), label=f"{label}")
+    simulation = sim.run(circ, shots=1) 
+    E = simulation.result().data(0)[f"{label}"].real
+    return E
+
+def main() -> None:
+
+    start, stop, step = 0.8, 2.1, 0.1
+    bond_distance_range = np.linspace(start, stop, num=round((stop - start) / step) + 1)
+    molecule = "N2"
+    basis_set = "cc-pvdz"
+    n_reps = 1
+    n_f = 2  # frozen core
+
+    # AerSimulator (MPS) backend
+    simulator = AerSimulator(
+        method="matrix_product_state",
+        matrix_product_state_max_bond_dimension=512,
+        matrix_product_state_truncation_threshold=1e-6,
+        mps_omp_threads=48,
+        mps_parallel_threshold=48,
+        max_parallel_threads=48
+    )
+
+    E_lucj: list[float] = []
+    print("R,E", flush=True)
+    for R in bond_distance_range:
+        mol = pyscf.gto.Mole()
+        mol.build(
+            atom = [["N",(0.0,0.0,0.0)],["N",(R,0.0,0.0)]],
+            basis=basis_set,
+            symmetry="Dooh",
+            unit="Angstrom",
+            verbose=0,
+        )
+        scf = pyscf.scf.RHF(mol).run()
+        active_space = range(n_f, mol.nao_nr())
+        mol_data = ffsim.MolecularData.from_scf(scf, active_space=active_space)
+
+        norb = mol_data.norb
+        nelec = mol_data.nelec
+        n_qubits = 2 * norb
+
+        H_f = ffsim.fermion_operator(mol_data.hamiltonian)
+        H_q = jordan_wigner(H_f, norb=norb)
+
+        pairs_aa = [(p, p + 1) for p in range(norb - 1)]
+        pairs_ab = [(p, p) for p in range(0, norb, 4)]
+        interaction_pairs = (pairs_aa, pairs_ab)
+
+        frozen_list = [i for i in range(mol.nao_nr()) if i not in active_space]
+        ccsd = pyscf.cc.CCSD(scf, frozen=frozen_list).run()
+        ucj = ffsim.UCJOpSpinBalanced.from_t_amplitudes(
+            t2=ccsd.t2, t1=ccsd.t1, n_reps=n_reps, interaction_pairs=interaction_pairs
+        )
+        
+        qreg = QuantumRegister(n_qubits, "q")
+        circ = QuantumCircuit(qreg)
+        circ.append(fqs.PrepareHartreeFockJW(norb, nelec), qreg)
+        circ.append(fqs.UCJOpSpinBalancedJW(ucj), qreg)
+
+        for _ in range(5):
+            circ = circ.decompose()
+
+        E = energy_of_circuit(simulator, circ, H_q, n_qubits, "E")
+        
+        print(f"{R:.10f},{E:.10f}", flush=True)
+
+if __name__ == "__main__":
+    main()
+
+```
+
+Works perfectly fine without lapack, and works on smaller systems with lapack, like in the sto-6g basis set.
+
+### What is the expected behavior?
+It should be able to perform SVD with lapack, and it should definitely be multi-threaded when installing from pypi wheels, not requiring to build from source.
+
+### Suggested solutions
+No idea. Maybe switch LAPACK to something else or parallelize the SVD? 

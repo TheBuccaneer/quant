@@ -1,0 +1,53 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:
+- qiskit_aer-0.16.4
+- **Python version**:
+- 3.11
+- **Operating system**:
+- linux/debian
+### What is the current behavior?
+When simulating small circuits with fake_sherbrooke  we encountered the following error
+
+```
+could not broadcast input array from shape (0,16) into shape (4096,16)
+(9 additional frame(s) were not displayed)
+...
+  File "qiskit/primitives/primitive_job.py", line 51, in result
+    return self._future.result()
+  File "concurrent/futures/_base.py", line 456, in result
+    return self.__get_result()
+  File "concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "qiskit_aer/primitives/sampler_v2.py", line 150, in _run
+    pub_results = self._run_pubs([pubs[i] for i in lst], shots)
+  File "qiskit_aer/primitives/sampler_v2.py", line 189, in _run_pubs
+    self._postprocess_pub(
+  File "qiskit_aer/primitives/sampler_v2.py", line 223, in _postprocess_pub
+    arrays[item.creg_name][index] = ary
+```
+
+This happens sporadically
+### Steps to reproduce the problem
+Run the estimator with a small circuit like the below on fake_sherbrooke
+qc = QuantumCircuit(2)
+qc.h(0)
+qc.cx(0, 1)
+qc.measure_all()
+
+observables = ["ZZ", "XX"]
+
+### What is the expected behavior?
+
+Circuit should be simulated without errors
+
+
+
+### Suggested solutions
+
+

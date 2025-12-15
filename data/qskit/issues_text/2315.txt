@@ -1,0 +1,46 @@
+### Environment
+
+- **Qiskit version**:  1.3.2
+- **Python version**: 3.11.11
+- **Operating system**: MacOS
+
+
+### What is happening?
+
+When I add in a CNOT to a simple circuit with T gates and hadamards, I seem to be getting an incorrect output. Issue persists even when accuracy is increased.
+
+### How can we reproduce the issue?
+
+```
+import qiskit
+
+from qiskit_aer import AerSimulator
+
+sim = AerSimulator(method="extended_stabilizer")
+
+qc = qiskit.QuantumCircuit(2)
+
+qc.h(0)
+qc.t(0)
+qc.h(0)
+qc.cx(0, 1)
+
+qc.measure_all()
+
+opts = {
+    'extended_stabilizer_approximation_error': 0.01,
+    'extended_stabilizer_mixing_time': 1000,
+}
+
+results = sim.run(qc, shots=100, **opts).result()
+
+print(results.get_counts())
+```
+
+### What should happen?
+
+Outputs 00 and 11 with 50% probability regardless of how I increase precision. I would expect to get 11 approximately 15% of the time and 00 approximately 85% of the time.
+
+### Any suggestions?
+
+Unsure how this might be occurring as I get the correct ratio when I get rid of the CNOT. Perhaps I'm misusing the CNOT. Perhaps there is some other accuracy measure that I need to adjust that I just didn't see?

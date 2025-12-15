@@ -1,0 +1,76 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit version**: 1.1.1
+- **Qiskit Aer version**: 0.14.2
+- **Python version**: 3.11.7
+- **Operating system**: MacOS 14.5
+
+### What is the current behavior?
+
+`QuantumCircuit.reverse_bits()` affects the bit order in the state vector but not the density matrix
+
+### Steps to reproduce the problem
+
+```python
+from qiskit import QuantumCircuit
+from qiskit.circuit.random import random_circuit
+from qiskit_aer import AerSimulator
+import numpy as np
+np.set_printoptions(linewidth=100, precision=3)
+
+def get_state_vector(circuit: QuantumCircuit):
+    simulator = AerSimulator(method="statevector")
+    result = simulator.run(circuit).result()
+    return result.data(0)["statevector"]
+
+def get_density_matrix(circuit: QuantumCircuit):
+    simulator = AerSimulator(method="density_matrix")
+    result = simulator.run(circuit).result()
+    return result.data(0)["density_matrix"]
+
+num_qubits = 2
+depth = 1
+seed = 2
+
+circuit = random_circuit(num_qubits, depth, seed=seed)
+circuit.save_statevector()
+print(get_state_vector(circuit))
+
+circuit = circuit.reverse_bits()
+print(get_state_vector(circuit)) # reversing bits affects the state vector
+
+
+circuit = random_circuit(num_qubits, depth, seed=seed)
+circuit.save_density_matrix()
+print(get_density_matrix(circuit))
+
+circuit = circuit.reverse_bits()
+print(get_density_matrix(circuit)) # reversing bits does not affect the density matrix
+```
+
+Output:
+
+```text
+Statevector([0.592+0.j   , 0.   -0.806j, 0.   +0.j   , 0.   +0.j   ],
+            dims=(2, 2))
+Statevector([0.592+0.j   , 0.   +0.j   , 0.   -0.806j, 0.   +0.j   ],
+            dims=(2, 2))
+DensityMatrix([[0.35+0.j   , 0.  +0.477j, 0.  +0.j   , 0.  +0.j   ],
+               [0.  -0.477j, 0.65+0.j   , 0.  +0.j   , 0.  +0.j   ],
+               [0.  +0.j   , 0.  +0.j   , 0.  +0.j   , 0.  +0.j   ],
+               [0.  +0.j   , 0.  +0.j   , 0.  +0.j   , 0.  +0.j   ]],
+              dims=(2, 2))
+DensityMatrix([[0.35+0.j   , 0.  +0.477j, 0.  +0.j   , 0.  +0.j   ],
+               [0.  -0.477j, 0.65+0.j   , 0.  +0.j   , 0.  +0.j   ],
+               [0.  +0.j   , 0.  +0.j   , 0.  +0.j   , 0.  +0.j   ],
+               [0.  +0.j   , 0.  +0.j   , 0.  +0.j   , 0.  +0.j   ]],
+              dims=(2, 2))
+```
+
+
+### What is the expected behavior?
+
+The effect of `QuantumCircuit.reverse_bits()` on the result should be consistent (should be unified to either have no effect on the order of bits in both `Statevector` and `DensityMatrix`, or to have an effect).

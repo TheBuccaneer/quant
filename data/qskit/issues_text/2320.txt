@@ -1,0 +1,88 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+qiskit-aer 0.16.1
+Python 3.10.13
+MacOS Sonoma 14.5
+
+### What is the current behavior?
+
+It looks like the steps in `MPS::common_apply_2_qubit_gate` do not preserve left/right orthogonality across the modified bond when the bond dimension is truncated. I believe this is unexpected behavior since other methods (i.e. `MPS::expectation_value_pauli_internal`) appear to assume that the state is properly orthogonalized.
+
+### Steps to reproduce the problem
+```
+from qiskit import QuantumCircuit, transpile
+from qiskit.quantum_info import random_unitary
+from qiskit_aer import AerSimulator
+import numpy as np
+
+num_qubits = 4
+circuit = QuantumCircuit(num_qubits)
+
+circuit.unitary(random_unitary(4, seed=314), [0, 1])
+circuit.unitary(random_unitary(4, seed=273), [2, 3])
+circuit.unitary(random_unitary(4, seed=162), [1, 2])
+
+# Small bond dimension so truncation is guaranteed when third gate is applied
+bond_dimension = 2
+simulator = AerSimulator(method='matrix_product_state', matrix_product_state_max_bond_dimension=bond_dimension)
+circuit.save_matrix_product_state(label='mps')
+tcirc = transpile(circuit, simulator)
+result = simulator.run(tcirc).result()
+
+data = result.data(0)
+tensors, singular_values = data['mps']
+
+# get deviation from left-orthogonality at site i
+def evaluate_left_orthogonality(i, tensors, singular_values):
+    V = np.array([tensors[i+1][0], tensors[i+1][1]])
+    S = np.diag(singular_values[i])
+    
+    s = V.shape
+    V_ = np.zeros(s, complex)
+    for i in range(2):
+        V_[i] = S @ V[i]
+    
+    I = np.zeros((V_.shape[2], V_.shape[2]), dtype=complex)
+
+    for i in range(2):
+        I += V_[i].T @ np.conjugate(V_[i])
+    
+    return np.linalg.norm(I - np.identity(I.shape[0]))
+
+# get deviation from right-orthogonality at site i
+def evaluate_right_orthogonality(i, tensors, singular_values):
+    V = np.array([tensors[i][0], tensors[i][1]])
+    S = np.diag(singular_values[i])
+    
+    s = V.shape
+    V_ = np.zeros(s, complex)
+    for i in range(2):
+        V_[i] = V[i] @ S
+    
+    I = np.zeros((V_.shape[1], V_.shape[1]), dtype=complex)
+
+    for i in range(2):
+        I += V_[i] @ np.conjugate(V_[i].T)
+        
+    return np.linalg.norm(I - np.identity(I.shape[0]))
+
+# Middle bond will have non-zero deviation from orthogonality when bond_dimension=2
+for i in range(0, num_qubits-1):
+    d = evaluate_right_orthogonality(i, tensors, singular_values)
+    print(f"i = {i}, error = {d:.3f}")
+print()
+for i in range(num_qubits-1):
+    d = evaluate_left_orthogonality(i, tensors, singular_values)
+    print(f"i = {i}, error = {d:.3f}")
+```
+
+### What is the expected behavior?
+
+The left- and right- contracted tensors above should be the identity. This allows expectation values to be computed locally without introducing additional errors. 
+
+### Suggested solutions
+
+The `MPS` class should be returned to an orthogonal form before expectation values are computed. This can be done in a number of ways; one possible solution is to track a left-orthogonal limit, such that any site to the left of this limit is guaranteed to be left-orthogonalized. When a multi-qubit gate is applied, the left-orthogonal limit should be moved to the updated bond. Then, if an expectation value is calculated beyond the left-ortho limit, the MPS should be re-orthogonalized via singular value decompositions (and ditto for right-orthogonalization). Another option would be to immediately re-orthogonalize the entire MPS after a 2-qubit gate is applied. 

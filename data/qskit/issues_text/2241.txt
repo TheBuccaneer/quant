@@ -1,0 +1,42 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:
+- pip3 list |grep qiskit
+PennyLane-qiskit                  0.38.0
+qiskit                            1.2.2
+qiskit-aer                        0.15.1
+qiskit-algorithms                 0.3.0
+qiskit-ibm-experiment             0.4.8
+qiskit-ibm-runtime                0.29.0
+qiskit-ionq                       0.5.6
+qiskit-machine-learning           0.7.2
+
+- **Python version**:
+- Python 3.12.3
+
+- **Operating system**:
+Ubuntu 24
+
+### What is the current behavior?
+This example code
+https://qiskit.github.io/qiskit-aer/tutorials/1_aersimulator.html#Setting-a-Custom-Statevector
+throws  the error:
+AttributeError: 'QuantumCircuit' object has no attribute 'set_statevector'
+
+
+
+
+### Steps to reproduce the problem
+just run your example
+
+
+### What is the expected behavior?
+it should run
+
+
+### Suggested solutions
+
+

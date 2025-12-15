@@ -1,0 +1,38 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.12.0
+- **Python version**:
+- **Operating system**:
+
+### What is the current behavior?
+
+Aer simulates parameterized circuits without parameter binds
+
+### Steps to reproduce the problem
+
+```
+from qiskit import transpile
+from qiskit.circuit.library import EfficientSU2
+from qiskit_aer import AerSimulator
+from numpy.random import random
+from time import time
+
+simulator = AerSimulator()
+
+circ = EfficientSU2(5, reps=1)
+circ.measure_all()
+circ = transpile(circ, simulator)
+
+simulator.run([circ]).result().get_counts()
+```
+
+### What is the expected behavior?
+
+The above code raises an error.
+
+### Suggested solutions
+
+Check length of `parameter_binds`.

@@ -1,0 +1,36 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: master or 0.15
+- **Python version**: 3.12
+- **Operating system**: Linux
+
+### What is the current behavior?
+
+The code does not compile using CUDA 12.4 and gcc 12.3
+
+```
+/users/diehlpk/compile/qiskit-aer/src/simulators/statevector/transformer.hpp:249:24: internal compiler error: in maybe_undo_parenthesized_ref, at cp/semantics.c:1740
+       for (uint_t j = 0; j < N; j++)
+                      ~~^~~~~
+Please submit a full bug report,
+with preprocessed source if appropriate.
+See <https://bugs.opensuse.org/> for instructions.
+```
+
+
+### Steps to reproduce the problem
+
+`python3.12 ./setup.py bdist_wheel -- -DAER_THRUST_BACKEND=CUDA -DAER_CUDA_ARCH="9.0" -DCUQUANTUM_ROOT=/users/diehlpk/compile/cuquantum-linux-sbsa-24.08.0.5_cuda12-archive  --`
+
+
+### What is the expected behavior?
+
+The code should compile
+
+
+### Suggested solutions
+
+I played around changing the C++ code but could not solve it

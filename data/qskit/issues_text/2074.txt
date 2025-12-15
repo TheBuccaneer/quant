@@ -1,0 +1,33 @@
+### Informations
+
+- **Qiskit Aer version**: Latest dev main branch sources
+- **Python version**: Irrelevant, as I'm using it from a c++ project
+- **Operating system**: Windows 11
+
+### What is the current behavior?
+
+During some tests I do, `CostBasedFusion::aggregate_operations` crashes.
+
+### Steps to reproduce the problem
+
+I'm executing some randomly generated circuits, I'm not yet sure how to reproduce it, but I think I could point out to a reason and a solution.
+
+This is the problem code:
+```
+        double estimated_cost =
+            estimate_cost(ops, (uint_t)j,
+                          i) // fusion gate from j-th to i-th, and
+            + (j == 0 ? 0.0 : costs[j - 1 - fusion_start]); // cost of (j-1)-th
+```
+
+With debug, I end up with j being 2, fusion_start also 2 and costs size being 2. This results in a costs[-1], resulting in a crash.
+
+### What is the expected behavior?
+
+Not crashing, obviously :)
+
+### Suggested solutions
+
+Replace the `j == 0` check with `j == fusion_start`.
+
+

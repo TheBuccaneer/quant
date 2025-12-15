@@ -1,0 +1,56 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.11.2
+- **Python version**: 3.11
+- **Operating system**: MacOS
+
+### What is the current behavior?
+Under `AerBackend.run`, input circuits get their metadata edited in place.
+
+
+### Steps to reproduce the problem
+```python
+from qiskit.circuit import QuantumCircuit
+from qiskit.providers.fake_provider import FakeNairobiV2
+
+qc = QuantumCircuit(2)
+qc.metadata = {"foo": "bar"}
+
+circuits = [qc.copy() for _ in range(5)]
+
+print("METADATA BEFORE EXECUTION:")
+_ = [print(c.metadata) for c in circuits]
+
+backend = FakeNairobiV2()
+backend.run(circuits)
+
+print("METADATA AFTER EXECUTION:")
+_ = [print(c.metadata) for c in circuits]
+```
+ouputs:
+```
+METADATA BEFORE EXECUTION:
+{'foo': 'bar'}
+{'foo': 'bar'}
+{'foo': 'bar'}
+{'foo': 'bar'}
+{'foo': 'bar'}
+METADATA AFTER EXECUTION:
+{'metadata_index': 0}
+{'metadata_index': 1}
+{'metadata_index': 2}
+{'metadata_index': 3}
+{'metadata_index': 4}
+```
+_(*) This is the behavior on a freshly initialized environment. The behavior seems somewhat erratic nonetheless if the kernel in my jupyter notebook is not restarted, occasionally preserving the metadata intact._
+
+### What is the expected behavior?
+Metadata should not be edited in place (i.e. by reference).
+
+
+### Suggested solutions
+Make a copy of the metadata before handling it.
+

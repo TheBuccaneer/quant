@@ -1,0 +1,16 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: *
+- **Python version**: *
+- **Operating system**: *
+
+### What is the current behavior?
+
+Transpile with multiple circuits fails in MacOS and Windows. Details are in https://github.com/Qiskit/qiskit/issues/12425
+
+### Suggested solutions
+
+In qiskit 1.1 there is a behavior change in the transpile. In many cases (especially in MacOS and Windows) the transpiler disables multiprocessing feature because of performance reason. In the parallel transpile backend Target information is deep copied via dill, but now all pass manager run shares the internal state. So Target should not be mutated.

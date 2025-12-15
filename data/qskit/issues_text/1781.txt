@@ -1,0 +1,94 @@
+### Informations
+
+- **Qiskit AER version**: main (@0.13.0) 
+- **Operating system**: Linux
+
+### What is the current behavior?
+Aersimulator run and estimator do not work when method=extended_stabilizer
+
+
+### Steps to reproduce the problem
+This small script shows what is happening:
+
+``` python
+import numpy as np
+from qiskit_aer import AerSimulator
+from qiskit.circuit.library import EfficientSU2
+from qiskit_aer.primitives import Estimator as aer_estimator
+from qiskit import transpile
+
+backend = AerSimulator(method="extended_stabilizer")
+
+ansatz = EfficientSU2(1)
+print(ansatz.decompose())
+
+num_parameters = ansatz.num_parameters
+parameters = np.random.rand(num_parameters)
+parameters = np.reshape(parameters, (-1, num_parameters)).tolist()
+batch_size = len(parameters)
+
+# RUN
+try:
+# This does not work ...
+    _ansatz = transpile(ansatz, backend=backend, basis_gates=backend.configuration().basis_gates, optimization_level=2)
+    print(_ansatz.decompose())
+    job = backend.run(_ansatz, parameter_binds=[{k: [0] for k in _ansatz.parameters}])
+    print(job.result())
+except:
+# ... however this does
+    print(ansatz.decompose())
+    job = backend.run(ansatz.decompose(), parameter_binds=[{k: [0] for k in _ansatz.parameters}])
+    print(job.result())
+
+# PRIMITIVE
+estimator = aer_estimator(
+    backend_options=backend.options._fields,
+    transpile_options={"optimization_level": 2},
+    run_options=None,
+    approximation=False,
+    skip_transpilation=False,
+)
+
+try:
+    print("Estimator 1")
+    # This does not work ...
+    operator = "X"
+    job = estimator.run(batch_size * [ansatz], batch_size * [operator], parameters)
+    print(job.result())
+except:
+    print("Estimator 2")
+    # neither this ...
+    job = estimator.run(batch_size * [ansatz.decompose()], batch_size * [operator], parameters)
+    print(job.result())
+finally:
+    # nor this ...
+    print("Estimator 3")
+    estimator = aer_estimator(
+        backend_options=backend.options._fields,
+        transpile_options={"optimization_level": 3},
+        run_options=None,
+        approximation=False,
+        skip_transpilation=True,
+    )
+    _ansatz = transpile(ansatz, backend=backend, basis_gates=backend.configuration().basis_gates, optimization_level=2)
+    job = estimator.run(batch_size * [_ansatz], batch_size * [operator], parameters)
+    print(job.result())
+```
+
+### What is the expected behavior?
+All of the above cases should run without any problem.
+
+
+### Suggested solutions
+In all failure cases, the problem appears when trying to get the global phase of the circuit at a point when the parameters are unbound:
+
+``` shell
+File "qiskit_aer/backends/aer_compiler.py", line 376, in assemble_circuit
+    global_phase = float(circuit.global_phase)
+  File "/qiskit/circuit/parameterexpression.py", line 477, in __float__
+    raise TypeError(
+TypeError: ParameterExpression with unbound parameters ({ParameterVectorElement(θ[5]), ParameterVectorElement(θ[1]), ParameterVectorElement(θ[6]), ParameterVectorElement(θ[7]), ParameterVectorElement(θ[2]), ParameterVectorElement(θ[3]), ParameterVectorElement(θ[4]), ParameterVectorElement(θ[0])}) cannot be cast to a float.
+```
+
+So probably it needs to be done before explicitly, note however, this would not explain why with other methods is working.
+

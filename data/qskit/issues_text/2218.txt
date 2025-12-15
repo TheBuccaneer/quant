@@ -1,0 +1,117 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:0.15
+- **Python version**:3.12
+- **Operating system**:windows 10
+
+### What is the current behavior?
+Building wheels for collected packages: qiskit-aer
+  Building wheel for qiskit-aer (pyproject.toml) ... error
+  error: subprocess-exited-with-error
+
+  × Building wheel for qiskit-aer (pyproject.toml) did not run successfully.
+  │ exit code: 1
+  ╰─> [81 lines of output]
+     
+     
+      --------------------------------------------------------------------------------
+      -- Trying 'Ninja (Visual Studio 17 2022 x64 v144)' generator
+      --------------------------------
+      ---------------------------
+      ----------------------
+      -----------------
+      ------------
+      -------
+      --
+      Not searching for unused variables given on the command line.
+      -- The C compiler identification is MSVC 19.41.34120.0
+      -- Detecting C compiler ABI info
+      -- Detecting C compiler ABI info - done
+      -- Check for working C compiler: E:/NewC/vscommedition/VC/Tools/MSVC/14.41.34120/bin/Hostx86/x64/cl.exe - skipped
+      -- Detecting C compile features
+      -- Detecting C compile features - done
+      -- The CXX compiler identification is MSVC 19.41.34120.0
+      -- Detecting CXX compiler ABI info
+      -- Detecting CXX compiler ABI info - done
+      -- Check for working CXX compiler: E:/NewC/vscommedition/VC/Tools/MSVC/14.41.34120/bin/Hostx86/x64/cl.exe - skipped        
+      -- Detecting CXX compile features
+      -- Detecting CXX compile features - done
+      -- Configuring done (3.2s)
+      -- Generating done (0.1s)
+      -- Build files have been written to: E:/projects/qunatum intern/qiskit_aer_5/qiskit-aer/_cmake_test_compile/build
+      --
+      -------
+      ------------
+      -----------------
+      ----------------------
+      ---------------------------
+      --------------------------------
+      -- Trying 'Ninja (Visual Studio 17 2022 x64 v144)' generator - success
+      --------------------------------------------------------------------------------
+     
+      Configuring Project
+        Working directory:
+          E:\projects\qunatum intern\qiskit_aer_5\qiskit-aer\_skbuild\win-amd64-3.12\cmake-build
+        Command:
+          'C:\Users\WIN10\AppData\Local\Temp\pip-build-env-dnyhzr39\overlay\Lib\site-packages\cmake\data\bin/cmake.exe' 'E:\projects\qunatum intern\qiskit_aer_5\qiskit-aer' -G Ninja '-DCMAKE_MAKE_PROGRAM:FILEPATH=C:\Users\WIN10\AppData\Local\Temp\pip-build-env-dnyhzr39\overlay\Lib\site-packages\ninja\data\bin\ninja' -D_SKBUILD_FORCE_MSVC=1930 --no-warn-unused-cli '-DCMAKE_INSTALL_PREFIX:PATH=E:\projects\qunatum intern\qiskit_aer_5\qiskit-aer\_skbuild\win-amd64-3.12\cmake-install' -DPYTHON_VERSION_STRING:STRING=3.12.4 -DSKBUILD:INTERNAL=TRUE '-DCMAKE_MODULE_PATH:PATH=C:\Users\WIN10\AppData\Local\Temp\pip-build-env-dnyhzr39\overlay\Lib\site-packages\skbuild\resources\cmake' '-DPYTHON_EXECUTABLE:PATH=E:\NewC\anaconda\envs\QiskitDevEnv5\python.exe' '-DPYTHON_INCLUDE_DIR:PATH=E:\NewC\anaconda\envs\QiskitDevEnv5\Include' '-DPYTHON_LIBRARY:PATH=E:\NewC\anaconda\envs\QiskitDevEnv5\libs\python312.lib' '-DPython_EXECUTABLE:PATH=E:\NewC\anaconda\envs\QiskitDevEnv5\python.exe' '-DPython_ROOT_DIR:PATH=E:\NewC\anaconda\envs\QiskitDevEnv5' -DPython_FIND_REGISTRY:STRING=NEVER '-DPython_INCLUDE_DIR:PATH=E:\NewC\anaconda\envs\QiskitDevEnv5\Include' '-DPython_LIBRARY:PATH=E:\NewC\anaconda\envs\QiskitDevEnv5\libs\python312.lib' '-DPython3_EXECUTABLE:PATH=E:\NewC\anaconda\envs\QiskitDevEnv5\python.exe' '-DPython3_ROOT_DIR:PATH=E:\NewC\anaconda\envs\QiskitDevEnv5' -DPython3_FIND_REGISTRY:STRING=NEVER '-DPython3_INCLUDE_DIR:PATH=E:\NewC\anaconda\envs\QiskitDevEnv5\Include' '-DPython3_LIBRARY:PATH=E:\NewC\anaconda\envs\QiskitDevEnv5\libs\python312.lib' '-DCMAKE_MAKE_PROGRAM:FILEPATH=C:\Users\WIN10\AppData\Local\Temp\pip-build-env-dnyhzr39\overlay\Lib\site-packages\ninja\data\bin\ninja' -DCMAKE_BUILD_TYPE:STRING=Release
+     
+      Not searching for unused variables given on the command line.
+      -- Performing Test flag_supported
+      -- Performing Test flag_supported - Success
+      -- Performing Test flag_supported
+      -- Performing Test flag_supported - Success
+      -- Conan: Automatic detection of conan settings from cmake
+      -- Conan: Detected VS runtime: MD
+      -- Conan: Settings= -s;arch=x86_64;-s;build_type=Release;-s;compiler=Visual Studio;-s;compiler.version=17;-s;compiler.runtime=MD
+      -- Conan: checking conan executable
+      -- Conan: Found program C:/Users/WIN10/AppData/Local/Temp/pip-build-env-xp8t85v0/overlay/Scripts/conan.exe
+      -- Conan: Version found
+      -- Conan executing: C:/Users/WIN10/AppData/Local/Temp/pip-build-env-xp8t85v0/overlay/Scripts/conan.exe install . -s arch=x86_64 -s build_type=Release -s compiler=Visual Studio -s compiler.version=17 -s compiler.runtime=MD -e=CONAN_CMAKE_PROGRAM=C:/Users/WIN10/AppData/Local/Temp/pip-build-env-dnyhzr39/overlay/Lib/site-packages/cmake/data/bin/cmake.exe -g=cmake --build=missing    
+      CMake Error at cmake/conan.cmake:404 (message):
+        Conan install failed='no such file or directory'
+      Call Stack (most recent call first):
+        cmake/conan.cmake:499 (conan_cmake_install)
+        cmake/conan_utils.cmake:63 (conan_cmake_run)
+        cmake/dependency_utils.cmake:20 (setup_conan)
+        CMakeLists.txt:179 (setup_dependencies)
+     
+     
+      -- Configuring incomplete, errors occurred!
+      Traceback (most recent call last):
+        File "C:\Users\WIN10\AppData\Local\Temp\pip-build-env-dnyhzr39\overlay\Lib\site-packages\skbuild\setuptools_wrap.py", line 660, in setup
+          env = cmkr.configure(
+                ^^^^^^^^^^^^^^^
+        File "C:\Users\WIN10\AppData\Local\Temp\pip-build-env-dnyhzr39\overlay\Lib\site-packages\skbuild\cmaker.py", line 354, in configure
+          raise SKBuildError(msg)
+     
+        Command:
+          'C:\Users\WIN10\AppData\Local\Temp\pip-build-env-dnyhzr39\overlay\Lib\site-packages\cmake\data\bin/cmake.exe' 'E:\projects\qunatum intern\qiskit_aer_5\qiskit-aer' -G Ninja '-DCMAKE_MAKE_PROGRAM:FILEPATH=C:\Users\WIN10\AppData\Local\Temp\pip-build-env-dnyhzr39\overlay\Lib\site-packages\ninja\data\bin\ninja' -D_SKBUILD_FORCE_MSVC=1930 --no-warn-unused-cli '-DCMAKE_INSTALL_PREFIX:PATH=E:\projects\qunatum intern\qiskit_aer_5\qiskit-aer\_skbuild\win-amd64-3.12\cmake-install' -DPYTHON_VERSION_STRING:STRING=3.12.4 -DSKBUILD:INTERNAL=TRUE '-DCMAKE_MODULE_PATH:PATH=C:\Users\WIN10\AppData\Local\Temp\pip-build-env-dnyhzr39\overlay\Lib\site-packages\skbuild\resources\cmake' '-DPYTHON_EXECUTABLE:PATH=E:\NewC\anaconda\envs\QiskitDevEnv5\python.exe' '-DPYTHON_INCLUDE_DIR:PATH=E:\NewC\anaconda\envs\QiskitDevEnv5\Include' '-DPYTHON_LIBRARY:PATH=E:\NewC\anaconda\envs\QiskitDevEnv5\libs\python312.lib' '-DPython_EXECUTABLE:PATH=E:\NewC\anaconda\envs\QiskitDevEnv5\python.exe' '-DPython_ROOT_DIR:PATH=E:\NewC\anaconda\envs\QiskitDevEnv5' -DPython_FIND_REGISTRY:STRING=NEVER '-DPython_INCLUDE_DIR:PATH=E:\NewC\anaconda\envs\QiskitDevEnv5\Include' '-DPython_LIBRARY:PATH=E:\NewC\anaconda\envs\QiskitDevEnv5\libs\python312.lib' '-DPython3_EXECUTABLE:PATH=E:\NewC\anaconda\envs\QiskitDevEnv5\python.exe' '-DPython3_ROOT_DIR:PATH=E:\NewC\anaconda\envs\QiskitDevEnv5' -DPython3_FIND_REGISTRY:STRING=NEVER '-DPython3_INCLUDE_DIR:PATH=E:\NewC\anaconda\envs\QiskitDevEnv5\Include' '-DPython3_LIBRARY:PATH=E:\NewC\anaconda\envs\QiskitDevEnv5\libs\python312.lib' '-DCMAKE_MAKE_PROGRAM:FILEPATH=C:\Users\WIN10\AppData\Local\Temp\pip-build-env-dnyhzr39\overlay\Lib\site-packages\ninja\data\bin\ninja' -DCMAKE_BUILD_TYPE:STRING=Release
+        Source directory:
+          E:\projects\qunatum intern\qiskit_aer_5\qiskit-aer
+        Working directory:
+          E:\projects\qunatum intern\qiskit_aer_5\qiskit-aer\_skbuild\win-amd64-3.12\cmake-build
+      Please see CMake's output for more information.
+     
+      [end of output]
+
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+  ERROR: Failed building wheel for qiskit-aer
+Failed to build qiskit-aer
+ERROR: ERROR: Failed to build installable wheels for some pyproject.toml based projects (qiskit-aer)
+
+
+### Steps to reproduce the problem
+follow the guidelines at the contribution then try to build, and update conan using pip install --upgrade conan then
+make sure you download the latest version of Visual Studio 2022 and latest MSVC
+
+
+### What is the expected behavior?
+to build normally 
+
+
+### Suggested solutions
+
+

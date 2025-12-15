@@ -1,0 +1,19 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.14.1
+- **Python version**:3.10
+- **Operating system**: centos 7
+- cuda version : 11
+- Using High performance cluster
+
+### What is the current behavior?
+
+I was trying to run a qiskit code consist of 32 qubits on my NVIDIA V100 gpu which has 16 GB memory and I have 2 GPUs, so 32 Qbits circuit required 32 GB memory for single precision, simulation was succesfull but in the result.metadata mpi related information was missing, and also for each no. of processes (eg.: 2,4,8) execution time was same. didnt understood this behaviour
+
+
+
+
+

@@ -1,0 +1,62 @@
+### Informations
+
+- **Qiskit Aer version**: 0.16.2
+- **Python version**: 3.12.3
+- **Operating system**: Ubuntu in WSL on Windows 11
+
+### What is the current behavior?
+
+Controlled parameterized gates (like `CRYGate`) seem to be ignored when running the Sampler (V1 or V2).
+
+### Steps to reproduce the problem
+
+```
+from qiskit.circuit import QuantumCircuit, Parameter
+import numpy as np
+from qiskit_aer.primitives import Sampler
+from qiskit_aer.primitives import SamplerV2
+
+sampler = Sampler()
+sampler_v2 = SamplerV2()
+
+a = Parameter("a")
+qc = QuantumCircuit(2)
+qc.x(0)
+qc.cry(a, 0, 1)
+qc.x(0)
+
+# Parameter list
+params = [np.pi / 4]
+
+qc_measured = qc.measure_all(inplace=False)
+
+dist = sampler.run(qc_measured, params).result().quasi_dists
+print("Dist V1", dist)
+
+dist_v2 = sampler_v2.run([(qc_measured, params)]).result()[0].data.meas.get_counts()
+print("Dist V2", dist_v2)
+
+qc_bound = qc_measured.assign_parameters(params)
+
+dist = sampler.run(qc_bound).result().quasi_dists
+print("Dist V1", dist)
+
+dist_v2 = sampler_v2.run([(qc_bound)]).result()[0].data.meas.get_counts()
+print("Dist V2", dist_v2)
+```
+
+Result:
+```
+Dist V1 [{0: 1.0}]
+Dist V2 {'00': 1024}
+Dist V1 [{2: 0.14453125, 0: 0.85546875}]
+Dist V2 {'00': 886, '10': 138}
+```
+
+### What is the expected behavior?
+
+Both circuits, the one with assigned parameters and the one without assigned parameters, should return similar values.
+
+### Suggested solutions
+
+As shown in the example, this can be circumvented by assigning parameters before running the Sampler.

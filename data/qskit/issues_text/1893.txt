@@ -1,0 +1,30 @@
+### Environment
+
+- **Qiskit Terra version**: `qiskit-terra==0.25.0`
+- **Python version**: `Python 3.9.12`
+- **Operating system**: Linux
+
+
+### What is happening?
+
+For some extremely large (high depth, high gate count) circuits, the local QASM simulator (`qasm_simulator`) occasionally encounters a core dump:
+```
+terminate called after throwing an instance of 'std::invalid_argument'
+  what():  QubitUnitary::State::invalid instruction 'rz'.
+Aborted (core dumped)
+```
+
+
+### How can we reproduce the issue?
+
+I encountered this on a 16 qubit circuit that was extremely high depth - it contained upwards of 38000 rz gates, 16000 rx gates, and 32000 cx gates. 
+
+Oddly, it appears that the error disappears if I compile the circuit to not use any rz gates. Although, I think that the error also only occurs sometimes - I can not deterministically replicate it so far. 
+
+### What should happen?
+
+No error. No core dump. 
+
+### Any suggestions?
+
+_No response_

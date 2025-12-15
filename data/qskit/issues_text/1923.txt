@@ -1,0 +1,50 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+**NOTE**: This is a continuation of #1689. I missed the responses to that issue somehow.
+
+### Informations
+
+- **Qiskit Aer version**: 0.12.2
+- **Python version**: 3.9
+- **Operating system**: macOS
+
+### What is the current behavior?
+
+When trying to build qiskit-aer, I encounter the following error ([build log](https://dev.azure.com/conda-forge/feedstock-builds/_build/results?buildId=774088&view=logs&j=9c5ef928-2cd6-52e5-dbe6-9d173a7d951b&t=20c71c51-4b27-578b-485d-06ade2de1d00&l=1026)):
+
+```
+  [9/11] Building CXX object qiskit_aer/backends/wrappers/CMakeFiles/controller_wrappers.dir/bindings.cc.o
+  FAILED: qiskit_aer/backends/wrappers/CMakeFiles/controller_wrappers.dir/bindings.cc.o
+  /Users/runner/miniforge3/conda-bld/qiskit-aer_1693702245767/_build_env/bin/x86_64-apple-darwin13.4.0-clang++ -Dcontroller_wrappers_EXPORTS -I/Users/runner/miniforge3/conda-bld/qiskit-aer_1693702245767/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehol/include/python3.9 -I/Users/runner/miniforge3/conda-bld/qiskit-aer_1693702245767/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehol/lib/python3.9/site-packages/pybind11/include -I/Users/runner/miniforge3/conda-bld/qiskit-aer_1693702245767/work/src -F/Applications/Xcode_13.2.1.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk/System/Library/Frameworks -march=core2 -mtune=haswell -mssse3 -ftree-vectorize -fPIC -fPIE -fstack-protector-strong -O2 -pipe -stdlib=libc++ -fvisibility-inlines-hidden -fmessage-length=0 -isystem /Users/runner/miniforge3/conda-bld/qiskit-aer_1693702245767/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehol/include -fdebug-prefix-map=/Users/runner/miniforge3/conda-bld/qiskit-aer_1693702245767/work=/usr/local/src/conda/qiskit-aer-0.12.2 -fdebug-prefix-map=/Users/runner/miniforge3/conda-bld/qiskit-aer_1693702245767/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehol=/usr/local/src/conda-prefix -pedantic -Wall -Wfloat-equal -Wundef -Wcast-align -Wwrite-strings -Wmissing-declarations -Wredundant-decls -Wshadow -Woverloaded-virtual -fopenmp=libomp -mpopcnt -O3 -DNDEBUG -std=gnu++14 -arch x86_64 -isysroot /Applications/Xcode_13.2.1.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk -mmacosx-version-min=10.9 -fPIC -fvisibility=hidden   -fopenmp=libomp -MD -MT qiskit_aer/backends/wrappers/CMakeFiles/controller_wrappers.dir/bindings.cc.o -MF qiskit_aer/backends/wrappers/CMakeFiles/controller_wrappers.dir/bindings.cc.o.d -o qiskit_aer/backends/wrappers/CMakeFiles/controller_wrappers.dir/bindings.cc.o -c /Users/runner/miniforge3/conda-bld/qiskit-aer_1693702245767/work/qiskit_aer/backends/wrappers/bindings.cc
+  In file included from /Users/runner/miniforge3/conda-bld/qiskit-aer_1693702245767/work/qiskit_aer/backends/wrappers/bindings.cc:15:
+  In file included from /Users/runner/miniforge3/conda-bld/qiskit-aer_1693702245767/work/qiskit_aer/backends/wrappers/aer_controller_binding.hpp:29:
+  In file included from /Users/runner/miniforge3/conda-bld/qiskit-aer_1693702245767/work/src/framework/pybind_casts.hpp:18:
+  In file included from /Users/runner/miniforge3/conda-bld/qiskit-aer_1693702245767/work/src/framework/../simulators/stabilizer/clifford.hpp:19:
+  /Users/runner/miniforge3/conda-bld/qiskit-aer_1693702245767/work/src/framework/utils.hpp:1274:34: error: use of undeclared identifier '_SC_PHYS_PAGES'
+    size_t pages = (size_t)sysconf(_SC_PHYS_PAGES);
+                                   ^
+```
+
+### Steps to reproduce the problem
+
+In https://github.com/Qiskit/qiskit-aer/issues/1689#issuecomment-1436662424, @hhorii described an attempt to run `conda build`, but the problem was that the commited version of the recipe was used, which had already disabled the osx build since I could not get it to succeed (this is why in the output it says "Skipped: qiskit-aer from /HOME/staged-recipes/recipes/qiskit-aer defines build/skip for this configuration ({'numpy': '1.16', 'cxx_compiler': 'clangxx', 'python': '3.9', 'target_platform': 'osx-64'})."). Now that the qiskit-aer feedstock exists, I opened a [new PR](https://github.com/conda-forge/qiskit-aer-feedstock/pull/15) for testing the macOS build. I suggest retrying with the [branch for that PR](https://github.com/wshanks/qiskit-aer-feedstock/tree/osx). Note that in the recipe I pinned to Python 3.9 to reduce CI usage, so it should be tested with 3.9 or the `=3.9` on the `python` lines in `meta.yaml` should be removed.
+
+I am not familiar with using `pip install conda-build`. It might be able to reproduce the problem. I usually install `conda-build` with `conda`. If I were testing, I would do this process:
+
+1. Install conda/mamba with [mambaforge](https://github.com/conda-forge/miniforge#mambaforge).
+2. After activating the base environment, `mamba install conda-build`.
+3. Clone https://github.com/wshanks/qiskit-aer-feedstock/tree/osx
+4. In qiskit-aer-feedstock repo, run `conda build recipe`.
+
+There is also a `build-locally.py` script in the qiskit-aer-feedstock repo, so you could do `python build-locally.py osx`, but that does more setup.
+
+### What is the expected behavior?
+
+qiskit-aer builds successfully.
+
+### Suggested solutions
+
+Comparing the build environment in the qiskit-aer GitHub Actions CI with the environment from the conda-forge CI (like the one in [the build log](https://dev.azure.com/conda-forge/feedstock-builds/_build/results?buildId=630667&view=logs&jobId=e35d4f76-8ff2-5536-d795-df91e63eb9f7&j=e35d4f76-8ff2-5536-d795-df91e63eb9f7&t=fa7b4b17-b6ff-5c9c-8cfc-15f888c92310)), what stands out to me is that in the qiskit-aer CI cmake reports the compiler as `AppleClang 14.0.0.14000029` while in the conda-forge CI it is reported as `Clang 14.0.6`. My guess is that `_SC_PHYS_PAGES` is included in an Apple specific header that the conda build of clang does not include?
+
+Searching for `_SC_PHYS_PAGES` and `osx` turns up a few things, mostly related to people trying to compile Linux programs on macOS using gcc. Could qiskit-aer do something like [this](https://stackoverflow.com/questions/30511579/linux-sc-phys-pages-not-working-on-mac-os-x)?

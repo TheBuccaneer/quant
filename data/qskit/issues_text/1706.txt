@@ -1,0 +1,43 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:
+- **Python version**:
+- **Operating system**:
+
+### What is the current behavior?
+
+```python
+from qiskit_aer import Aer
+Aer.get_backend("aer_simulator").configuration().basis_gates 
+```
+does not contain `break_loop`, so the following fails:
+
+```python
+om qiskit import QuantumCircuit, transpile
+qc = QuantumCircuit(2, 1)
+
+with qc.for_loop(range(5)):
+    qc.measure(0, 0)
+    qc.break_loop().c_if(0, True)
+
+from qiskit_aer import Aer
+backend = Aer.get_backend("aer_simulator")
+
+transpile(qc, backend)
+```
+
+
+### Steps to reproduce the problem
+
+
+
+### What is the expected behavior?
+
+
+
+### Suggested solutions
+
+

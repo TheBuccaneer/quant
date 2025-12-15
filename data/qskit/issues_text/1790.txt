@@ -1,0 +1,36 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.12.0
+- **Qiskit Aer GPU version**: 0.11.2
+- **Python version**: 3.9.16
+- **Operating system**: Ubuntu 20.04.5 LTS
+
+### What is the current behavior?
+Specifying `method="tensor_network"` ( #1637 ) with `device="GPU"` produces AerError: "Invalid simulation method tensor_network" for the latest release.
+
+
+### Steps to reproduce the problem
+```
+pip install qiskit
+pip install cuquantum-python-cu11 cupy-cuda11x
+pip install qiskit-aer-gpu
+```
+This should install qiskit-aer 0.12.0, qiskit-aer-gpu 0.11.2, and cuQuantum with cuTensorNet support. Then
+```python
+from qiskit_aer import AerSimulator
+
+backend = AerSimulator(method="tensor_network", device="GPU")
+```
+
+
+
+### What is the expected behavior?
+`tensor_network` should be available for `AerSimulator` when cuTensorNet is functional.
+
+
+### Suggested solutions
+Not sure if it's related, but the latest version of qiskit-aer-gpu (available on PyPI) is 0.11.2.
+

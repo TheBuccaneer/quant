@@ -1,0 +1,34 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: Latest development version
+- **Python version**: Not relevant as qiskit aer was used from C++ when noticing it
+- **Operating system**: Windows 11
+
+### What is the current behavior?
+
+I was testing the MPS simulator with some randomly generated circuits... with some I've got crashes.
+The call chain (a part of it) of this reported crash is `AerState::apply_measure` -> `AerState::flush_ops` -> `AerState::transpile_ops` -> `Fusion::optimize_circuit` -> ... -> `DiagonalFusion::get_next_diagonal_end` -> `DiagonalFusion::is_diagonal_op`
+
+The last call is with an invalid op. The problem occurs because `DiagonalFusion::get_next_diagonal_end` gets an invalid `from` parameter.
+The `ops` list had 102 size and `next_diagonal_start` was 102.
+
+### Steps to reproduce the problem
+
+This would be probably hard to reproduce, I was generating some random circuits with more than 100 ops to test some things and maybe one in 100 circuits crashed (it's just an order of magnitude guesstimation), probably related with this (I also found this https://github.com/Qiskit/qiskit-aer/issues/2286 during the tests).
+
+### What is the expected behavior?
+
+No crash.
+
+### Suggested solutions
+
+`DiagonalFusion::get_next_diagonal_end` https://github.com/Qiskit/qiskit-aer/blob/582407a3f8ef5070c850fb4c417c53c1db1f5998/src/transpile/fusion.hpp#L578 could have this check added right at the beginning:
+
+```
+  if (ops.size() <= from)
+    return -1;
+```
+

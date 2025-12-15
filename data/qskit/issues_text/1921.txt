@@ -1,0 +1,51 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues to confirm this idea does not exist. -->
+
+### What is the expected behavior?
+It would be nice to know what is the memory required before executing a circuit using a simulator.  
+It is impossible to exactly know the memory needed when using the **extended_simulator**.  Looking at the code [extended_stabilizer_state.hpp](https://github.com/Qiskit/qiskit-aer/blob/main/src/simulators/extended_stabilizer/extended_stabilizer_state.hpp). The formula `required_chi()` used by the extended simulator does not seem to be only a function of the exact gate counts in the circuit 
+```
+size_t State::required_memory_mb(uint_t num_qubits,
+                                 const std::vectoroperations::Op &ops) const {
+  size_t required_chi = compute_chi(ops.cbegin(), ops.cend());
+  // 5 vectors of num_qubits*8byte words
+  // Plus 2*CHSimulator::scalar_t which has 3 4 byte words
+```
+
+Here is an example that shows this would help if knowing the exact memory required per circuit.  
+Consider 2 different circuits, with the following gates (**Circuit** **A** is having less gates than **Circuit** **B**) :
+
+**Circuit A** 
+OrderedDict([
+             ('u1', 272),
+             ('sx', 133),
+             ('cx', 114),
+             ('h', 36),
+             ('measure', 36)])
+
+**Circuit B**
+OrderedDict([
+             ('u1', 480),
+             ('cx', 228),
+             ('sx', 216),
+             ('h', 36),
+             ('measure', 36)])
+
+Then execute those 2 circuits on the `extended_stabilizer`
+
+```
+extended_stabilizer_simulator = AerSimulator(method='extended_stabilizer')
+# Transpile circuit for backend
+tcirc = transpile(circuit, extended_stabilizer_simulator)
+extended_stabilizer_result = extended_stabilizer_simulator.run(tcirc, shots=1).result()
+print('This succeeded?: {}'.format(extended_stabilizer_result.success))
+
+```
+
+Circuit A is failing with message 
+```
+Simulation failed and returned the following error message:
+ERROR: a circuit requires more memory than max_memory_mb.
+```
+while Circuit B works. (even though Circuit B is much bigger than Circuit A) 
+

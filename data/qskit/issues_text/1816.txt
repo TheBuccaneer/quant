@@ -1,0 +1,177 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.12
+- **Python version**: 3.8
+- **Operating system**: MacOS
+
+### What is the current behavior?
+Aer Estimator fails on complex circuits when reference Estimator works well.
+
+A similar issue is filed here: https://github.com/Qiskit/qiskit-ibm-runtime/issues/809, I think they are related, but the circuit in that issue can be executed by Aer Estimator.
+
+The Sampler primitive is subject to the same problem, I think.
+
+
+### Steps to reproduce the problem
+Run the script:
+```python
+import numpy as np
+from qiskit import QuantumCircuit
+from qiskit.circuit import ParameterVector
+from qiskit.circuit.library import ZZFeatureMap
+from qiskit.primitives import Estimator
+from qiskit.quantum_info import Pauli
+from qiskit_aer.primitives import Estimator as AerEstimator
+
+
+def create_layer(num_qubits, params):
+    qc = QuantumCircuit(num_qubits, name="L")
+
+    param_index = 0
+    for qubit1 in range(0, num_qubits - 1, 2):
+        qubit2 = qubit1 + 1
+        unit_params = params[param_index: param_index + 3]
+        add_units(qc, qubit1, qubit2, unit_params)
+        param_index += 3
+
+    qc.barrier()
+
+    for qubit1 in range(1, num_qubits - 1, 2):
+        qubit2 = qubit1 + 1
+        unit_params = params[param_index: param_index + 3]
+        add_units(qc, qubit1, qubit2, unit_params)
+        param_index += 3
+
+    qc.barrier()
+
+    return qc.to_instruction()
+
+
+def add_units(qc: QuantumCircuit, qubit1, qubit2, params):
+    u = QuantumCircuit(2, name="CXU")
+
+    u.rz(params[0], 0)
+    u.ry(params[1], 1)
+    u.ry(params[2], 1)
+
+    qc.compose(u.to_instruction(), [qubit1, qubit2], inplace=True)
+
+
+def create_ansatz(num_qubits):
+
+    qc = QuantumCircuit(num_qubits)
+
+    num_params = 9
+    params = ParameterVector("u", num_params)
+    layer = create_layer(num_qubits, params)
+
+    qc.compose(layer, list(range(num_qubits)), inplace=True)
+
+    return qc
+
+
+num_qubits = 4
+fm = ZZFeatureMap(num_qubits)
+
+ansatz = create_ansatz(num_qubits)
+
+qc = QuantumCircuit(num_qubits)
+qc.compose(fm, inplace=True)
+qc.compose(ansatz, inplace=True)
+print(qc)
+
+# qc = qc.decompose(reps=3)
+
+estimator = Estimator()
+result = estimator.run(qc, Pauli("Z" * num_qubits), np.random.random(qc.num_parameters)).result()
+print(f"Reference: {result}")
+
+estimator = AerEstimator()
+result = estimator.run(qc, Pauli("Z" * num_qubits), np.random.random(qc.num_parameters)).result()
+print(f"Aer: {result}")
+```
+
+I get a stack trace:
+```
+Simulation failed and returned the following error message:
+ERROR: Failed to load circuits: Invalid parameterized qobj: instruction param position out of range
+Traceback (most recent call last):
+  File ".../__aer_estimator_bug.py", line 73, in <module>
+    result = estimator.run(qc, Pauli("Z" * num_qubits), np.random.random(qc.num_parameters)).result()
+  File ".../python3.8/site-packages/qiskit/primitives/primitive_job.py", line 55, in result
+    return self._future.result()
+  File ".../python3.8/concurrent/futures/_base.py", line 444, in result
+    return self.__get_result()
+  File ".../python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File ".../python3.8/concurrent/futures/thread.py", line 57, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File ".../python3.8/site-packages/qiskit_aer/primitives/estimator.py", line 119, in _call
+    return self._compute(circuits, observables, parameter_values, run_options)
+  File ".../python3.8/site-packages/qiskit_aer/primitives/estimator.py", line 229, in _compute
+    expectation_values, metadata = zip(
+  File ".../python3.8/site-packages/qiskit_aer/primitives/estimator.py", line 230, in <genexpr>
+    *(post_processing.run(results) for post_processing in post_processings)
+  File ".../python3.8/site-packages/qiskit_aer/primitives/estimator.py", line 486, in run
+    result = results[c_i]
+IndexError: list index out of range
+```
+
+If the line `# qc = qc.decompose(reps=3)` is uncommented, I get a slightly different error that might shed a light on the problem. Here is this stack trace:
+
+```
+Traceback (most recent call last):
+  File ".../python3.8/site-packages/qiskit/circuit/parameterexpression.py", line 474, in __float__
+    return float(self._symbol_expr)
+  File "symengine_wrapper.pyx", line 1151, in symengine.lib.symengine_wrapper.Basic.__float__
+  File "symengine_wrapper.pyx", line 976, in symengine.lib.symengine_wrapper.Basic.n
+  File "symengine_wrapper.pyx", line 4346, in symengine.lib.symengine_wrapper.evalf
+RuntimeError: Symbol cannot be evaluated.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File ".../__aer_estimator_bug.py", line 73, in <module>
+    result = estimator.run(qc, Pauli("Z" * num_qubits), np.random.random(qc.num_parameters)).result()
+  File ".../python3.8/site-packages/qiskit/primitives/primitive_job.py", line 55, in result
+    return self._future.result()
+  File ".../python3.8/concurrent/futures/_base.py", line 444, in result
+    return self.__get_result()
+  File ".../python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File ".../python3.8/concurrent/futures/thread.py", line 57, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File ".../python3.8/site-packages/qiskit_aer/primitives/estimator.py", line 119, in _call
+    return self._compute(circuits, observables, parameter_values, run_options)
+  File ".../python3.8/site-packages/qiskit_aer/primitives/estimator.py", line 217, in _compute
+    self._backend.run(
+  File ".../python3.8/site-packages/qiskit_aer/jobs/utils.py", line 41, in _wrapper
+    return func(self, *args, **kwargs)
+  File ".../python3.8/site-packages/qiskit_aer/jobs/aerjob.py", line 106, in result
+    return self._future.result(timeout=timeout)
+  File ".../python3.8/concurrent/futures/_base.py", line 437, in result
+    return self.__get_result()
+  File ".../python3.8/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File ".../python3.8/concurrent/futures/thread.py", line 57, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File ".../python3.8/site-packages/qiskit_aer/backends/aerbackend.py", line 437, in _execute_circuits_job
+    aer_circuits = assemble_circuits(circuits)
+  File ".../python3.8/site-packages/qiskit_aer/backends/aer_compiler.py", line 552, in assemble_circuits
+    return [assemble_circuit(circuit) for circuit in circuits]
+  File ".../python3.8/site-packages/qiskit_aer/backends/aer_compiler.py", line 552, in <listcomp>
+    return [assemble_circuit(circuit) for circuit in circuits]
+  File ".../python3.8/site-packages/qiskit_aer/backends/aer_compiler.py", line 376, in assemble_circuit
+    global_phase = float(circuit.global_phase)
+  File ".../python3.8/site-packages/qiskit/circuit/parameterexpression.py", line 477, in __float__
+    raise TypeError(
+TypeError: ParameterExpression with unbound parameters ({ParameterVectorElement(u[0]), ParameterVectorElement(u[6]), ParameterVectorElement(u[3])}) cannot be cast to a float.
+```
+
+### What is the expected behavior?
+No error is risen.
+
+

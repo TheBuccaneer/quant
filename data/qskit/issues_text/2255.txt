@@ -1,0 +1,97 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.13-0.15 (tested multiple)
+- **Python version**: 3.10
+- **Operating system**: Ubuntu 20 and Windows 10 (tested multiple)
+
+### What is the current behavior?
+
+If I use `set_matrix_product_state` to set an initial state in the simulator - it's not loaded properly.
+
+The state is generated manually, and follows the correct structure used in qiskit (see also https://arxiv.org/abs/quant-ph/0301063),
+however fails to be uploaded to the simulator.
+
+### Steps to reproduce the problem
+
+In this example we prepare a Bell state, though the issue is not related to a particular state or system size.
+
+```
+import qiskit
+import qiskit_aer
+import numpy as np # ==1.26.4 in our experiment
+
+# bell state
+statevector = np.array([1.0 + 0.j, 0.0 + 0.j, 0.0 + 0.j, 1.0 + 0.j]) / np.sqrt(2)
+# also try state [1, 0, 0, 1.j] or others, it's not related to bell states
+
+simulator = qiskit_aer.AerSimulator(method="matrix_product_state")
+```
+
+Since this is a 2 qubit state, it can be very quickly decomposed to MPS via a single SVD:
+```
+gammas = []
+lambdas = []
+matrix = statevector.reshape(2, 2)
+u, s, v = np.linalg.svd(matrix, full_matrices=False)
+s /= np.linalg.norm(s)
+u = np.reshape(u, (2, 2, 1)).transpose((0, 2, 1))
+gammas.append(tuple(u))
+lambdas.append(s)
+v = np.reshape(v, (2, 2, 1)).transpose((1, 0, 2))
+gammas.append(tuple(v))
+mps_state = (gammas, lambdas)
+
+print(mps_state)
+> ([(array([[1.+0.j, 0.+0.j]]), array([[0.+0.j, 1.+0.j]])), (array([[1.+0.j],
+       [0.+0.j]]), array([[0.+0.j],
+       [1.+0.j]]))], [array([0.70710678, 0.70710678])])
+```
+One can easily verify that it's a correct MPS state, in a correct canonical form, and even matches all types and structures as qiskit uses.
+
+Now let us simply load it and get a statevector back
+```
+qc = qiskit.QuantumCircuit(2)
+qc.set_matrix_product_state(mps_state)
+qc.save_statevector(label="my_sv")
+result = simulator.run(qc).result()
+data = result.data(0)
+sv_result = data["my_sv"]
+
+print(sv_result)
+> Statevector([0.70710678+0.j, 0.        +0.j, 0.        +0.j,
+             0.        +0.j],
+            dims=(2, 2))
+```
+Note that qiskit returns the incorrect statevector, it's not even properly normalized.
+
+If we get back the MPS state instantly like this
+```
+qc = qiskit.QuantumCircuit(2)
+qc.set_matrix_product_state(mps_state)
+qc.save_matrix_product_state(label="my_mps")
+result = simulator.run(qc).result()
+data = result.data(0)
+mps_result = data["my_mps"]
+
+print(mps_result)
+> ([(array([[1.+0.j, 0.+0.j]]), array([[0.+0.j, 1.+0.j]])), (array([[1.+0.j],
+       [0.+0.j]]), array([[0.+0.j],
+       [0.+0.j]]))], [array([0.70710678, 0.70710678])])
+```
+Note the missing 1 in the last matrix in gammas.
+
+### What is the expected behavior?
+
+The state `mps_state` is a correct MPS state expected by the simulator. In the first test we expect to get a statevector for a Bell state, in the 2nd test we expect to return the same state as loaded.
+
+We also manually tested MPS conversation via qiskit like: set statevector, save matrix product state right after. We compare the obtained state to `mps_state` and see that distance between all matrices is 0. Yet if we load back the state returned by qiskit - it will load properly, while the state prepared by SVD will not. 
+
+For our purposes, however, we can not use such method of creating the MPS state via loading a full statevector to qiskit, for example, because of memory issues at large scale. Yet we see no mathematical and numerical difference between these two MPS states.
+
+
+### Suggested solutions
+
+Since we have no access to a compiled code of Aer, we can not know what is happening. Though we can point out that the issue occurs only when we work with complex valued states, e.g. in our example for the Bell state we could use type `float` everywhere, then the procedure won't produce any error -- this is why we also proposed to check state with a complex amplitude in the comment.

@@ -1,0 +1,34 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.14.1
+- **Python version**: 3.11
+- **Operating system**: Mac
+
+### What is the current behavior?
+from_backend seems to do nothing.
+
+
+### Steps to reproduce the problem
+
+Take a look at the source code here in EstimatorV2
+```python
+    def from_backend(self, backend, **options):
+        """use external backend"""
+        self._backend.from_backend(backend, **options)
+```
+The method `from_backend` is a class method. Not sure why it's called on an instance of the object and it's return is not used to replace `self._backend`.
+
+### What is the expected behavior?
+Should update self._backend
+
+
+### Suggested solutions
+Maybe the follwiong, not. sure if we need to also update other options, etc. such as in `self.options.backend_options`
+```python
+    def from_backend(self, backend, **options):
+        """use external backend"""
+        self._backend = AerSimulator.from_backend(backend, **options)
+```

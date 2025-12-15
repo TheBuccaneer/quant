@@ -1,0 +1,59 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.15.1
+- **Python version**: 3.12.7
+- **Operating system**: Fedora 40
+
+### What is the current behavior?
+On some circuits `AerSimulator(method='statevector', fusion_enable=...)` produces very different results based on the value of `fusion_enable`. I think the `fusion_enable=False` result is the correct one.
+
+
+### Steps to reproduce the problem
+```
+import qiskit
+import qiskit_aer
+import numpy
+
+q = qiskit.circuit.QuantumRegister(15)
+circuit = qiskit.QuantumCircuit(q)
+circuit.h(q[0])
+circuit.cx(q[1], q[0])
+circuit.x(q[0])
+circuit.s(q[0])
+circuit.x(q[0])
+circuit.save_statevector()
+
+sim1 = qiskit_aer.AerSimulator(method='statevector', precision='double', device='CPU', fusion_enable=True)
+sim2 = qiskit_aer.AerSimulator(method='statevector', precision='double', device='CPU', fusion_enable=False)
+
+res1 = sim1.run(circuit, shots=1).result()
+res2 = sim2.run(circuit, shots=1).result()
+
+sv1 = numpy.asarray(res1.data()['statevector'])[:4]
+# [0.7071067811865476, 0.7071067811865475j, 0, 0]
+
+sv2 = numpy.asarray(res2.data()['statevector'])[:4]
+# [0.7071067811865476j, 0.7071067811865475, 0, 0]
+
+# remove global phase
+sv1 /= sv1[0]
+sv2 /= sv2[0]
+
+print(list(sv1))
+# [1, 0.9999999999999998j, 0, 0]
+
+print(list(sv2))
+# [1, -0.9999999999999998j, 0, 0]
+```
+
+
+### What is the expected behavior?
+The difference between simulation results with and without fusion should be minimal.
+
+
+### Suggested solutions
+
+

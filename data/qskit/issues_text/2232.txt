@@ -1,0 +1,150 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.15.1 (and earlier versions too like 0.14)
+- **Python version**: Seen on 3.8 and 3.12 in Finance CI and 3.9 locally when reproducing
+- **Operating system**: Linux
+
+### What is the current behavior?
+
+Qiskit Finance Notebook tests are failing, and the failing notebook exhibits the same behavior when running locally
+
+```
+Kernel died
+
+Notebook error:
+DeadKernelError in tutorials/03_european_call_option_pricing.ipynb:
+Kernel died
+make: *** [Makefile:71: html] Error 2
+```
+
+### Steps to reproduce the problem
+
+Run the following notebook having installed Qiskit Finance
+https://github.com/qiskit-community/qiskit-finance/blob/main/docs/tutorials/03_european_call_option_pricing.ipynb
+
+It fails in cell 9 when executing this `result = ae.estimate(problem)`
+
+I also created this standalone code in a Python file when reproducing the issue locally
+
+```
+import numpy as np
+
+from qiskit import QuantumCircuit
+from qiskit_algorithms import IterativeAmplitudeEstimation, EstimationProblem
+from qiskit.circuit.library import LinearAmplitudeFunction
+from qiskit_aer.primitives import Sampler
+from qiskit.primitives import Sampler as RefSampler
+from qiskit_finance.circuit.library import LogNormalDistribution
+
+# number of qubits to represent the uncertainty
+num_uncertainty_qubits = 3
+
+# parameters for considered random distribution
+S = 2.0  # initial spot price
+vol = 0.4  # volatility of 40%
+r = 0.05  # annual interest rate of 4%
+T = 40 / 365  # 40 days to maturity
+
+# resulting parameters for log-normal distribution
+mu = (r - 0.5 * vol**2) * T + np.log(S)
+sigma = vol * np.sqrt(T)
+mean = np.exp(mu + sigma**2 / 2)
+variance = (np.exp(sigma**2) - 1) * np.exp(2 * mu + sigma**2)
+stddev = np.sqrt(variance)
+
+# lowest and highest value considered for the spot price; in between, an equidistant discretization is considered.
+low = np.maximum(0, mean - 3 * stddev)
+high = mean + 3 * stddev
+
+# construct A operator for QAE for the payoff function by
+# composing the uncertainty model and the objective
+uncertainty_model = LogNormalDistribution(
+    num_uncertainty_qubits, mu=mu, sigma=sigma**2, bounds=(low, high)
+)
+
+# set the strike price (should be within the low and the high value of the uncertainty)
+strike_price = 1.896
+
+# set the approximation scaling for the payoff function
+c_approx = 0.25
+
+# setup piecewise linear objective fcuntion
+breakpoints = [low, strike_price]
+slopes = [0, 1]
+offsets = [0, 0]
+f_min = 0
+f_max = high - strike_price
+european_call_objective = LinearAmplitudeFunction(
+    num_uncertainty_qubits,
+    slopes,
+    offsets,
+    domain=(low, high),
+    image=(f_min, f_max),
+    breakpoints=breakpoints,
+    rescaling_factor=c_approx,
+)
+
+# construct A operator for QAE for the payoff function by
+# composing the uncertainty model and the objective
+num_qubits = european_call_objective.num_qubits
+european_call = QuantumCircuit(num_qubits)
+european_call.append(uncertainty_model, range(num_uncertainty_qubits))
+european_call.append(european_call_objective, range(num_qubits))
+
+# evaluate exact expected value (normalized to the [0, 1] interval)
+x = uncertainty_model.values
+y = np.maximum(0, x - strike_price)
+exact_value = np.dot(uncertainty_model.probabilities, y)
+exact_delta = sum(uncertainty_model.probabilities[x >= strike_price])
+print("exact expected value:\t%.4f" % exact_value)
+print("exact delta value:   \t%.4f" % exact_delta)
+
+# set target precision and confidence level
+epsilon = 0.01
+alpha = 0.05
+
+problem = EstimationProblem(
+    state_preparation=european_call,
+    objective_qubits=[3],
+    post_processing=european_call_objective.post_processing,
+)
+# construct amplitude estimation
+sampler=Sampler(run_options={"shots": 100, "seed": 75})
+#sampler=RefSampler(options={"shots": 100, "seed": 75})  # This works with qiskit sampler
+ae = IterativeAmplitudeEstimation(
+    epsilon_target=epsilon, alpha=alpha, sampler=sampler
+)
+
+print("Computing result...")
+result = ae.estimate(problem)
+
+conf_int = np.array(result.confidence_interval_processed)
+print("Exact value:        \t%.4f" % exact_value)
+print("Estimated value:    \t%.4f" % (result.estimation_processed))
+print("Confidence interval:\t[%.4f, %.4f]" % tuple(conf_int))
+```
+
+Above you will see two lines
+```
+sampler=Sampler(run_options={"shots": 100, "seed": 75})
+#sampler=RefSampler(options={"shots": 100, "seed": 75})  # This works with qiskit sampler
+```
+If you uncomment the 2nd it will instead use the reference Sampler from Qiskit and when using that things work correctly. With the Aer sampler I get this
+```
+> python fin_nb_3_fail.py (above code is what is in this file for me)
+exact expected value:   0.1623
+exact delta value:      0.8098
+Computing result...
+Segmentation fault (core dumped)
+```
+
+### What is the expected behavior?
+
+It should work without segmentation failure as it did in the past
+
+### Suggested solutions
+
+

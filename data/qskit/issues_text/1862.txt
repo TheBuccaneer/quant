@@ -1,0 +1,70 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+qiskit aer is yet to be built
+python version: 3.8.16
+Operating System: Ubuntu 20.04
+
+### What is the current behavior?
+I am trying to build qiskit aer with MPI support along with GPU compatibility. I have followed instructions in CONTRIBUTING.md and ran commands:
+
+conda create -y -n QiskitDevEnv python=3
+pip install -r requirements-dev.txt
+sudo apt install build-essential
+sudo apt install libopenblas-dev
+sudo apt-get install git
+
+After running final command for build purpose along with my required options:
+
+python ./setup.py bdist_wheel -- -DAER_THRUST_BACKEND=CUDA -DAER_MPI=True
+
+I got following Error:
+
+`/usr/include/pybind11/pybind11.h(78): error: an rvalue reference cannot be bound to an lvalue
+          detected during:
+            instantiation of "pybind11::cpp_function::cpp_function(Return (Class::*)(Arg...), const Extra &...) [with Return=void, Class=AER::AerState, Arg=<const AER::reg_t &, AER::cmatrix_t &&>, Extra=<pybind11::name, pybind11::is_method, pybind11::sibling>]" 
+(1112): here
+            instantiation of "pybind11::class_<type_, options...> &pybind11::class_<type_, options...>::def(const char *, Func &&, const Extra &...) [with type_=AER::AerState, options=<>, Func=void (AER::AerState::*)(const AER::reg_t &, AER::cmatrix_t &&), Extra=<>]" 
+/home/dell/vir/qiskit-aer-main/qiskit_aer/backends/wrappers/aer_state_binding.hpp(124): here
+            instantiation of "void bind_aer_state(MODULE) [with MODULE=pybind11::module]" 
+/home/dell/vir/qiskit-aer-main/qiskit_aer/backends/wrappers/bindings.cc(28): here
+
+2 errors detected in the compilation of "/tmp/tmpxft_00002cb3_00000000-6_bindings.cpp1.ii".
+make[2]: *** [qiskit_aer/backends/wrappers/CMakeFiles/controller_wrappers.dir/build.make:76: qiskit_aer/backends/wrappers/CMakeFiles/controller_wrappers.dir/bindings.cc.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:874: qiskit_aer/backends/wrappers/CMakeFiles/controller_wrappers.dir/all] Error 2
+make: *** [Makefile:146: all] Error 2
+Traceback (most recent call last):
+  File "/home/dell/miniconda3/envs/QiskitDevEnv/lib/python3.8/site-packages/skbuild/setuptools_wrap.py", line 674, in setup
+    cmkr.make(make_args, install_target=cmake_install_target, env=env)
+  File "/home/dell/miniconda3/envs/QiskitDevEnv/lib/python3.8/site-packages/skbuild/cmaker.py", line 697, in make
+    self.make_impl(clargs=clargs, config=config, source_dir=source_dir, install_target=install_target, env=env)
+  File "/home/dell/miniconda3/envs/QiskitDevEnv/lib/python3.8/site-packages/skbuild/cmaker.py", line 742, in make_impl
+    raise SKBuildError(msg)
+
+An error occurred while building with CMake.
+  Command:
+    /home/dell/miniconda3/envs/QiskitDevEnv/lib/python3.8/site-packages/cmake/data/bin/cmake --build . --target install --config Release --
+  Install target:
+    install
+  Source directory:
+    /home/dell/vir/qiskit-aer-main
+  Working directory:
+    /home/dell/vir/qiskit-aer-main/_skbuild/linux-x86_64-3.8/cmake-build
+Please check the install target is valid and see CMake's output for more information.
+`
+
+### Steps to reproduce the problem
+
+Instructions in CONTRIBUTING.md followed with running actual setup command
+python ./setup.py bdist_wheel -- -DAER_THRUST_BACKEND=CUDA -DAER_MPI=True
+
+
+### What is the expected behavior?
+Expected behavior is successful building of qiskit with GPU and MPI support, as my goal is to simulate circuits on a HPC having GPUs. I cannot use Nvidia cuQuantum as the GPU I am using has Compute Capability less (6.1) than required (7.0+) for cuquantum appliance.
+
+
+### Suggested solutions
+Error saying some functions argument issues in pybind11, my initial guess is there some package incompatibility with rest of the code, might be version issue of pybind11 but not sure
+

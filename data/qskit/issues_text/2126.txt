@@ -1,0 +1,42 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.14.0.1
+- **Python version**: 3.9.6
+- **Operating system**: macOS Sonoma 14.4.1
+
+### What is the current behavior?
+import qiskit_aer raises an exception:
+```
+Traceback (most recent call last):
+  File ".../src/simple_program.py", line 2, in <module>
+    import qiskit_aer
+  File ".../venv/lib/python3.9/site-packages/qiskit_aer/__init__.py", line 69, in <module>
+    from qiskit_aer.aerprovider import AerProvider
+...
+File ".../venv/lib/python3.9/site-packages/qiskit/transpiler/passes/basis/basis_translator.py", line 565, in _basis_search
+    rustworkx.digraph_dijkstra_search(graph, [dummy], vis.edge_cost, vis)
+  File ".../venv/lib/python3.9/site-packages/qiskit/transpiler/passes/basis/basis_translator.py", line 509, in edge_cost
+    for instruction in edge_data.rule.qc:
+AttributeError: 'Equivalence' object has no attribute 'qc'
+```
+
+
+### Steps to reproduce the problem
+I can reproduce it in my IntelliJ-Environment, with the following short program:
+
+```
+import qiskit_aer
+
+print(f'Version qiskit_aer = {qiskit_aer.__version__}')
+
+```
+
+### What is the expected behavior?
+No error :-)
+
+
+### Suggested solutions
+:-)

@@ -1,0 +1,12 @@
+
+### Informations
+
+- **Qiskit Aer version**: 0.15.1
+- **Python version**: 3.11
+- **Operating system**: FreeBSD 14.1
+
+### What is the current behavior?
+bin/qasm_simulator isn't installed any more by cmake, but qasm_simulator.py is present in the source tree.
+Did you forget to install it?
+
+

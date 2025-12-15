@@ -1,0 +1,121 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer (latest) source bulid**:
+- **Python 3.11**:
+- **ubuntu 20.04 (GCP VM instance)**:
+- Tesla T4 driver Version: 530.41.03:
+- cuda 11.1
+
+### What is the current behavior?
+
+Trying to use cuQuantum from Qiskit, I came across this site.
+
+https://github.com/Qiskit/qiskit-aer/blob/main/CONTRIBUTING.md
+
+I found from #1609 that I need to build qiskit-aer to use cuQuantum from qiskit-aer, so I built the source and got an error when I entered the following command.
+
+```sh
+qiskit-aer$ python ./setup.py bdist_wheel -- -DAER_THRUST_BACKEND=CUDA -DCUQUANTUM_ROOT=./home/quantum_talk_ch/miniconda3/envs/test/lib/python3.11/site-packages/cuquantum -DCUTENSOR_ROOT=./miniconda3/envs/test/lib/python3.11/site-packages/cutensor -DAER_ENABLE_CUQUANTUM=true --
+```
+
+
+```
+・・・
+・・・
+-- Performing Test flag_supported - Success
+-- Conan: Automatic detection of conan settings from cmake
+-- Conan: Settings= -s;build_type=Release;-s;compiler=gcc;-s;compiler.version=9;-s;compiler.libcxx=libstdc++11
+-- Conan: checking conan executable
+-- Conan: Found program /home/quantum_talk_ch/miniconda3/envs/test/bin/conan
+-- Conan: Version found Conan version 2.0.4
+
+-- Conan executing: /home/quantum_talk_ch/miniconda3/envs/test/bin/conan install . -s build_type=Release -s compiler=gcc -s compiler.version=9 -s compiler.libcxx=libstdc++11 -e=CONAN_CMAKE_PROGRAM=/usr/bin/cmake -g=cmake --build=missing
+usage: conan install [-h] [-f FORMAT] [-v [V]] [--name NAME]
+                     [--version VERSION] [--user USER] [--channel CHANNEL]
+                     [--requires REQUIRES] [--tool-requires TOOL_REQUIRES]
+                     [-b BUILD] [-r REMOTE | -nr] [-u] [-o OPTIONS_HOST]
+                     [-o:b OPTIONS_BUILD] [-o:h OPTIONS_HOST]
+                     [-pr PROFILE_HOST] [-pr:b PROFILE_BUILD]
+                     [-pr:h PROFILE_HOST] [-s SETTINGS_HOST]
+                     [-s:b SETTINGS_BUILD] [-s:h SETTINGS_HOST] [-c CONF_HOST]
+                     [-c:b CONF_BUILD] [-c:h CONF_HOST] [-l LOCKFILE]
+                     [--lockfile-partial] [--lockfile-out LOCKFILE_OUT]
+                     [--lockfile-packages] [--lockfile-clean] [-g GENERATOR]
+                     [-of OUTPUT_FOLDER] [--deploy DEPLOY] [--build-require]
+                     [path]
+conan install: error: unrecognized arguments: -e=CONAN_CMAKE_PROGRAM=/usr/bin/cmake
+ERROR: Exiting with code: 2
+CMake Error at cmake/conan.cmake:402 (message):
+  Conan install failed='2'
+Call Stack (most recent call first):
+  cmake/conan.cmake:497 (conan_cmake_install)
+  cmake/conan_utils.cmake:71 (conan_cmake_run)
+  cmake/dependency_utils.cmake:20 (setup_conan)
+  CMakeLists.txt:144 (setup_dependencies)
+
+
+-- Configuring incomplete, errors occurred!
+See also "/home/quantum_talk_ch/qiskit-aer/_skbuild/linux-x86_64-3.10/cmake-build/CMakeFiles/CMakeOutput.log".
+Traceback (most recent call last):
+  File "/home/quantum_talk_ch/miniconda3/lib/python3.10/site-packages/skbuild/setuptools_wrap.py", line 666, in setup
+    env = cmkr.configure(
+  File "/home/quantum_talk_ch/miniconda3/lib/python3.10/site-packages/skbuild/cmaker.py", line 356, in configure
+    raise SKBuildError(msg)
+
+An error occurred while configuring with CMake.
+・・・
+・・・
+```
+
+I seem to be getting some errors regarding Conan, but I don't know much about Cmake and can't solve them. What could be the cause and how can it be resolved?
+
+### Steps to reproduce the problem
+
+On GCP VM instance.
+
+1. Install cuQuantum from the steps mentioned in the [documentation](https://docs.nvidia.com/cuda/cuquantum/python/README.html).
+2. build qiskit-aer
+
+```
+$ git clone https://github.com/Qiskit/qiskit-aer
+```
+
+and following documentation
+
+```
+$ cd qiskit-aer
+$ pip install -r requirements-dev.txt
+$ sudo apt install build-essential
+$ sudo apt install libopenblas-dev
+```
+
+then run setup.py.
+
+```
+qiskit-aer$ python ./setup.py bdist_wheel -- -DAER_THRUST_BACKEND=CUDA -DCUQUANTUM_ROOT=./home/quantum_talk_ch/miniconda3/envs/test/lib/python3.11/site-packages/cuquantum -DCUTENSOR_ROOT=./miniconda3/envs/test/lib/python3.11/site-packages/cutensor -DAER_ENABLE_CUQUANTUM=true --
+```
+
+### What is the expected behavior?
+
+The build of qiskit-aer is completed and cuquanutum can be used from qiskit-aer.
+
+Now, if we flag cuStateVec_enable=True in AerSimulator() as in #1609,
+
+```
+$ python test.py 
+
+Simulation failed and returned the following error message:
+ERROR: Failed to load qobj: Simulation device "GPU" does not support cuStateVec on this system
+Traceback (most recent call last):
+```
+
+and this error↑ occurs.
+
+### Suggested solutions
+
+
+
+

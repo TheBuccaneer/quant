@@ -1,0 +1,96 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.16.1
+- **Qiskit version**: 1.4.0
+- **Python version**: 3.11.7
+- **Operating system**: MacOS
+
+### What is the current behavior?
+The `qiskit.QuantumCircuit.unitary()` method produces the incorrect statevector result. It seems to "remember" unitary gates that were applied to other `qiskit.QuantumCircuit` objects.
+
+This is likely related to #2271.
+
+### Steps to reproduce the problem
+```
+import qiskit
+import qiskit_aer
+import numpy as np
+import functools as ft
+
+qubits = 2
+anc = 1
+
+up = [1, 0]
+down = [0, 1]
+
+X = [[0, 1], [1, 0]]
+all_X = ft.reduce(np.kron, [X for _ in range(qubits + anc)])
+ops = [all_X] * 5 # This operator applies Pauli X on every qubit
+
+# Define the (|110> + |101>)/sqrt(2) state
+state = (ft.reduce(np.kron, [down, down, up]) + ft.reduce(np.kron, [down, up, down])) / np.sqrt(2)
+   
+for op in ops:
+   # Setup circuit
+   qc = qiskit.QuantumCircuit(qubits + anc)
+   print("id: ", id(qc)) # To check that each initialized QuantumCircuit object is unique
+   qc.initialize(state, [0, 1, 2]) # Method resets all qubits before initializing state
+
+   qc.unitary(op, [0, 1, 2])
+   qc.save_statevector()
+
+   # Transpile circuit
+   backend = qiskit_aer.AerSimulator()
+   new_qc = qiskit.transpile(qc, backend)
+   
+   # Obtain state
+   state = backend.run(new_qc).result().get_statevector()
+   print("state: ", state.draw('latex_source'))
+   
+   print()
+--------------------------------------------------------------------------------
+# >id:  4811551696
+# >state:  \frac{\sqrt{2}}{2} |001\rangle+\frac{\sqrt{2}}{2} |010\rangle
+
+# >id:  4817326928
+# >state:  \frac{\sqrt{2}}{2} |101\rangle+\frac{\sqrt{2}}{2} |110\rangle
+
+# >id:  4811517520
+# >state:  \frac{\sqrt{2}}{2} |001\rangle+\frac{\sqrt{2}}{2} |010\rangle
+
+# >id:  4817498064
+# >state:  \frac{\sqrt{2}}{2} |101\rangle+\frac{\sqrt{2}}{2} |110\rangle
+
+# >id:  4806618640
+# >state:  \frac{\sqrt{2}}{2} |001\rangle+\frac{\sqrt{2}}{2} |010\rangle
+```
+
+
+### What is the expected behavior?
+With the starting state `(|110> + |101>)/sqrt(2)`, applying X Pauli on every qubit should get us the `(|001> + |010>)/sqrt(2)` state every time. However, the output indicates to us that despite invoking a unique instance of `QuantumCircuit` on each loop, the circuit "remembers" the unitary operators applied on the previous loop, resulting in an output that alternates between applying "all_X" on the state vs applying "all_X all_X = I" on the state.
+
+Another example of this anomalous behaviour can be demonstrated with the following set of operators:
+```
+...
+X = [[0, 1], [1, 0]]
+Y = [[0, -1j], [1j, 0]]
+all_X = ft.reduce(np.kron, [X for _ in range(qubits + anc)])
+all_Y = ft.reduce(np.kron, [Y for _ in range(qubits + anc)])
+ops = [all_Y, all_X]
+...
+--------------------------------------------------------------------------------
+# >id:  4874108368
+# >state:  - \frac{\sqrt{2} i}{2} |001\rangle- \frac{\sqrt{2} i}{2} |010\rangle
+
+# >id:  4817192592
+# >state:  - \frac{\sqrt{2} i}{2} |101\rangle- \frac{\sqrt{2} i}{2} |110\rangle
+...
+```
+On the second loop, the output state is supposed to be `(|001> + |010>)/sqrt(2)`. Instead, we get `-i (|101> + |110>)/sqrt(2)`, which is obtained by applying all_X onto the output state from loop 1.
+
+
+### Suggested solutions
+None

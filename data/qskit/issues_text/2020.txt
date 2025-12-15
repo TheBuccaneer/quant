@@ -1,0 +1,53 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.13.1
+- **Python version**:
+- **Operating system**:
+
+### What is the current behavior?
+
+```
+qr = QuantumRegister(1)
+cr = ClassicalRegister(1)
+qc = QuantumCircuit(qr, cr)
+
+qc.measure(0, 0)
+cond = expr.bit_and(cr[0], cr[0])
+with qc.if_test(cond):
+  qc.x(0)
+qc.measure(0, 0)
+
+from qiskit_aer import AerSimulator
+
+simulator = AerSimulator()
+simulator.run(qc).result().get_counts()
+```
+
+binary operations should work for bool values. However, current Aer supports only uint values. The above code fails with the following exception:
+
+```
+File qiskit_aer/backends/aer_compiler.py:772, in _AssembleExprImpl.visit_binary(self, node)
+    771 def visit_binary(self, node, /):
+--> 772     return AerBinaryExpr(
+    773         _assemble_binary_operator(node.op),
+    774         node.left.accept(self),
+    775         node.right.accept(self),
+    776     )
+
+ValueError: bit operation allows only for uint expressions.
+```
+
+### Steps to reproduce the problem
+
+Run the above code.
+
+### What is the expected behavior?
+
+no error.
+
+### Suggested solutions
+
+Add support of bool type for binary operations.

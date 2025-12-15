@@ -1,0 +1,135 @@
+### Informations
+
+- **Qiskit Aer version**: 0.17.1
+- **Python version**: 3.12.9
+- **Operating system**: MacOS Sequoia 15.6
+
+### What is the current behavior?
+I'm not sure why, but it seems that the `mps_log_data` metadata stores the information from previous results, even though each time the circuit, simulator, result objects are freshly initialised.
+
+Example 1: I create two separate circuits, with two separate sets of IDs for each `circ`, `simulator`, and `res` object involved in the computation. I simulate them separately, yet the MPS log information of circuit 1 appears in the log information of circuit 2, even though we're dealing with two separate sets of objects. Somehow circuit 2 contains the log of both `cz` gate and `cx` gate even though it was not defined with the `cx`.
+```
+## QISKIT BUG CIRCUIT? ##
+import qiskit_aer
+import qiskit
+
+# Define two circuits
+circ1 = qiskit.QuantumCircuit(3)
+circ1.h(0)
+circ1.cx(0, 2)
+circ1.measure_all()
+print(f"Circuit ID: {id(circ1)}")
+
+simulator1 = qiskit_aer.AerSimulator(method='matrix_product_state', matrix_product_state_max_bond_dimension=2**10, mps_log_data=True, mps_lapack = False)
+print(f"Simulator ID: {id(simulator1)}")
+res1 = simulator1.run(circ1, shots=1).result()
+print(f"Result ID: {id(res1)}")
+
+print(f"Counts: {res1.get_counts()}")
+print(f"MPS log data: {res1.results[0].metadata['MPS_log_data']}")
+print(f"Length of log string: {len(res1.results[0].metadata['MPS_log_data'])}")
+print()
+
+
+circ2 = qiskit.QuantumCircuit(3)
+circ2.h(0)
+circ2.cz(0, 2)
+circ2.measure_all()
+print(f"Circuit ID: {id(circ2)}")
+
+simulator2 = qiskit_aer.AerSimulator(method='matrix_product_state', matrix_product_state_max_bond_dimension=2**10, mps_log_data=True, mps_lapack = False)
+print(f"Simulator ID: {id(simulator2)}")
+res2 = simulator2.run(circ2, shots=1).result()
+print(f"Result ID: {id(res2)}")
+
+print(f"Counts: {res2.get_counts()}")
+print(f"MPS log data: {res2.results[0].metadata['MPS_log_data']}")
+print(f"Length of log string: {len(res2.results[0].metadata['MPS_log_data'])}")
+print()
+===========================================================================
+Circuit ID: 4369141344
+Simulator ID: 4576459328
+Result ID: 4578347200
+Counts: {'000': 1}
+MPS log data: {internal_swap on qubits 2,1, BD=[1 1],  I0:cx on qubits 0,2, BD=[2 1],  }
+Length of log string: 74
+
+Circuit ID: 4578348688
+Simulator ID: 4369906720
+Result ID: 4578622016
+Counts: {'001': 1}
+MPS log data: {internal_swap on qubits 2,1, BD=[1 1],  I0:cx on qubits 0,2, BD=[2 1],  internal_swap on qubits 2,1, BD=[1 1],  I1:cz on qubits 0,2, BD=[1 1],  }
+Length of log string: 146
+```
+
+Example2: The object IDs of `circ`, `simulator`, and `res` are different each time. And the circuit is simple enough that we know it should only involve two operations — an internal swap, followed by the 2q `cx` gate. However, it seems that each time the results are simulated, the MPS log data gets longer and longer.
+```
+## QISKIT BUG CIRCUIT? ##
+import qiskit_aer
+import qiskit
+
+for _ in range(5):
+    # Define arbitrary circuit
+    circ = qiskit.QuantumCircuit(3)
+    circ.h(0)
+    circ.cx(0, 2)
+    circ.measure_all()
+    print(f"Circuit ID: {id(circ)}")
+
+    simulator = qiskit_aer.AerSimulator(method='matrix_product_state', matrix_product_state_max_bond_dimension=2**10, mps_log_data=True, mps_lapack = False)
+    print(f"Simulator ID: {id(simulator)}")
+    res = simulator.run(circ, shots=1).result()
+    print(f"Result ID: {id(res)}")
+    
+    print(f"Counts: {res.get_counts()}")
+    print(f"MPS log data: {res.results[0].metadata['MPS_log_data']}")
+    print(f"Length of log string: {len(res.results[0].metadata['MPS_log_data'])}")
+    print()
+===========================================================================
+Circuit ID: 4697661344
+Simulator ID: 4394192672
+Result ID: 4533600912
+Counts: {'000': 1}
+MPS log data: {internal_swap on qubits 2,1, BD=[1 1],  I0:cx on qubits 0,2, BD=[2 1],  }
+Length of log string: 74
+
+Circuit ID: 4394192720
+Simulator ID: 4697848816
+Result ID: 4698142048
+Counts: {'000': 1}
+MPS log data: {internal_swap on qubits 2,1, BD=[1 1],  I0:cx on qubits 0,2, BD=[2 1],  internal_swap on qubits 2,1, BD=[1 1],  I1:cx on qubits 0,2, BD=[2 1],  }
+Length of log string: 146
+
+Circuit ID: 4394192672
+Simulator ID: 4473157200
+Result ID: 4698142288
+Counts: {'101': 1}
+MPS log data: {internal_swap on qubits 2,1, BD=[1 1],  I0:cx on qubits 0,2, BD=[2 1],  internal_swap on qubits 2,1, BD=[1 1],  I1:cx on qubits 0,2, BD=[2 1],  internal_swap on qubits 2,1, BD=[1 1],  I2:cx on qubits 0,2, BD=[2 1],  }
+Length of log string: 218
+
+Circuit ID: 4562328544
+Simulator ID: 4697848816
+Result ID: 4698142528
+Counts: {'101': 1}
+MPS log data: {internal_swap on qubits 2,1, BD=[1 1],  I0:cx on qubits 0,2, BD=[2 1],  internal_swap on qubits 2,1, BD=[1 1],  I1:cx on qubits 0,2, BD=[2 1],  internal_swap on qubits 2,1, BD=[1 1],  I2:cx on qubits 0,2, BD=[2 1],  internal_swap on qubits 2,1, BD=[1 1],  I3:cx on qubits 0,2, BD=[2 1],  }
+Length of log string: 290
+
+Circuit ID: 4697666672
+Simulator ID: 4698141856
+Result ID: 4698142768
+Counts: {'101': 1}
+MPS log data: {internal_swap on qubits 2,1, BD=[1 1],  I0:cx on qubits 0,2, BD=[2 1],  internal_swap on qubits 2,1, BD=[1 1],  I1:cx on qubits 0,2, BD=[2 1],  internal_swap on qubits 2,1, BD=[1 1],  I2:cx on qubits 0,2, BD=[2 1],  internal_swap on qubits 2,1, BD=[1 1],  I3:cx on qubits 0,2, BD=[2 1],  internal_swap on qubits 2,1, BD=[1 1],  I4:cx on qubits 0,2, BD=[2 1],  }
+Length of log string: 362
+
+```
+
+
+### Steps to reproduce the problem
+See above. 
+
+### What is the expected behavior?
+I am hoping to be able to extract the MPS log information of just the single run. Would the team be able to advise on what I should be doing instead?
+
+### Suggested solutions
+It seems that the MPS log information is somehow stored within the class and persists across separate instances. Either that, or I'm using qiskit-aer wrong. 
+

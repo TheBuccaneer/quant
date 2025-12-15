@@ -1,0 +1,20 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:　0.12.2
+- **Python version**:
+- **Operating system**:
+
+### What is the current behavior?
+
+Extended stabilizer uses same random generator among multiple threads without considering thread safety in the parallel section as below
+
+https://github.com/Qiskit/qiskit-aer/blob/5e77fc83dde114aba7e4f27d6d0247d6081bbb58/src/simulators/extended_stabilizer/extended_stabilizer_state.hpp#L462-L489
+
+I think we can not reproduce the same results with the same random seed
+
+### Suggested solutions
+
+To get the consistent resault with the same random seed, we have to allocate random generators for each states

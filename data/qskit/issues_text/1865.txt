@@ -1,0 +1,45 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.12.0 (local) & 0.12.1 (Quantum Lab)
+- **Python version**: 3.10.4 (local)
+- **Operating system**: Win11
+
+### What is the current behavior?
+
+Wrong outcome using `c_if` instead of `if_test` + `reset` on simulators. Correct outcome on real systems
+
+### Steps to reproduce the problem
+
+Executing this circuit :
+```python
+qr = QuantumRegister(2,'q')
+q0_value = ClassicalRegister(1,"q0_value")
+q1_value = ClassicalRegister(1,"q1_value")
+qc = QuantumCircuit(qr,q0_value,q1_value)
+
+qc.h(0)
+qc.cx(0,1)
+qc.measure(1,q1_value)
+qc.barrier()
+qc.reset(0).c_if(q1_value,0)
+#with qc.if_test((q1_value,0)):
+#    qc.reset(0)
+qc.barrier()
+qc.measure(0,q0_value)
+```
+
+leads to a wrong outcome (for example {'0 0': 1015, '1 0': 1016})
+
+### What is the expected behavior?
+
+Results should be like {'0 0': 1015, '1 1': 1016}.  
+
+The correct answer is obtained if one use if_test + reset (see code in comments above)
+The correct answer is obtained using c_if or if_test + reset on real systems
+
+
+
+

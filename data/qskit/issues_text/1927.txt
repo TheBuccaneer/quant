@@ -1,0 +1,31 @@
+### Information
+
+- **Qiskit Aer version**: `qiskit-aer==0.12.2`
+- **Python version**: Python 3.9.17
+- **Operating system**: macOS
+
+### What is the current behavior?
+
+Some circuit types, regardless of their size return the following error:
+```
+qiskit.exceptions.QiskitError: 'ERROR: a circuit requires more memory than max_memory_mb. ,  EMPTY'
+```
+
+When executed with the the `extended_stabilizer` simulator option. 
+
+This suggests that this error is not actually being thrown because of the size of the circuit, since these circuits can be simulated very easily on for example the `qasm_simulator`. 
+
+### Steps to reproduce the problem
+[ex.txt](https://github.com/Qiskit/qiskit-aer/files/12529372/ex.txt) is a circuit with 5 qubits which throws this error. 
+
+```
+from qiskit.providers.aer import AerSimulator
+from qiskit import qasm3
+simulator = AerSimulator(method='extended_stabilizer')
+
+qc = qasm3.load("ex.txt")
+simulator.run(qc, shots=10).result().get_counts()
+```
+
+Note that issue #1921 also mentions this error; this error occurs for circuits without classical control instructions. This qasm file gives an example circuit (with 36 active qubits) where this happens: [example.txt](https://github.com/Qiskit/qiskit-aer/files/12529423/example.txt)
+

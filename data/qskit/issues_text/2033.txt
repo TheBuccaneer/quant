@@ -1,0 +1,81 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.13.0-0.13.2
+- **Python version**: 3.11
+- **Operating system**: MacOS
+
+### What is the current behavior?
+
+Trying to use qiskit pass managers with a user provided coupling map leads to transpiler errors when using Aer 0.13.
+
+### Steps to reproduce the problem
+
+```python
+from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+from qiskit.transpiler import CouplingMap
+from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
+
+qc = QuantumCircuit(3)
+qc.cx(0, 1)
+
+pm = generate_preset_pass_manager(2, backend=AerSimulator(), coupling_map=CouplingMap([[0, 2], [1, 2]]))
+pm.run([qc])
+```
+
+Raises an exception:
+```python
+---------------------------------------------------------------------------
+TranspilerError                           Traceback (most recent call last)
+File ~/mambaforge/envs/qiskit45/lib/python3.11/site-packages/qiskit/transpiler/runningpassmanager.py:161, in _replace_error.<locals>.wrapper(*meth_args, **meth_kwargs)
+    160 try:
+--> 161     return meth(*meth_args, **meth_kwargs)
+    162 except PassManagerError as ex:
+
+File ~/mambaforge/envs/qiskit45/lib/python3.11/site-packages/qiskit/passmanager/base_tasks.py:218, in BaseController.execute(self, passmanager_ir, state, callback)
+    217 while True:
+--> 218     passmanager_ir, state = next_task.execute(
+    219         passmanager_ir=passmanager_ir,
+    220         state=state,
+    221         callback=callback,
+    222     )
+    223     try:
+    224         # Sending the object through the generator implies the custom controllers
+    225         # can always rely on the latest data to choose the next task to run.
+
+File ~/mambaforge/envs/qiskit45/lib/python3.11/site-packages/qiskit/passmanager/base_tasks.py:218, in BaseController.execute(self, passmanager_ir, state, callback)
+    217 while True:
+--> 218     passmanager_ir, state = next_task.execute(
+    219         passmanager_ir=passmanager_ir,
+    220         state=state,
+    221         callback=callback,
+    222     )
+    223     try:
+    224         # Sending the object through the generator implies the custom controllers
+    225         # can always rely on the latest data to choose the next task to run.
+
+File ~/mambaforge/envs/qiskit45/lib/python3.11/site-packages/qiskit/passmanager/base_tasks.py:98, in GenericPass.execute(self, passmanager_ir, state, callback)
+     97 if self not in state.workflow_status.completed_passes:
+---> 98     ret = self.run(passmanager_ir)
+     99     run_state = RunState.SUCCESS
+
+File ~/mambaforge/envs/qiskit45/lib/python3.11/site-packages/qiskit/transpiler/passes/layout/vf2_layout.py:129, in VF2Layout.run(self, dag)
+    128 if self.coupling_map is None:
+--> 129     raise TranspilerError("coupling_map or target must be specified.")
+    130 self.avg_error_map = self.property_set["vf2_avg_error_map"]
+
+TranspilerError: 'coupling_map or target must be specified.'
+```
+
+### What is the expected behavior?
+
+The above code runs without error and returns the correct transpiled circuit when using AerSimulator from qiskit-aer 0.12
+
+### Suggested solutions
+
+I'm not sure what is going on with Aer, but it seems like it is overriding the user provided coupling map somewhere in the passing of kwargs from the transpiler, and this is only happening in Qiskit Aer 0.13. 
+
+This might be related to the `target` attribute being added to AerSimulator in 0.13? @mtreinish 

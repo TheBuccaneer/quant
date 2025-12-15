@@ -1,0 +1,56 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.15.1
+- **Python version**: 31.12
+- **Operating system**: Rocky Linux 8
+
+### What is the current behavior?
+
+With qiskit-aer==0.15.1 and qiskit-aer-gpu==0.15.1 installed, I get the error message:
+
+```
+RuntimeError: Simulation device "GPU" is not supported on this system
+```
+even though I am using a system with an nvidia GPU with CUDA 12.7 and nvidia drivers 565.57.01 installed.
+
+### Steps to reproduce the problem
+
+```
+conda create --name <my_env_name> --python==3.12
+pip install qiskit-aer==0.15.1
+pip install qiskit-aer-gpu==0.15.1
+```
+then run the script:
+
+```
+import numpy as np
+
+# Import Qiskit
+from qiskit import QuantumCircuit, transpile
+from qiskit_aer import AerSimulator
+
+circ = QuantumCircuit(2)
+circ.h(0)
+circ.cx(0, 1)
+circ.measure_all()
+
+# Transpile for simulator
+simulator = AerSimulator(method='statevector',device='GPU')
+print(simulator.available_devices())
+circ = transpile(circ, simulator)
+
+# Run and get counts
+result = simulator.run(circ).result()
+counts = result.get_counts(circ)
+```
+
+### What is the expected behavior?
+
+The program runs without error.
+
+### Suggested solutions
+
+This could be user error on my part, but if so, please let me know what I am doing wrong. Thanks.

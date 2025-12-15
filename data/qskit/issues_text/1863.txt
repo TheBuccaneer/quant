@@ -1,0 +1,32 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.12.1
+- **Python version**: 3.10.7
+- **Operating system**: Microsoft Windows 11 Home
+- **OS Version**:                10.0.22621 N/A Build 22621
+
+### What is the current behavior?
+The code was working perfectly a week ago. However, after the Aer update from version 12.0 to 12.1, it started causing a 'bind_parameter' error that did not exist before. Now, I believe we can pass the parameters through the execute function of Aer, whereas in my code, I bind the parameters within the circuit. How can I resolve this issue? Alternatively, is there any way to set a custom Aer version on IBM Quantum Lab?
+
+
+### Steps to reproduce the problem
+code :
+![image](https://github.com/Qiskit/qiskit-aer/assets/92601933/0aaa2b49-9331-4afc-a035-c88de825e346)
+
+error :
+![image](https://github.com/Qiskit/qiskit-aer/assets/92601933/6de63337-9c81-4bfa-92dc-bd7158088d17)
+
+### What is the expected behavior?
+I ran the same code a week ago. The code should run fine and it would return the optimized parameters.
+![image](https://github.com/Qiskit/qiskit-aer/assets/92601933/ca8e45bd-b26e-482c-9803-6c960defaacf)
+here is the circuit function where parameters are bounded
+![image](https://github.com/Qiskit/qiskit-aer/assets/92601933/d3d40a55-0624-43ca-8132-4a881bb4892f)
+
+
+
+### Suggested solutions
+
+The user should have the choice of whether to use the 'bind_parameter' parameter in the execute function or within the circuit. This flexibility is important because if the user has already set their own parameters within the circuit, it could potentially lead to errors when executing it in Aer

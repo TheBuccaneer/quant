@@ -1,0 +1,86 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:0.45
+- **Python version**:3.11.6
+- **Operating system**: Ubuntu 23.10
+
+### What is the current behavior?
+I have installed openmpi and build qiskit-aer with source allowing MPI and GPU support with required flags. Now when I run my code with python3 command, it works fine but when I run it with mpirun command, it generates above error.
+
+```
+python3 demo.py
+
+{'time_taken_execute': 9.508799192, 'mpi_rank': 0, 'time_taken_parameter_binding': 7.1507e-05, 'num_mpi_processes': 1, 'num_processes_per_experiments': 1, 'omp_enabled': True, 'max_gpu_memory_mb': 5933, 'max_memory_mb': 15903, 'parallel_experiments': 1}
+```
+
+With mpirun, it generates SegmentationFault, Fortunately I have root access, running command with --allow-root generates following error:
+
+```
+sudo mpirun --allow-run-as-root python3 demo.py 
+[sudo] password for dell: 
+Traceback (most recent call last):
+  File "/home/dell/qiskit-aer-main/demo-files/demo.py", line 4, in <module>
+    from qiskit.providers.aer import *
+ModuleNotFoundError: No module named 'qiskit.providers.aer'
+Traceback (most recent call last):
+  File "/home/dell/qiskit-aer-main/demo-files/demo.py", line 4, in <module>
+    from qiskit.providers.aer import *
+ModuleNotFoundError: No module named 'qiskit.providers.aer'
+Traceback (most recent call last):
+  File "/home/dell/qiskit-aer-main/demo-files/demo.py", line 4, in <module>
+    from qiskit.providers.aer import *
+ModuleNotFoundError: No module named 'qiskit.providers.aer'
+Traceback (most recent call last):
+  File "/home/dell/qiskit-aer-main/demo-files/demo.py", line 4, in <module>
+    from qiskit.providers.aer import *
+ModuleNotFoundError: No module named 'qiskit.providers.aer'
+--------------------------------------------------------------------------
+Primary job  terminated normally, but 1 process returned
+a non-zero exit code. Per user-direction, the job has been aborted.
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+mpirun detected that one or more processes exited with non-zero status, thus causing
+the job to be terminated. The first process to do so was:
+
+  Process name: [[49612,1],1]
+  Exit code:    1
+```
+My code is:
+
+```
+from qiskit import *
+from qiskit.circuit.library import *
+from qiskit.providers.aer import *
+sim = AerSimulator(method='statevector', device='GPU',blocking_enable=True, blocking_qubits=10)
+shots = 100
+depth=10
+qubits =  25
+circuit = transpile(QuantumVolume(qubits, depth, seed=0),
+backend=sim,
+optimization_level=0)
+circuit.measure_all()
+result = execute(circuit,sim,shots=shots,seed_simulator=12345, blocking_enable=True, blocking_qubits=10).result()
+dict=result.to_dict()
+meta = dict['metadata']
+myrank = meta['mpi_rank']
+data = dict['results'][0]['data']['counts']
+#print (myrank)
+if (myrank==0):
+   print(meta)
+```
+### Steps to reproduce the problem
+
+Running Code with mpirun command generates error
+
+### What is the expected behavior?
+
+Code should run same both with python3 and with mpirun python3 other than processes difference. When I go to installed qiskit path I found there is not qiskit.providers.aer folder, when I changed in code to qiskit.provider.basicaer (which path existed in my case), error changed.
+
+
+### Suggested solutions
+
+I think there is something related to path not set but I am not sure.
+

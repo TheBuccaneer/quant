@@ -1,0 +1,32 @@
+### Informations
+
+- **Qiskit Aer version**:  0.12.1 (Qiskit: 0.43.2)
+- **Python version**: Python 3.9.12
+- **Operating system**: MacOS Ventura 13.4.1 and Linux 3.10.0-1062.18.1.el7.x86_64
+
+### What is the current behavior?
+
+`max_parallel_experiments=` or `precision=` do not seem to take effect on simulation performance. Simulation times and memory usage are basically unchanged when tuning these parameters.
+
+Also, when I tried to raise an error with one of the options (like precision='something_that_should_not_work') it did only raise an error when calling `.result()` (in my example when calling `answer`).
+
+This has been replicated locally (in my Mac) and also on an HPC cluster running Linux.
+
+### Steps to reproduce the problem
+For example:
+
+`simulator = AerSimulator(method='statevector', precision='double', max_parallel_experiments=5)
+
+circuits_list = transpile(circuits_list, simulator)
+job_statevector = simulator(circuits_list)
+print(f"Backend options: {simulator.options}") #to check if it passing the correct info, which it does
+answer = job_statevector.result().get_counts()`
+
+### What is the expected behavior?
+
+I would expect halving the memory usage when comparing results from `precision="double"` to `="single"` and faster execution times with different memory usage when experimenting with `max_parallel_experiments=`
+
+### Suggested solutions
+
+No idea :(. 
+

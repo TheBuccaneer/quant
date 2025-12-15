@@ -1,0 +1,25 @@
+
+
+### Informations
+
+- **Qiskit Aer version**:  Qiskit Version: 0.24.1
+
+- **Python version**:  Python Version: 3.8.8 
+
+- **Operating system**:  Windows
+
+### What is the current behavior?
+I want to execute a circuit with the Qasm simulator, but if an error occurs,
+ I receive a message indicating that I used the statevector simulator
+.![image](https://github.com/Qiskit/qiskit-aer/assets/55302724/d1234e64-2619-4da6-9db8-a0e54f2b20a5)
+
+
+
+### What is the expected behavior?
+
+Simulation failed and returned the following error message:
+ERROR:  [Experiment 0] Insufficient memory to run circuit circuit-22865 using the Qasm simulator. Required memory: 274877906944M, max memory: 7998M
+
+
+
+

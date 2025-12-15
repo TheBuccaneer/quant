@@ -1,0 +1,50 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.15.1
+- **Python version**: 3.10.5
+- **Operating system**: Linux_x86
+
+### What is the current behavior?
+When using `SamplerV2` and passing an options dictionary like so:
+
+```
+from qiskit_aer.primitives import SamplerV2
+from qiskit_aer import AerSimulator 
+from qiskit import transpile
+from qiskit.primitives import BackendSamplerV2
+
+service = QiskitRuntimeService()
+backend = service.least_busy(min_num_qubits=127)
+
+simulator = AerSimulator(method='statevector').from_backend(backend)
+# sampler=SamplerV2(options={"backend_options":{'method':'statevector','device':'GPU'},#,'blocking_enable':True,'blocking_qubits':6,'cuStateVec_enable':True,'batched_shots_gpu':True,"batched_shots_gpu_max_qubits":16,"shot_branching_enable":True},
+#                            "run_options":{}}).from_backend(backend)
+
+options={
+    "backend_options":{'method':'statevector','device':'GPU'},#,'blocking_enable':True,'blocking_qubits':6,'cuStateVec_enable':True,'batched_shots_gpu':True,"batched_shots_gpu_max_qubits":16,"shot_branching_enable":True},
+    "run_options":{}
+}
+
+sampler=SamplerV2(options=options).from_backend(backend)
+```
+Options are not being passed to the sampler object. They can be checked with 
+
+```
+sampler._backend._options
+```
+Currently, options need to be manually set using `sampler._backend.set_options(method='statevector',device="GPU")` after the object is created.
+
+### Steps to reproduce the problem
+ The code above should reproduce it.
+
+
+### What is the expected behavior?
+Options should be passed to the sampler object instead of requiring the user to set options manually afterward.
+
+
+### Suggested solutions
+
+Unsure what is causing the issue.

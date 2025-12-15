@@ -1,0 +1,41 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.12.0 and `main`
+- **Python version**: 3.10
+- **Operating system**: Linux
+
+### What is the current behavior?
+
+Sampler with `shots=None` only works if each classical bit is set by a measurement at the end of the circuit.
+
+### Steps to reproduce the problem
+
+```python
+from qiskit_aer.primitives import Sampler as AerSampler
+qc = QuantumCircuit(2, 2)
+qc.h(0)
+qc.cx(0, 1)
+qc.measure(0, 0)
+qc.reset(0)
+qc.measure(0, 1)
+AerSampler().run(qc, shots=None).result().quasi_dists
+```
+
+raises
+
+```
+QiskitError: 'Some classical bits are not used for measurements. The number of classical bits 2, the used classical bits {1}.'
+```
+
+### What is the expected behavior?
+
+Sampler should support calculating exact probabilities for circuits with arbitrary measurements
+
+### Suggested solutions
+
+My understanding is that this will not be simple to fix in Aer.  However, I wanted to have an open issue to refer to.  In the meantime, I have created my own Sampler implementation based on Qiskit Terra's `Statevector` that supports mid-circuit measurements correctly: https://github.com/Qiskit-Extensions/circuit-knitting-toolbox/blob/main/circuit_knitting_toolbox/utils/simulation.py
+
+Related Qiskit Terra issue: https://github.com/Qiskit/qiskit-terra/issues/9657

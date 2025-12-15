@@ -1,0 +1,59 @@
+### Informations
+
+- **Qiskit Aer version**: 1.0.2
+- **Python version**: 3.9.7
+- **Operating system**: Windows
+
+### What is the current behavior?
+Mid-circuit measurement and conditional branching are important features in Quantum computing. 
+Unfortunately, the Aer simulator is presently yielding wrong results when used for noisy simulation of dynamic circuits.
+
+
+### Steps to reproduce the problem
+```
+qregs = qiskit.QuantumRegister(2, name="Q")
+final_reg = qiskit.ClassicalRegister(1, name="M")
+cregs = qiskit.ClassicalRegister(1, name="R")
+circ = qiskit.QuantumCircuit(qregs[:-1], cregs, qregs[-1:], final_reg)
+
+circ.unitary(np.array([[0, 1], [1, 0]]), 0, label="excite")
+circ.measure(qregs[0], final_reg)
+
+circ.measure(qregs[1], cregs[0])
+####### insertion of dynamic circuit #######
+with circ.if_test((cregs[0], 1)):
+    circ.y(qregs[-1])
+####### insertion of dynamic circuit #######
+
+run_options = {"shots": 10000, "seed_simulator": 123}
+error = qiskit_aer.noise.depolarizing_error(0.1, 1)
+noise_model = qiskit_aer.noise.NoiseModel()
+noise_model.add_quantum_error(error, ["excite"], [0])
+backend = qiskit_aer.AerSimulator(method="automatic", noise_model=noise_model)
+job = backend.run(circ, noise_model=noise_model, **run_options)
+result = job.result()
+fid = (
+    sum([count for bitstring, count in result.get_counts().items() if bitstring[0] == "1"])
+    / run_options["shots"]
+)
+print("fidelity: ", fid)
+circ.draw(output="mpl")
+```
+
+```
+> fidelity: 1.0 (no noise effect)
+> fidelity: 0.9509 (noisy)
+```
+no dynamic circuit
+![image](https://github.com/Qiskit/qiskit-aer/assets/50734064/10b3f785-5d0a-4e13-a99d-17779377c43a)
+
+with dynamic circuit
+![image](https://github.com/Qiskit/qiskit-aer/assets/50734064/ed3d2e2d-50ef-4c30-8811-f82c25b56c31)
+
+
+### What is the expected behavior?
+The fidelity should be less than 1.0 since depolarizing error is added to the qubit(qregs[0]). However, it goes to 1.0 if I add one more qubit (qregs[1]) and insert some dynamic branches in the circuit, which I think should not effect qregs[0] in any way.
+
+### Suggested solutions
+It appears that the inclusion of the conditional gate has interfered with the simulation noise model.
+Please have a check~

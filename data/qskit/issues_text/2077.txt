@@ -1,0 +1,68 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.14.0
+- **Python version**: 3.11.6
+- **Operating system**: Ubuntu 23.10
+
+### What is the current behavior?
+I am running a code to create GHZ state using 30 qubits, using statevector simulator which generated insufficient memory error
+
+`qiskit.exceptions.QiskitError: 'ERROR:  [Experiment 0] Insufficient memory to run circuit circuit-158 using the statevector simulator. Required memory: 16384M, max memory: 15903M ,  ERROR: Insufficient memory to run circuit circuit-158 using the statevector simulator. Required memory: 16384M, max memory: 15903M'
+`
+I added a node and run script with two nodes but it spilled above error:
+
+command:
+
+`mpirun -np 2 -machinefile machinefile.txt python3 ghz.py`
+
+Error:
+
+```
+[dell-Precision-Tower-5810:24773] *** An error occurred in MPI_Irecv
+[dell-Precision-Tower-5810:24773] *** reported by process [3164471297,0]
+[dell-Precision-Tower-5810:24773] *** on communicator MPI_COMM_WORLD
+[dell-Precision-Tower-5810:24773] *** MPI_ERR_COUNT: invalid count argument
+[dell-Precision-Tower-5810:24773] *** MPI_ERRORS_ARE_FATAL (processes in this communicator will now abort,
+[dell-Precision-Tower-5810:24773] ***    and potentially your MPI job)
+[dell-5810:03630] PMIX ERROR: UNREACHABLE in file server/pmix_server.c at line 2198
+[dell-Precision-Tower-5810:24768] 1 more process has sent help message help-mpi-errors.txt / mpi_errors_are_fatal
+[dell-Precision-Tower-5810:24768] Set MCA parameter "orte_base_help_aggregate" to 0 to see all help / error messages
+
+```
+Here is the code
+
+```
+from qiskit import QuantumCircuit, transpile
+from qiskit_aer import *
+
+def create_ghz_circuit(n_qubits):
+    circuit = QuantumCircuit(n_qubits)
+    circuit.h(0)
+    for qubit in range(n_qubits - 1):
+        circuit.cx(qubit, qubit + 1)
+    return circuit
+
+n_qubits=30
+simulator = AerSimulator(method='statevector',device='CPU',blocking_enable=True, blocking_qubits=n_qubits-2)
+circuit = create_ghz_circuit(n_qubits)
+print(circuit.num_qubits)
+circuit.measure_all()
+job = simulator.run(circuit)
+result = job.result()
+```
+
+### Steps to reproduce the problem
+
+Running code with mpirun generates error
+
+
+### What is the expected behavior?
+Insufficient Memory issue should be resolved and code should able to simulate GHZ state.
+
+
+### Suggested solutions
+The error is in MPI_Irecv method of MPI and MPI_ERR_COUNT: invalid count argument suggests that there is some mismatch in argument type.
+

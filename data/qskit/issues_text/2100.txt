@@ -1,0 +1,57 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:  0.14.0.1
+- **Python version**: 3.12.2
+- **Operating system**: Ubuntu 22.04.4 LTS
+
+### What is the current behavior?
+
+Throws the following error:
+
+```
+ValueError: Input operator is not Hermitian.
+```
+
+### Steps to reproduce the problem
+
+```
+from qiskit import QuantumCircuit
+from qiskit.quantum_info.operators import SparsePauliOp
+from qiskit_aer.primitives import Estimator
+
+qc = QuantumCircuit(2)
+op = SparsePauliOp(["XY", "XX"], coeffs=[0.5, 0.2j])
+
+estimator1 = Estimator(run_options={"shots": 1000})
+estimator2 = Estimator(approximation=True, run_options={"shots": None})
+print("Estimator with shot noise")
+print(estimator1.run(qc, op).result().values)
+print(estimator1.run(qc, op).result().values)
+print()
+print("Estimator without shot noise")
+print(estimator2.run(qc, op).result().values)
+print(estimator2.run(qc, op).result().values)
+```
+
+### What is the expected behavior?
+
+The expected behavior is to give the noiseless result instead of throwing an error.
+
+### Suggested solutions
+
+I looked into the source code of `qiskit_aer` and found the following code (in `qiskit_aer.primitives.estimator` beginning on line 454):
+
+```
+                      if shots is None:
+                          circuit.save_expectation_value(observable, self._layouts[i])
+                      else:
+                          for term_ind, pauli in enumerate(observable.paulis):
+                              circuit.save_expectation_value(
+                                  pauli, self._layouts[i], label=str(term_ind)
+                              )
+```
+
+It looks like when `shot=None` and `approximation=True`, it saves the expectation value differently than when there is shot-noise.

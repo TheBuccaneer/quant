@@ -1,0 +1,65 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:
+- **Python version**:
+- **Operating system**:
+
+### What is the current behavior?
+
+Currently, some fake simulators throw a NoiseError exception when running an empty quantum circuit (initialized and measured).
+
+```
+qiskit_aer.noise.noiseerror.NoiseError: 'Invalid T_2 relaxation time parameter: T_2 greater than 2 * T_1.'
+```
+
+### Steps to reproduce the problem
+
+Run the following program:
+
+```
+from qiskit.circuit import QuantumCircuit
+from qiskit import transpile
+from qiskit_ibm_runtime.fake_provider import FakeSherbrooke, FakeArmonkV2, FakeAuckland, FakeBelemV2
+from qiskit_aer import AerSimulator
+
+
+qc = QuantumCircuit(1)
+qc.measure_all()
+
+backend = FakeSherbrooke()
+
+transpiled_qc = transpile(qc, backend=backend, scheduling_method='asap')
+job = backend.run(transpiled_qc)
+print(job.result().get_counts())
+```
+
+However, running the same circuit on the real quantum computer or AerSimulator will output the measurement result successfully. 
+
+```
+from qiskit.circuit import QuantumCircuit
+from qiskit import transpile
+from qiskit_ibm_runtime import QiskitRuntimeService
+from qiskit_aer import AerSimulator
+
+
+qc = QuantumCircuit(1)
+qc.measure_all()
+
+service = QiskitRuntimeService()
+backend = service.backend("ibm_sherbrooke")
+backend_sim = AerSimulator.from_backend(backend) # Both backend and backend_sim can run successfully. 
+
+transpiled_qc = transpile(qc, backend=backend, scheduling_method='asap')
+job1 = backend.run(transpiled_qc)
+print(job1.result().get_counts())
+job2 = backend_sim.run(transpiled_qc)
+print(job2.result().get_counts())
+```
+
+### What is the expected behavior?
+
+The behavior should be consistent across both fake and real backends. 
+

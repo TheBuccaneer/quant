@@ -1,0 +1,44 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:
+
+0.15
+
+- **Python version**:
+
+```
+  Successfully set up CPython (3.11.9)
+```
+
+- **Operating system**:
+
+```
+Microsoft Windows Server 2022
+  10.0.203[4]
+```
+
+It's looking for the "win_amd64.whl" wheel.
+
+
+### What is the current behavior?
+
+```
+  ERROR: Failed building wheel for qiskit-aer
+```
+
+### Steps to reproduce the problem
+
+
+
+### What is the expected behavior?
+
+I would expect Qiskit Aer to come bundled with a usable wheel for vanilla Windows GitHub Actions.
+Qiskit 0.14 worked fine.
+
+
+### Suggested solutions
+
+

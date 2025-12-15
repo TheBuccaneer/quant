@@ -1,0 +1,66 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:0.16.0
+- **Python version**:3.10.11
+- **Operating system**:macOS 14.x (ARM64)
+
+### What is the current behavior?
+Importing the AerSimulator module from qiskit.providers.aer results in a ModuleNotFoundError, despite qiskit-aer being successfully installed and listed as a requirement.
+
+Error:
+
+plaintext
+Copy
+Edit
+ModuleNotFoundError: No module named 'qiskit.providers.aer'
+This issue persists even after trying to reinstall the qiskit-aer package with various options (e.g., --no-binary, source install, and prebuilt wheels). The qiskit.providers directory in the installed package does not include the aer submodule.
+
+
+
+
+### Steps to reproduce the problem
+Create a new virtual environment with Python 3.10.11:
+
+bash
+Copy
+Edit
+python3.10 -m venv .venv
+source .venv/bin/activate
+Install Qiskit and Qiskit Aer:
+
+bash
+Copy
+Edit
+pip install qiskit qiskit-aer
+Run the following Python script:
+
+python
+Copy
+Edit
+from qiskit.providers.aer import AerSimulator
+Observe the ModuleNotFoundError:
+
+plaintext
+Copy
+Edit
+ModuleNotFoundError: No module named 'qiskit.providers.aer'
+
+
+### What is the expected behavior?
+The AerSimulator should be imported successfully, allowing simulation of quantum circuits using Aer.
+
+
+### Suggested solutions
+Verify Installation Directory:
+Check if the qiskit.providers.aer submodule is missing from the installation directory.
+Go to:
+bash
+Copy
+Edit
+cd /Users/raviraja/PycharmProjects/Q cryptography/.venv/lib/python3.10/site-packages/qiskit/providers/
+ls
+If aer is missing, it indicates a failed or incomplete installation.
+

@@ -1,0 +1,144 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.12.0
+- **Python version**: 3.10
+- **Operating system**: Mac OS Ventura, Intel
+
+### What is the current behavior?
+Aer Estimator crashes while running simulation.
+
+
+### Steps to reproduce the problem
+Script below
+
+
+### What is the expected behavior?
+I create a parameter placeholder at the beginning.
+After prepending the circuit with ZFeatureMap and several compositions
+the final circuit obtains a non-zero global phase represeneted as a linear
+combination of placeholder's entries. I do *NOT* change the global phase
+myself, rather this is the outcome of aforementioned operations.
+At the time of evaluation, the linear combination of placeholder's entries
+cannot not be cast to a float value causing an exception.
+
+In the simple example below, I reproduced the behaviour by explicitely 
+expressing the global phase as a sum of two placeholder entries.
+Note, the default estimator works without a problem.
+
+
+### Suggested solutions
+Checking of global phase before evaluation is needed.
+
+### Script reproducing the issue:
+```
+import time
+import numpy as np
+from qiskit import QuantumCircuit
+from qiskit.circuit import ParameterVector
+from qiskit.primitives import Estimator as BackendEstimator
+from qiskit.providers.fake_provider import FakeKolkataV2
+from qiskit.quantum_info import SparsePauliOp
+from qiskit.utils import algorithm_globals
+from qiskit_aer.primitives import Estimator as AerEstimator
+
+
+def report():
+    num_qubits = 10
+    algorithm_globals.random_seed = 1234567
+    np.random.seed(algorithm_globals.random_seed)
+
+    # Create a circuit with parameter placeholder.
+    params = ParameterVector(name="r", length=num_qubits - 1)
+    qc = QuantumCircuit(num_qubits)
+    for i in range(num_qubits - 1):
+        qc.cx(i, i + 1)
+        qc.rz(params[i], i)
+    qc.global_phase = params[0] + params[1]  # <<<<< M A K E S  T H E  P R O B L E M
+
+    params = np.random.rand(len(params))
+    observable = SparsePauliOp.from_list([("Z" * qc.num_qubits, 1)])
+
+    tic = time.perf_counter()
+    backend_options = {"seed_simulator": algorithm_globals.random_seed, "shots": 4096}
+    use_aer = 1  # <<<<< choose estimator here
+    if use_aer != 0:
+        transpile_options = {"seed_transpiler": algorithm_globals.random_seed}
+        run_options = {"shots": 1000}
+        estimator = AerEstimator(
+            backend_options=backend_options,
+            transpile_options=transpile_options,
+            run_options=run_options,
+        )
+    else:
+        estimator = BackendEstimator(FakeKolkataV2(), options=backend_options)
+    toc = time.perf_counter() - tic
+    print(f"Estimator created in {toc:.2f} seconds")
+
+    for i in range(20):
+        tic = time.perf_counter()
+        result = estimator.run(qc, observable, params).result()
+        toc = time.perf_counter() - tic
+        print(f"Attempt {i}, result obtained in {toc:.2f} seconds")
+        print(f"Result: {result}\n----------------------------------\n")
+
+report()
+```
+
+### Script's output:
+```
+% py3 bug_report.py
+Number of qubits: 10
+Estimator created in 0.00 seconds
+Traceback (most recent call last):
+  File "/Users/username/venv/qu/lib/python3.10/site-packages/qiskit/circuit/parameterexpression.py", line 472, in __float__
+    return float(self._symbol_expr)
+  File "symengine_wrapper.pyx", line 1155, in symengine.lib.symengine_wrapper.Basic.__float__
+  File "symengine_wrapper.pyx", line 980, in symengine.lib.symengine_wrapper.Basic.n
+  File "symengine_wrapper.pyx", line 4383, in symengine.lib.symengine_wrapper.evalf
+RuntimeError: Symbol cannot be evaluated.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/username/work/qml_time_evol_research/bug_report.py", line 243, in <module>
+    run_circuit_on_simulator(_num_qubits, _num_units, _num_layers, _insert_barriers)
+  File "/Users/username/work/qml_time_evol_research/bug_report.py", line 231, in run_circuit_on_simulator
+    result = estimator.run(qc, observable, params).result()
+  File "/Users/username/venv/qu/lib/python3.10/site-packages/qiskit/primitives/primitive_job.py", line 50, in result
+    return self._future.result()
+  File "/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/concurrent/futures/_base.py", line 451, in result
+    return self.__get_result()
+  File "/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/concurrent/futures/_base.py", line 403, in __get_result
+    raise self._exception
+  File "/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/Users/username/venv/qu/lib/python3.10/site-packages/qiskit_aer/primitives/estimator.py", line 119, in _call
+    return self._compute(circuits, observables, parameter_values, run_options)
+  File "/Users/username/venv/qu/lib/python3.10/site-packages/qiskit_aer/primitives/estimator.py", line 222, in _compute
+    .result()
+  File "/Users/username/venv/qu/lib/python3.10/site-packages/qiskit_aer/jobs/utils.py", line 41, in _wrapper
+    return func(self, *args, **kwargs)
+  File "/Users/username/venv/qu/lib/python3.10/site-packages/qiskit_aer/jobs/aerjob.py", line 106, in result
+    return self._future.result(timeout=timeout)
+  File "/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/concurrent/futures/_base.py", line 451, in result
+    return self.__get_result()
+  File "/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/concurrent/futures/_base.py", line 403, in __get_result
+    raise self._exception
+  File "/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/Users/username/venv/qu/lib/python3.10/site-packages/qiskit_aer/backends/aerbackend.py", line 437, in _execute_circuits_job
+    aer_circuits = assemble_circuits(circuits)
+  File "/Users/username/venv/qu/lib/python3.10/site-packages/qiskit_aer/backends/aer_compiler.py", line 552, in assemble_circuits
+    return [assemble_circuit(circuit) for circuit in circuits]
+  File "/Users/username/venv/qu/lib/python3.10/site-packages/qiskit_aer/backends/aer_compiler.py", line 552, in <listcomp>
+    return [assemble_circuit(circuit) for circuit in circuits]
+  File "/Users/username/venv/qu/lib/python3.10/site-packages/qiskit_aer/backends/aer_compiler.py", line 376, in assemble_circuit
+    global_phase = float(circuit.global_phase)
+  File "/Users/username/venv/qu/lib/python3.10/site-packages/qiskit/circuit/parameterexpression.py", line 475, in __float__
+    raise TypeError(
+TypeError: ParameterExpression with unbound parameters ({ParameterVectorElement(r[0]), ParameterVectorElement(r[1])}) cannot be cast to a float.
+```
+

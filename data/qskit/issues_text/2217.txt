@@ -1,0 +1,45 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.15.0
+- **Python version**: Python 3.12.4
+- **Operating system**: Ubuntu 22.04.3 LTS
+
+### What is the current behavior?
+When attempting to insert the inverse version of specific two-qubit gates (`dcx`, `iswap`, `csx`) into a circuit and transpile it using `AerSimulator()` or `QasmSimulator()`, the program raises a `CircuitError`.
+
+```
+File "/root/anaconda3/envs/qiskit_latest/lib/python3.12/site-packages/qiskit/transpiler/passes/optimization/consolidate_blocks.py", line 102, in run
+    dag.substitute_node(block[0], UnitaryGate(block[0].op.to_matrix()))
+                                              ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/anaconda3/envs/qiskit_latest/lib/python3.12/site-packages/qiskit/circuit/gate.py", line 63, in to_matrix
+    raise CircuitError(f"to_matrix not defined for this {type(self)}")
+qiskit.circuit.exceptions.CircuitError: "to_matrix not defined for this <class 'qiskit.circuit.gate.Gate'>"
+```
+
+### Steps to reproduce the problem
+```
+from qiskit.circuit import QuantumCircuit
+from qiskit import transpile
+from qiskit_aer import AerSimulator, QasmSimulator
+
+qc = QuantumCircuit(2)
+qc.dcx(0, 1)
+# qc.iswap(0，1)
+# qc.csx(0，1)
+qc = qc.inverse()
+qc.measure_all()
+backend_sim = AerSimulator()
+# backend_sim = QasmSimulator() # This backend throws the same error.
+trans_qc = transpile(qc, backend=backend_sim, translation_method='synthesis')
+```
+
+### What is the expected behavior?
+The transpilation should complete without errors.
+
+
+### Suggested solutions
+
+

@@ -1,0 +1,25 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: Starting from `0.14.1`
+- **Python version**: CPython 3.9
+- **Operating system**: macOS arm64
+
+### What is the current behavior?
+
+Since the release of `qiskit-aer` `0.14.1` no Python wheels for Python 3.9 on arm64 macOS have been uploaded to PyPI.
+
+### Steps to reproduce the problem
+
+Try to `pip install qiskit-aer` on arm64 macOS under Python 3.9. It will try to build from the sdist instead of downloading a pre-built wheel.
+
+### What is the expected behavior?
+
+Pre-built wheels have been available before `0.14.1`. So if there is no big reason for omitting the 3.9 arm64 macOS wheel, such a wheel should be uploaded to PyPI.
+
+### Suggested solutions
+
+Check the CD PyPI publishing pipeline, why the specific wheel is not produced anymore.
+

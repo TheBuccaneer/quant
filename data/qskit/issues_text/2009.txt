@@ -1,0 +1,37 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: qiskit-aer==0.13.1, qiskit==0.45.0, qiskit-terra==0.45.0
+- **Python version**: Python 3.10.13
+- **Operating system**: macOS 14.1.1
+
+### What is the current behavior?
+
+`target.qargs` of AerSimulator based on `FakeVigo` contains `None`.
+
+### Steps to reproduce the problem
+
+```python
+from qiskit_aer import AerSimulator
+from qiskit.providers.fake_provider import FakeVigo
+
+backend = AerSimulator.from_backend(FakeVigo())
+print(backend.target.qargs)
+```
+
+output
+```
+{(0, 1), (1, 3), None, (2,), (1, 2), (3, 4), (2, 1), (4, 3), (3, 1), (4,), (1,), (1, 0), (0,), (3,)}
+```
+
+### What is the expected behavior?
+
+qargs should consist of only tuples.
+
+I'm not sure it's the issue of `AerSimulator` or `FakeVigo`.
+
+### Suggested solutions
+
+

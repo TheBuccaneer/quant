@@ -1,0 +1,157 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- Qiskit Aer version: 0.17.0
+- Python version:3.11
+- Operating system:Linux
+- Architecture: aarch_64
+
+What is the current behavior?
+The code will work with method="statevector", Device="GPU" but fails when trying to use tensor_network
+
+
+Steps to reproduce the problem
+The code
+
+```python
+from qiskit import QuantumCircuit, transpile
+from qiskit.circuit.library import QuantumVolume
+from qiskit_aer import AerSimulator
+qubit = 24 
+circ = QuantumVolume(qubit, 10, seed=0)
+sim = AerSimulator(method='tensor_network', device='GPU')
+circ = transpile(circ, backend=sim)
+circ.measure_all()
+result = sim.run(circ,shots=100, blocking_enabled = True, blocking_qubits = 11).result()
+print(result)
+```
+
+But I get this output
+
+```text
+ srun --mpi=pmix --nodes=1 --ntasks-per-node=1 --gpus-per-task=1 python  bench.py
+
+ 
+
+Traceback (most recent call last):
+
+  File "/vast/home/ple/bench.py", line 14, in <module>
+
+    result = sim.run(circ,shots=100, blocking_enabled = True, blocking_qubits = 11).result()
+
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  File "/vast/home/ple/.conda/envs/qiskit-aer-gpu-cuquantum-tn/lib/python3.11/site-packages/qiskit_aer/jobs/utils.py", line 38, in _wrapper
+
+    return func(self, *args, **kwargs)
+
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  File "/vast/home/ple/.conda/envs/qiskit-aer-gpu-cuquantum-tn/lib/python3.11/site-packages/qiskit_aer/jobs/aerjob.py", line 96, in result
+
+    return self._future.result(timeout=timeout)
+
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  File "/vast/home/ple/.conda/envs/qiskit-aer-gpu-cuquantum-tn/lib/python3.11/concurrent/futures/_base.py", line 456, in result
+
+    return self.__get_result()
+
+           ^^^^^^^^^^^^^^^^^^^
+
+  File "/vast/home/ple/.conda/envs/qiskit-aer-gpu-cuquantum-tn/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+
+    raise self._exception
+
+  File "/vast/home/ple/.conda/envs/qiskit-aer-gpu-cuquantum-tn/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+
+    result = self.fn(*self.args, **self.kwargs)
+
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  File "/vast/home/ple/.conda/envs/qiskit-aer-gpu-cuquantum-tn/lib/python3.11/site-packages/qiskit_aer/backends/aerbackend.py", line 474, in _execute_circuits_job
+
+    output = self._execute_circuits(aer_circuits, noise_model, config)
+
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  File "/vast/home/ple/.conda/envs/qiskit-aer-gpu-cuquantum-tn/lib/python3.11/site-packages/qiskit_aer/backends/aer_simulator.py", line 906, in _execute_circuits
+
+    ret = cpp_execute_circuits(self._controller, aer_circuits, noise_model, config)
+
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  File "/vast/home/ple/.conda/envs/qiskit-aer-gpu-cuquantum-tn/lib/python3.11/site-packages/qiskit_aer/backends/backend_utils.py", line 446, in cpp_execute_circuits
+
+    return controller.execute(aer_circuits, noise_model, config)
+
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+RuntimeError: Invalid combination of simulation method and device, "tensor_network" only supports "device=GPU"
+
+srun: error: cn876: task 0: Exited with exit code 1
+```
+
+Here are my build steps
+
+```text
+module load archiconda/0.2.3 
+
+module load cuda/12.3.1 
+
+module load mpich/3.4.3-gcc_11.2.0 
+
+module load cuquantum
+
+export CC=$AA64_HOME/11.2.0/bin/gcc
+
+export CXX=$AA64_HOME/11.2.0/bin/g++
+
+export MPI_PATH=$AA64_HOME/mpich/3.4.3-gcc_11.2.0
+
+export CUDA_PATH=$AA64_HOME/packages/cuda/12.3.1
+
+export CUQUANTUM_ROOT=$AA64_HOME/packages/cuquantum/
+
+ 
+
+conda create -n qiskit-aer-gpu-cuquantum-tn python=3.11
+
+conda activate qiskit-aer-gpu-cuquantum-tn
+
+ 
+
+git clone https://github.com/Qiskit/qiskit-aer
+
+cd qiskit-aer
+
+pip install build
+
+pip install -r requirements-dev.txt 
+
+pip install pybind11
+
+pip install "pybind11[global]"
+
+ 
+
+python ./setup.py bdist_wheel -- -DCUQUANTUM_ROOT=$AA64_HOME/packages/cuquantum/ -DAER_CUDA_ARCH="9.0" -DAER_THRUST_CUDA=1 -DCMAKE_MPICXX_COMPILER=CC -DAER_THRUST_BACKEND=CUDA -DAER_MPI=true
+
+ 
+
+pip install -U -c constraints.txt -r requirements-dev.txt dist/qiskit_aer-“***”.whl (replace ** with actual file name
+```
+ 
+
+
+
+### What is the expected behavior? 
+It prints the result with method = 'statevector'
+
+
+
+### Suggested solutions
+
+I have also tried -DAER_THRUST_CUDA=true and -DAER_CUTENSORNET=True and still doesn't work

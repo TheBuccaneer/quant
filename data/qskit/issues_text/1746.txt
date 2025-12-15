@@ -1,0 +1,52 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.12.0
+- **Python version**: 3.9
+- **Operating system**: MacOS
+
+### What is the current behavior?
+
+Performance degradation due to #1717 is happened in 0.12.0.
+
+#1717 provides pybind for `AER::Config`. This class will help simulation of circuits that use `param_binds` (such as in Primitive), but not for general circuits. `AER::Config` lists all items for configuration even though which are not used in a specified simulation method.
+
+### Steps to reproduce the problem
+
+Run circuits with small qubits. 
+
+<img width="362" alt="image" src="https://user-images.githubusercontent.com/13864484/224880632-01339ddc-d285-4bc2-81e0-0524f26d6741.png">
+
+The above results were measured with following codes:
+
+```
+from time import time
+from qiskit import QuantumCircuit, transpile
+from qiskit_aer import AerSimulator
+from qiskit.circuit.library import QuantumVolume
+
+backend = AerSimulator(method='statevector')
+
+print('num_qubits, iteration, elapsed')
+for num_qubits in range(3, 15):
+	circ = QuantumVolume(num_qubits)
+	circ.measure_all()
+	circ = transpile(circ, backend)
+	
+	start_ts = time()
+	for j in range(100):
+		ret = backend.run(circ).result()
+	elapsed = time() - start_ts
+	print(num_qubits, 100, elapsed)
+```
+
+### What is the expected behavior?
+
+No regression.
+
+### Suggested solutions
+
+Not list all configuration items.
+

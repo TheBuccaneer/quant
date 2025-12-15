@@ -1,0 +1,26 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 12
+- **Python version**:
+- **Operating system**:
+
+### What is the current behavior?
+
+I am attempting to rerun a notebook that worked back in Dec. of 2022: https://quantum-enablement.org/events/skku-2022/Runtime-3.html
+
+For Aer version 12, the VQE problem on the simulator repeatedly converges to an incorrect value hovering in the range of ~-0.57, whereas the true value is ~-0.70.  Downgrading Aer to the previous version, e.g 0.11.2, once again returns values consistent with previous results, eg. -0.698, and expectation of using a noise-less simulator.
+
+
+### Steps to reproduce the problem
+Re-run notebook section using Aer Estimator
+
+
+### What is the expected behavior?
+The Estimator in version 12 should yield results inline with the previous version and the known result.
+
+### Suggested solutions
+
+

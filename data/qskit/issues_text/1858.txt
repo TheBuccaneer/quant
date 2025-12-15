@@ -1,0 +1,43 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:  0.12.1
+- **Python version**: 3.9
+- **Operating system**: Windows
+
+### What is the current behavior?
+When running a simulation of a pulse `Schedule`, the measurements are not done properly. In the example below, the state of qubit 1 is not measured correctly\not measured at all.
+
+### Steps to reproduce the problem
+```
+from qiskit import QuantumCircuit
+from qiskit import transpile, schedule
+from qiskit.providers.fake_provider import FakeManila
+
+backend = FakeManila()
+circ=QuantumCircuit(2)
+
+circ.sx(0)
+circ.sx(1)
+circ.measure_all()
+
+circ_transpile = transpile(circ, backend,initial_layout=[0,1])
+circ_sched=schedule(circ_transpile, backend)
+
+job = backend.run(circ_transpile, shots=20000)
+counts_scaled = job.result().get_counts()
+# {'10': 5835, '00': 5916, '11': 3996, '01': 4253} - seems ok
+job = backend.run(circ_sched, shots=20000)
+counts_scaled = job.result().get_counts()
+# {'00': 2887, '01': 17113} - definitely wrong
+```
+
+### What is the expected behavior?
+The state of qubit 1 should be measured correctly\as well, leaving a balanced distribution across all 4 states.
+
+### Suggested solutions
+Everything about this bug report is deprecated\heading for deprecation, from Terra's `Schedule` to Aer's Pulse Simulator (#1809). Just wanted to put it here to make sure there isn't any non-deprecated cause for the bug.
+(For what it's worth, we see no problem with Terra's `Schedule` [Terra issue [10324](https://github.com/Qiskit/qiskit-terra/issues/10324)])
+

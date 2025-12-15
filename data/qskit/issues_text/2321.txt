@@ -1,0 +1,62 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.16.1
+- **Python version**: 3.12
+- **Operating system**: linux arm
+
+### What is the current behavior?
+
+Only for version 0.16.1, our CI fails only for linux ARM and for Python 3.12 (3.11 and 3.10 work fine as well as v0.16.0), see e.g. https://github.com/cda-tum/mqt-bench/actions/runs/13525645197/job/37795417319 for details. The error message is: 
+
+ImportError while importing test module '/home/runner/work/mqt-bench/mqt-bench/tests/test_cli.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_cli.py:10: in <module>
+    from mqt.bench import CompilerSettings, QiskitSettings, get_benchmark
+src/mqt/bench/__init__.py:9: in <module>
+    from mqt.bench.benchmark_generator import (
+src/mqt/bench/benchmark_generator.py:16: in <module>
+    from . import qiskit_helper, tket_helper
+src/mqt/bench/tket_helper.py:10: in <module>
+    from pytket.extensions.qiskit import qiskit_to_tk
+.nox/tests-3-12/lib/python3.12/site-packages/pytket/extensions/qiskit/__init__.py:18: in <module>
+    from .backends import (
+.nox/tests-3-12/lib/python3.12/site-packages/pytket/extensions/qiskit/backends/__init__.py:16: in <module>
+    from .aer import (
+.nox/tests-3-12/lib/python3.12/site-packages/pytket/extensions/qiskit/backends/aer.py:25: in <module>
+    from qiskit_aer import Aer  # type: ignore
+.nox/tests-3-12/lib/python3.12/site-packages/qiskit_aer/__init__.py:69: in <module>
+    from qiskit_aer.aerprovider import AerProvider
+.nox/tests-3-12/lib/python3.12/site-packages/qiskit_aer/aerprovider.py:20: in <module>
+    from .backends.aer_simulator import AerSimulator
+.nox/tests-3-12/lib/python3.12/site-packages/qiskit_aer/backends/__init__.py:17: in <module>
+    from .aer_simulator import AerSimulator
+.nox/tests-3-12/lib/python3.12/site-packages/qiskit_aer/backends/aer_simulator.py:24: in <module>
+    from .aerbackend import AerBackend, AerError
+.nox/tests-3-12/lib/python3.12/site-packages/qiskit_aer/backends/aerbackend.py:33: in <module>
+    from ..noise.noise_model import NoiseModel, QuantumErrorLocation
+.nox/tests-3-12/lib/python3.12/site-packages/qiskit_aer/noise/__init__.py:241: in <module>
+    from .noise_model import NoiseModel
+.nox/tests-3-12/lib/python3.12/site-packages/qiskit_aer/noise/noise_model.py:38: in <module>
+    from ..backends.backend_utils import BASIS_GATES
+.nox/tests-3-12/lib/python3.12/site-packages/qiskit_aer/backends/backend_utils.py:30: in <module>
+    from .controller_wrappers import aer_initialize_libraries
+E   ImportError: /home/runner/work/mqt-bench/mqt-bench/.nox/tests-3-12/lib/python3.12/site-packages/qiskit_aer/backends/controller_wrappers.cpython-312-aarch64-linux-gnu.so: undefined symbol: omp_get_num_threads
+
+
+### Steps to reproduce the problem
+
+Unfortunately, I do not have the time to reduce this to a smaller example.
+
+### What is the expected behavior?
+
+
+
+### Suggested solutions
+
+

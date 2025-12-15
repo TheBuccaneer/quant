@@ -1,0 +1,83 @@
+### Informations
+
+- **Qiskit Aer version**: 0.11.2
+- **Python version**: 3.8.10
+- **Operating system**: Linux (Ubuntu 20.04.1)
+
+### What is the current behavior?
+
+MPS simulator hangs during processing of a measurement instruction in specific cases reproduced below, and in the case that (a) the bond dimension is limited; and (b) the `mps_apply_measure` method is used for measurement.
+
+The hang is caused by an infinite loop in the C++ `csvd` code because the value of `eps` is zero and none of the exit conditions are satisfied. The value of `eps` is zero because the input matrix is zero. The input matrix is zero because this is the result of the `MPS_Tensor::Decompose` method, executed in the context of `MPS::move_all_qubits_to_sorted_ordering()`.
+
+References:
+
+https://github.com/Qiskit/qiskit-aer/blob/6b0e9996e907b48a3788b15ac2010aa8e1f32ff7/src/simulators/matrix_product_state/svd.cpp#L157
+
+https://github.com/Qiskit/qiskit-aer/blob/6b0e9996e907b48a3788b15ac2010aa8e1f32ff7/src/simulators/matrix_product_state/matrix_product_state_tensor.hpp#L653
+
+https://github.com/Qiskit/qiskit-aer/blob/6b0e9996e907b48a3788b15ac2010aa8e1f32ff7/src/simulators/matrix_product_state/matrix_product_state_internal.cpp#L976
+
+### Steps to reproduce the problem
+
+Issue is reproduced with the following Python script. 
+
+The problematic behavior is seen in this test case only if the measurement outcome is 1. This is selected stochastically by `AerSimulator` and cannot be seeded as far as I can determine. If the measurement outcome is 0 the program completes.
+
+When the issue arises, the program hangs in the context of processing instruction `measure q[0] -> c[0];`.
+
+```
+from qiskit import QuantumCircuit, transpile
+from qiskit_aer import AerSimulator
+
+INPUT = """OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[4];
+creg c[4];
+h q[3];
+h q[1];
+cx q[1],q[2];
+cx q[3],q[0];
+measure q[0] -> c[0];
+measure q[1] -> c[1];
+measure q[2] -> c[2];
+measure q[3] -> c[3];"""
+
+# Construct quantum circuit
+circuit = QuantumCircuit.from_qasm_str(INPUT)
+
+simulator = AerSimulator(
+    method='matrix_product_state',
+    matrix_product_state_max_bond_dimension=2  # hangs only if this is 2
+)
+
+# Run and get counts, using the matrix_product_state method
+def run():
+    transpiled_circuit = transpile(circuit, simulator)
+    res = simulator.run(transpiled_circuit, shots=1, memory=True)
+    return res.result().get_memory()
+
+if __name__ == '__main__':
+    res = run()
+    print(res)
+```
+
+Changing the measurement method to `mps_sample_measure_algorithm="mps_probabilities"` avoids the issue, but has limited scalability.
+
+Changing `matrix_product_state_max_bond_dimension=2` to a value other than 2 avoids the issue, but the intent is to be able to set it.
+
+Changes to this input program such as replacing `h q[3]` with `h q[2]` also avoids the issue.
+
+### What is the expected behavior?
+
+Simulation should complete with correct sampling result.
+
+The rationale for this particular circuit test is to verify that two independent Bell states which would normally be precisely represented using MPS with a bond dimension of 2 if they were local on the MPS linear chain (e.g. qubits 0 and 1, and qubits 2 and 3) are not precisely represented when the Bell states are not local (in this case, qubits 0 and 3, and qubits 1 and 2). The simulation should succeed but we should not expect all four outcomes to be represented with equal probability due to truncation.
+
+### Suggested solutions
+
+The solution appears to lie in correcting the behavior of `MPS::common_apply_2_qubit_gate()` in the context of this measurement operation, but I have not determined how. Any guidance would be appreciated.
+
+References:
+
+https://github.com/Qiskit/qiskit-aer/blob/6b0e9996e907b48a3788b15ac2010aa8e1f32ff7/src/simulators/matrix_product_state/matrix_product_state_internal.cpp#L625

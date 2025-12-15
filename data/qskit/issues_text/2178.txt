@@ -1,0 +1,27 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.14.2
+- **Python version**: 3.11
+- **Operating system**: Linux
+
+### What is the current behavior?
+
+```
+site-packages/qiskit_aer/__init__.py:89: DeprecationWarning: The class ``qiskit.providers.provider.Provider`` is deprecated as of qiskit 1.1. It will be removed no earlier than 3 months after the release date. The abstract Provider and ProviderV1 classes are deprecated and will be removed in 2.0. You can just remove it as the parent class and a `get_backend` method that returns the backends from `self.backend`.
+    Aer = AerProvider()  # pylint: disable=invalid-name
+```
+
+### Steps to reproduce the problem
+
+Use aer simulator with qiskit 1.1 or later.
+
+### What is the expected behavior?
+
+No warning
+
+### Suggested solutions
+
+Don't use `ProviderV1` as a parent class.

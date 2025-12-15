@@ -1,0 +1,37 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: Latest development version
+- **Python version**: Irrelevant, as it's called from C++
+- **Operating system**: Windows, linux, macos
+
+### What is the current behavior?
+
+Calling `AerState::probability` throws an exception with the message "Save amplitude square must be defined on full width of qubits."
+The exception comes from here: https://github.com/Qiskit/qiskit-aer/blob/269c26fd0552836db54f27d511e07167f58d7990/src/simulators/stabilizer/stabilizer_state.hpp#L578
+
+
+### Steps to reproduce the problem
+
+Configure a stabilizer simulator then call 'probability' for an outcome.
+
+
+### What is the expected behavior?
+
+Return the probability.
+
+### Suggested solutions
+
+Modify `AerState::probability` to add the list of qubits, that is, insert
+
+```
+  for (uint_t i = 0; i < num_of_qubits_; ++i)
+    op.qubits.push_back(i);
+```
+somewhere here: https://github.com/Qiskit/qiskit-aer/blob/269c26fd0552836db54f27d511e07167f58d7990/src/controllers/state_controller.hpp#L1382
+
+This issue is similar with this one: https://github.com/Qiskit/qiskit-aer/issues/2234
+
+

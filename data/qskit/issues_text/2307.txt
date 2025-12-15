@@ -1,0 +1,19 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+
+
+### What is the current behavior?
+Clicking the "source" button on API docs leads to 404 page. (Such as [here](https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.noise.PauliLindbladError.html))
+
+
+### Steps to reproduce the problem
+Click any "source" button in API docs
+
+
+### What is the expected behavior?
+Should link to the source code for the latest release
+
+
+### Suggested solutions
+It looks like 0.16 was released but no stable branch was created. Maybe just need a stable branch created and pointing to the correct commit

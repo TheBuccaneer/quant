@@ -1,0 +1,69 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.16.1
+- **Python version**: 3.12.7
+- **Operating system**: Windows 11 Home
+
+### What is the current behavior?
+
+Expectation values of circuits under depolarizing noise do not match their theoretical prediction. For the example below we expect an expectation value of 0.9491 but instead get 0.9568.
+
+### Steps to reproduce the problem
+
+The following simulated circuit is **equivalent to identity**:
+
+```
+from qiskit_aer.primitives import EstimatorV2 as Estimator
+from qiskit_aer.noise import NoiseModel, depolarizing_error
+from qiskit import QuantumCircuit
+
+qc = QuantumCircuit(2)
+qc.x(1)
+qc.ecr(0,1)
+qc.sx([1])
+qc.sx([1])
+qc.ecr(0,1)
+qc.x([0,1])
+qc.x([0,1])
+qc.x([0,1])
+qc.ecr(0,1)
+qc.sx([1])
+qc.sx([1])
+qc.ecr(0,1)
+qc.x(0)
+
+noise_model = NoiseModel()
+error = depolarizing_error(0.001, 1)
+noise_model.add_all_qubit_quantum_error(error, ['sx','x'])
+error = depolarizing_error(0.01, 2)
+noise_model.add_all_qubit_quantum_error(error, ['ecr'])
+
+estimator_noisy = Estimator(
+        options={
+            'backend_options': {'noise_model': noise_model},
+        }
+    )
+
+print(estimator_noisy.run([(qc, 'IZ')]).result()[0].data.evs)
+```
+outputs
+0.9567593856946349.
+
+### What is the expected behavior?
+
+The effect of $N$ gates $G_i$ with depolarizing error probability $p_i$ should be to map the state 
+$$\rho \mapsto  \left[ (1-p_1) \cdots (1-p_N) \right] \left(G_N \cdots G_1\right) \rho (G_1^\dagger \cdots G_N^\dagger ) + \left[ 1- \left[ (1-p_1) \cdots (1-p_N) \right] \right] \frac{\mathbb{I}}{4}.$$
+The circuit above is equivalent to the identity and there are 12 single-qubit gates with $p=0.001$ and 4 two-qubit gates with $p=0.01$, so the noisy expectation value should be $\text{Tr}(\tilde{\rho}Z_0) = (1-0.01)^4 \cdot (1-0.001)^{12} \approx 0.9491$, which does not match the output of the estimator.
+
+Swapping the $X$ and $\sqrt{X}$ gates in the circuit gives another circuit which is also equivalent to identity. Noisy simulation in this case gives the expectation value as 0.9548, which matches neither the other circuit nor the theoretical prediction.  
+
+### Suggested solution
+
+If we only simulate noise on the two-qubit ECR gates, the estimator result matches the theoretical prediction. If we simulate just the single-qubit gate noise, the results for the two circuits are again inconsistent with one another and with thetheoretical prediction. Hence I conclude that this must be an issue with simulating the depolarizing noise for single-qubit gates as part of a multi-qubit circuit. 
+
+
+
+

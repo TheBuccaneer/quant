@@ -1,0 +1,39 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version: 0.12.1**:
+- **Python version: 3.10.9**:
+- **Operating system: Win11, 16 GB RAM**:
+
+### What is the current behavior?
+The `AerSimulator(method='matrix_product_state')` aborts with an error message if the number of qubits of the circuit is greater than the maximum memory / 32 MB, regardless of the size of a generated MPS. With 16 GB RAM the number of qubits is limited to 504, which is in any case not necessary with a moderate bond dimension. 
+
+
+### Steps to reproduce the problem
+```python
+num_qubits = 505
+circ = QuantumCircuit(num_qubits)
+circ.h(0)
+for i in range (0, num_qubits-1):
+    circ.cx(i, i+1)
+circ.measure_all()
+
+simulator = AerSimulator(method='matrix_product_state')
+res = simulator.run(circ).result()
+```
+gives
+![image](https://github.com/Qiskit/qiskit-aer/assets/117047381/7bbbd746-b9d5-4b80-aa75-10f53df4d0f7)
+
+### What is the expected behavior?
+The simulation of the circuit above works fine in 1-2 sec for 504 qubits. So it should not abort with 505 qubits. Furthermore the required memory for the MPS is only about 0.3 MB and not  $505 \cdot 32 = 16160$ MB! 
+
+
+### Suggested solutions
+You should keep track of the size of the generated MPS, which is bounded above by approximately $N (32 d^2 + 8 d)$ bytes, where $N$ is the number of qubits and $d$ is the maximum bond dimension. There is some overhead for list, tuple, and Ndarray structures that can be neglected for larger $d$. In my own simulation, run in Numpy, I get $N (32 d^2 + 8 d + 440)$ and which, interestingly, is several seconds faster than the qiskit simulation for larger $d.$ So one should be able to comfortably simulate 1000 qubit circuits with d = 64 (correspond to 6 entanglement blocks in a VQE ansatz) and even more so with d=2 on a 16 GB RAM device.
+
+**Another remark**
+You should adapt your [matrix product state simulation method tutorial](https://[qiskit.org/documentation/stable/0.42/tutorials/simulators/7_matrix_product_state_method.html) in qiskit: *We can handle more qubits than this, but execution may take a few minutes. Try running a similar circuit with 500 qubits! Or maybe even 1000 (you can get a cup of coffee while waiting).*
+This is definitly not true! With constant bond dimension the matrix product state algorithm scales linearly with the number of qubits and the number of shots (as long shots $\gg d$). So if it takes about 0.1 seconds for 50 qubits, it takes about one second for 500 qubits and two seconds for 1000 qubits. That's not a few minutes and certainly not time to drink a coffee! And this is not only theoretical, I checked the linearity practically on my as well as on Aer Simulation. 
+

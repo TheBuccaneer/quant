@@ -1,0 +1,85 @@
+### Informations
+
+-**Qiskit version**: 1.3.2
+- **Qiskit Aer version**: 0.16.0
+- **Python version**: 3.11.5
+- **Operating system**: macOS 15.2
+
+### What is the current behavior?
+
+Noisy and exact simulation results for EstimatorV2 primitives are identical when noise model is built from a backend.
+
+
+### Steps to reproduce the problem
+
+This is the example from [docs](https://docs.quantum.ibm.com/guides/simulate-with-qiskit-aer), with the noise model built from a backend.
+
+````
+from time import time
+
+from qiskit import QuantumCircuit, generate_preset_pass_manager
+from qiskit_aer import AerSimulator
+from qiskit_aer.noise import NoiseModel
+from qiskit_ibm_runtime import QiskitRuntimeService
+from qiskit_aer.primitives import EstimatorV2 as EstimatorAer
+
+from qiskit.circuit.library import EfficientSU2
+ 
+n_qubits = 8
+circuit = EfficientSU2(n_qubits)
+
+from qiskit.quantum_info import SparsePauliOp
+from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
+from qiskit_aer import AerSimulator
+from qiskit_aer.primitives import EstimatorV2 as Estimator
+ 
+observable = SparsePauliOp("Z" * n_qubits)
+params = [0.1] * circuit.num_parameters
+ 
+exact_estimator = Estimator()
+# The circuit needs to be transpiled to the AerSimulator target
+pass_manager = generate_preset_pass_manager(3, AerSimulator())
+isa_circuit = pass_manager.run(circuit)
+pub = (isa_circuit, observable, params)
+job = exact_estimator.run([pub])
+result = job.result()
+pub_result = result[0]
+exact_value = float(pub_result.data.evs)
+
+print("Exact value:", exact_value)
+
+device = "ibm_brisbane"
+service = QiskitRuntimeService(
+    instance="YOUR INSTANCE"
+)
+backend = service.backend(device)
+noise_model = NoiseModel.from_backend(backend)
+
+#Works for custom noise models #
+# from qiskit_aer.noise import depolarizing_error
+# noise_model = NoiseModel()
+# cx_depolarizing_prob = 0.02
+# noise_model.add_all_qubit_quantum_error(
+#     depolarizing_error(cx_depolarizing_prob, 2), ["cx"]
+# )
+
+noisy_estimator = Estimator(
+    options=dict(backend_options=dict(noise_model=noise_model))
+)
+job = noisy_estimator.run([pub])
+result = job.result()
+pub_result = result[0]
+noisy_value = float(pub_result.data.evs)
+
+print("Noisy value:", noisy_value)
+````
+
+### What is the expected behavior?
+
+print("Noisy value:", noisy_value)` --> 0.7247404214143528
+
+### Other info
+
+Issue is invariant to the backend used.
+
+

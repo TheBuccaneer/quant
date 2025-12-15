@@ -1,0 +1,24 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: NA since not imported
+- **Python version**: 3.10.12 (main, Mar 22 2024, 16:50:05) [GCC 11.4.0]
+- **Operating system**: Windows 11 (also tried using colab which uses Linux)
+
+### What is the current behavior?
+Aer in qiskit isn't getting imported
+
+
+### Steps to reproduce the problem
+
+
+
+### What is the expected behavior?
+Aer should be imported 
+
+
+### Suggested solutions
+
+

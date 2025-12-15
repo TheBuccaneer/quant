@@ -1,0 +1,34 @@
+### Environment
+
+- **Qiskit Terra version**:  0.23.3
+- **Python version**: 3.10
+- **Operating system**: osx
+
+
+### What is happening?
+
+I am trying to make convert and use QuantumCircuit from OpenQASM3 file. After obtaining the circuit (an instance of QuantumCircuit class), I added save_statevector() instruction and `CircuitError: 'duplicate qubit arguments'` error is thrown.
+
+### How can we reproduce the issue?
+
+```
+from qiskit.qasm3 import dumps, loads
+
+circ = QuantumCircuit(2)
+circ.x(0)
+circ.cx(0, 1)
+
+qasm_str = dumps(circ)
+print(qasm_str)
+
+new_circ = loads(qasm_str)
+new_circ.save_statevector()
+```
+
+### What should happen?
+
+There shouldn't be any error thrown. 
+
+### Any suggestions?
+
+_No response_

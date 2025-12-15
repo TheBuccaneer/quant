@@ -1,0 +1,121 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.14.1
+- **Python version**: 3.11.3
+- **Operating system**: macOS Sonoma 14.4.1
+
+### What is the current behavior?
+When trying to run a dynamic circuit with the runtime sampler and the aer simulator it looks like it crashes on the aer compiler when transforming the feedforward parts of the circuits.
+The final error is `CircuitError: "Bit 'Qubit(QuantumRegister(1, 'q'), 0)' is not in the circuit."`
+
+
+### Steps to reproduce the problem
+This code reproduces the error which the following version of qiskit packages : qiskit==1.0.2, qiskit-ibm-runtime==0.23.0, qiskit-aer==0.14.1
+
+```
+from qiskit import QuantumCircuit, transpile, QuantumRegister, ClassicalRegister
+from qiskit.visualization import circuit_drawer
+from time import time
+import numpy as np
+from qiskit_ibm_runtime import QiskitRuntimeService, SamplerV2 as Sampler
+from qiskit_aer import AerSimulator
+
+def test():
+    qc = QuantumCircuit(1,1,name='ansatz_circ')
+    qc.measure(0, 0)
+    with qc.if_test((qc.cregs[0], 1)): qc.x(0)
+    return qc
+
+qc = test()
+cc = QuantumCircuit(2,1)
+cc.h(range(2))
+cc.compose(qc, [1], [0], inplace=True) 
+cc.barrier()
+cc.measure(1,0)
+
+backend = AerSimulator()
+print('Transpile for',backend)
+qcT = transpile(cc, backend=backend, optimization_level=3, seed_transpiler=111)
+sampler = Sampler(backend=backend)
+pub=(qcT,)
+print('job started at',backend)
+job = sampler.run(pub, shots=4000)
+result=job.result()[0]
+
+```
+
+
+
+### What is the expected behavior?
+
+The code runs without any CircuitError.
+
+### Suggested solutions
+
+Note that if we create the circuit this way instead of using the test function, it runs without any issues : 
+```
+cc = QuantumCircuit(2,1)
+cc.h(range(2))
+#cc.compose(qc, [1], [0], inplace=True) 
+cc.measure(0, 0)
+with cc.if_test((qc.cregs[0], 1)): qc.x(0)
+cc.barrier()
+cc.measure(1,0)
+
+```
+
+I also compared with the previous aer version and **it works with 0.14.0**. When comparing the traceback with the changes between the 2 versions, I believe [these changes](https://github.com/Qiskit/qiskit-aer/pull/2095) make the crash happen. I put an abstract of the error related to aer that's returned on my end. It looks like a mismatch in the way quantum/classical registers are handled by the transpilation part when using a sub-circuit ?
+
+```
+File [~/VirtualEnv/test/lib/python3.11/site-packages/qiskit_aer/backends/aerbackend.py:451](http://localhost:8888/~/VirtualEnv/test/lib/python3.11/site-packages/qiskit_aer/backends/aerbackend.py#line=450), in AerBackend._execute_circuits_job(self, circuits, parameter_binds, run_options, job_id, format_result)
+    448 start = time.time()
+    450 # Compile circuits
+--> 451 circuits, noise_model = self._compile(circuits, **run_options)
+    453 if self._target is not None:
+    454     aer_circuits, idx_maps = assemble_circuits(circuits, self.configuration().basis_gates)
+
+File [~/VirtualEnv/test/lib/python3.11/site-packages/qiskit_aer/backends/aerbackend.py:528](http://localhost:8888/~/VirtualEnv/test/lib/python3.11/site-packages/qiskit_aer/backends/aerbackend.py#line=527), in AerBackend._compile(self, circuits, **run_options)
+    525 optypes = [circuit_optypes(circ) for circ in circuits]
+    527 # Compile Qasm3 instructions
+--> 528 circuits, optypes = compile_circuit(circuits, optypes=optypes)
+    530 # run option noise model
+    531 circuits, noise_model, run_options = self._assemble_noise_model(
+    532     circuits, optypes, **run_options
+    533 )
+
+File [~/VirtualEnv/test/lib/python3.11/site-packages/qiskit_aer/backends/aer_compiler.py:483](http://localhost:8888/~/VirtualEnv/test/lib/python3.11/site-packages/qiskit_aer/backends/aer_compiler.py#line=482), in compile_circuit(circuits, optypes)
+    479 def compile_circuit(circuits, optypes=None):
+    480     """
+    481     compile a circuit that have control-flow instructions
+    482     """
+--> 483     return AerCompiler().compile(circuits, optypes)
+
+File [~/VirtualEnv/test/lib/python3.11/site-packages/qiskit_aer/backends/aer_compiler.py:102](http://localhost:8888/~/VirtualEnv/test/lib/python3.11/site-packages/qiskit_aer/backends/aer_compiler.py#line=101), in AerCompiler.compile(self, circuits, optypes)
+    100 if self._is_dynamic(circuit, compiled_optypes[idx]):
+    101     pm = PassManager([Decompose(["mark", "jump"])])
+--> 102     compiled_circ = pm.run(self._inline_circuit(circuit, None, None))
+    104     compiled_circuits.append(compiled_circ)
+    105     # Recompute optype for compiled circuit
+
+File [~/VirtualEnv/test/lib/python3.11/site-packages/qiskit_aer/backends/aer_compiler.py:199](http://localhost:8888/~/VirtualEnv/test/lib/python3.11/site-packages/qiskit_aer/backends/aer_compiler.py#line=198), in AerCompiler._inline_circuit(self, circ, continue_label, break_label, bit_map)
+    197 elif isinstance(instruction.operation, IfElseOp):
+    198     ret.barrier()
+--> 199     self._inline_if_else_op(instruction, continue_label, break_label, ret, bit_map)
+    200     ret.barrier()
+    201 elif isinstance(instruction.operation, SwitchCaseOp):
+
+File [~/VirtualEnv/test/lib/python3.11/site-packages/qiskit_aer/backends/aer_compiler.py:376](http://localhost:8888/~/VirtualEnv/test/lib/python3.11/site-packages/qiskit_aer/backends/aer_compiler.py#line=375), in AerCompiler._inline_if_else_op(self, instruction, continue_label, break_label, parent, bit_map)
+    374 child = self._inline_circuit(true_body, continue_label, break_label, true_bit_map)
+    375 for inst in child.data:
+--> 376     parent.append(inst, qargs, cargs)
+    378 if false_body:
+    379     false_bit_map = {
+    380         inner: bit_map[outer]
+    381         for inner, outer in itertools.chain(
+   (...)
+    384         )
+    385     }
+```

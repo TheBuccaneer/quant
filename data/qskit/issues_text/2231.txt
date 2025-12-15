@@ -1,0 +1,61 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: master or 0.15
+- **Python version**: 3.12
+- **Operating system**: Linux
+
+### What is the current behavior?
+
+Cmake was updated to 3.20 and now I get this error but it worked with cmake 3.19.
+
+```
+-- Conan: Automatic detection of conan settings from cmake
+CMake Error at cmake/conan.cmake:129 (if):
+  if given arguments:
+
+    "STREQUAL" "GNU"
+
+  Unknown arguments specified
+Call Stack (most recent call first):
+  cmake/conan.cmake:498 (conan_cmake_settings)
+  cmake/conan_utils.cmake:63 (conan_cmake_run)
+  cmake/dependency_utils.cmake:20 (setup_conan)
+  CMakeLists.txt:179 (setup_dependencies)
+
+
+-- Configuring incomplete, errors occurred!
+See also "/users/diehlpk/compile/qiskit-aer/_skbuild/linux-aarch64-3.12/cmake-build/CMakeFiles/CMakeOutput.log".
+See also "/users/diehlpk/compile/qiskit-aer/_skbuild/linux-aarch64-3.12/cmake-build/CMakeFiles/CMakeError.log".
+Traceback (most recent call last):
+  File "/users/diehlpk/spack/opt/spack/linux-sles15-neoverse_v2/gcc-12.3.0/python-3.12.0-quyirrlbbkwrjhbntxirwig42iukexr2/lib/python3.12/site-packages/skbuild/setuptools_wrap.py", line 660, in setup
+    env = cmkr.configure(
+          ^^^^^^^^^^^^^^^
+  File "/users/diehlpk/spack/opt/spack/linux-sles15-neoverse_v2/gcc-12.3.0/python-3.12.0-quyirrlbbkwrjhbntxirwig42iukexr2/lib/python3.12/site-packages/skbuild/cmaker.py", line 354, in configure
+    raise SKBuildError(msg)
+
+An error occurred while configuring with CMake.
+  Command:
+    /usr/bin/cmake /users/diehlpk/compile/qiskit-aer -G 'Unix Makefiles' --no-warn-unused-cli -DCMAKE_INSTALL_PREFIX:PATH=/users/diehlpk/compile/qiskit-aer/_skbuild/linux-aarch64-3.12/cmake-install -DPYTHON_VERSION_STRING:STRING=3.12.0 -DSKBUILD:INTERNAL=TRUE -DCMAKE_MODULE_PATH:PATH=/users/diehlpk/spack/opt/spack/linux-sles15-neoverse_v2/gcc-12.3.0/python-3.12.0-quyirrlbbkwrjhbntxirwig42iukexr2/lib/python3.12/site-packages/skbuild/resources/cmake -DPYTHON_EXECUTABLE:PATH=/users/diehlpk/spack/opt/spack/linux-sles15-neoverse_v2/gcc-12.3.0/python-3.12.0-quyirrlbbkwrjhbntxirwig42iukexr2/bin/python3.12 -DPYTHON_INCLUDE_DIR:PATH=/users/diehlpk/spack/opt/spack/linux-sles15-neoverse_v2/gcc-12.3.0/python-3.12.0-quyirrlbbkwrjhbntxirwig42iukexr2/include/python3.12 -DPYTHON_LIBRARY:PATH=/users/diehlpk/spack/opt/spack/linux-sles15-neoverse_v2/gcc-12.3.0/python-3.12.0-quyirrlbbkwrjhbntxirwig42iukexr2/lib/libpython3.12.so -DPython_EXECUTABLE:PATH=/users/diehlpk/spack/opt/spack/linux-sles15-neoverse_v2/gcc-12.3.0/python-3.12.0-quyirrlbbkwrjhbntxirwig42iukexr2/bin/python3.12 -DPython_ROOT_DIR:PATH=/users/diehlpk/spack/opt/spack/linux-sles15-neoverse_v2/gcc-12.3.0/python-3.12.0-quyirrlbbkwrjhbntxirwig42iukexr2 -DPython_FIND_REGISTRY:STRING=NEVER -DPython_INCLUDE_DIR:PATH=/users/diehlpk/spack/opt/spack/linux-sles15-neoverse_v2/gcc-12.3.0/python-3.12.0-quyirrlbbkwrjhbntxirwig42iukexr2/include/python3.12 -DPython_NumPy_INCLUDE_DIRS:PATH=/users/diehlpk/spack/opt/spack/linux-sles15-neoverse_v2/gcc-12.3.0/python-3.12.0-quyirrlbbkwrjhbntxirwig42iukexr2/lib/python3.12/site-packages/numpy/_core/include -DPython3_EXECUTABLE:PATH=/users/diehlpk/spack/opt/spack/linux-sles15-neoverse_v2/gcc-12.3.0/python-3.12.0-quyirrlbbkwrjhbntxirwig42iukexr2/bin/python3.12 -DPython3_ROOT_DIR:PATH=/users/diehlpk/spack/opt/spack/linux-sles15-neoverse_v2/gcc-12.3.0/python-3.12.0-quyirrlbbkwrjhbntxirwig42iukexr2 -DPython3_FIND_REGISTRY:STRING=NEVER -DPython3_INCLUDE_DIR:PATH=/users/diehlpk/spack/opt/spack/linux-sles15-neoverse_v2/gcc-12.3.0/python-3.12.0-quyirrlbbkwrjhbntxirwig42iukexr2/include/python3.12 -DPython3_NumPy_INCLUDE_DIRS:PATH=/users/diehlpk/spack/opt/spack/linux-sles15-neoverse_v2/gcc-12.3.0/python-3.12.0-quyirrlbbkwrjhbntxirwig42iukexr2/lib/python3.12/site-packages/numpy/_core/include -DAER_THRUST_BACKEND=CUDA -DAER_CUDA_ARCH=9.0 -DCUQUANTUM_ROOT=/users/diehlpk/compile/cuquantum-linux-sbsa-24.08.0.5_cuda12-archive -DCMAKE_BUILD_TYPE:STRING=Release
+  Source directory:
+    /users/diehlpk/compile/qiskit-aer
+  Working directory:
+    /users/diehlpk/compile/qiskit-aer/_skbuild/linux-aarch64-3.12/cmake-build
+Please see CMake's output for more information.
+```
+
+
+
+### Steps to reproduce the problem
+
+Install the package with cmake 3.20
+
+### What is the expected behavior?
+
+
+
+### Suggested solutions
+
+

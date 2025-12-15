@@ -1,0 +1,39 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.14.1
+- **Python version**: 3.11.9
+- **Operating system**: Fedora 40
+
+### What is the current behavior?
+
+
+
+### Steps to reproduce the problem
+
+```python
+from qiskit_aer.primitives import EstimatorV2
+
+estimator = EstimatorV2(options=dict(backend_options=dict(method="stabilizer")))
+```
+
+```
+Traceback (most recent call last):
+  File "/home/kevinsung/projects/documentation/scratch/repro.py", line 3, in <module>
+    estimator = EstimatorV2(options=dict(backend_options=dict(method="stabilizer")))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kevinsung/.pyenv/versions/documentation/lib/python3.11/site-packages/qiskit_aer/primitives/estimator_v2.py", line 74, in __init__
+    self._backend = AerSimulator(method=method, **self.options.backend_options)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: qiskit_aer.backends.aer_simulator.AerSimulator() got multiple values for keyword argument 'method'
+```
+
+### What is the expected behavior?
+
+Should work.
+
+### Suggested solutions
+
+Looks like [this line](https://github.com/Qiskit/qiskit-aer/blob/18987e012905253d39343f8ade4a2c54045744b9/qiskit_aer/primitives/estimator_v2.py#L74) should not be setting the method for the user.

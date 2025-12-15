@@ -1,0 +1,97 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.15.0
+- **Python version**: 3.10
+- **Operating system**:  Mac OS Sonoma
+
+### What is the current behavior?
+
+Instantiating a custom noise model with AerSimulator while setting `runtime_parameter_bind_enable` to True and using the EstimatorV2.from_backend() yields inconsistent behaviour
+
+### Steps to reproduce the problem
+
+`from qiskit.primitives import BackendEstimatorV2, StatevectorEstimator
+from qiskit_aer.primitives import EstimatorV2
+from qiskit.quantum_info import SparsePauliOp
+from qiskit_aer.noise import NoiseModel, coherent_unitary_error
+from qiskit.circuit import QuantumCircuit, Parameter, ParameterVector
+from qiskit_aer import AerSimulator
+from qiskit import transpile
+import numpy as np
+from qiskit.quantum_info import Operator
+from qiskit.circuit.library import RXGate
+
+pi = np.pi
+phi = pi
+phi_in_degree = int(phi * 180 / pi)
+custom_rx_label = "x"+ str(phi_in_degree)
+gamma = 0.2  # Noise strength
+theta = ParameterVector('θ', 1)
+circuit_context = QuantumCircuit(1)
+circuit_context.rx(phi, 0)
+circ = QuantumCircuit(1)
+circ.unitary(Operator(circuit_context), [0], label=custom_rx_label)
+parametrized_gate = QuantumCircuit(1)
+parametrized_gate.rx(pi + theta[0], [0])
+circ.append(parametrized_gate.to_instruction(), [0])
+
+observable = SparsePauliOp.from_list([('I', 1.), ('Z', 1.)])
+
+statevector = StatevectorEstimator()
+noise_model = NoiseModel(["unitary", 'u', 'h', 's', 'sdg'])
+noise_model.add_all_qubit_quantum_error(coherent_unitary_error(Operator(RXGate(gamma*phi))), [custom_rx_label])
+
+backend = AerSimulator(noise_model=noise_model, runtime_parameter_bind_enable=True)
+backend_estimator = BackendEstimatorV2(backend = backend)
+aer_estimator = EstimatorV2.from_backend(backend)
+
+circ = transpile(circ, backend, optimization_level=0)
+
+pub = [(circ, observable, np.array([[0.6913867 ],
+        [0.6824007 ],
+        [0.7085619 ],
+        [0.72341967],
+        [0.72430754],
+        [0.72378087],
+        [0.72243524],
+        [0.72189641],
+        [0.70088053],
+        [0.68133354],
+        [0.71555138],
+        [0.71889377],
+        [0.6900897 ],
+        [0.69484091],
+        [0.72912645],
+        [0.71886444],
+        [0.68423009],
+        [0.70399284],
+        [0.69807243],
+        [0.68054748],
+        [0.71228957],
+        [0.68517494],
+        [0.69045353],
+        [0.72175193],
+        [0.68547511],
+        [0.69586802],
+        [0.67968917],
+        [0.73793793],
+        [0.67734265],
+        [0.73250389],
+        [0.67946792],
+        [0.67821336]]), 0.0024693239916239737)]
+statevector_results = statevector.run(pub).result()
+backend_results = backend_estimator.run(pub).result() 
+aer_results = aer_estimator.run(pub).result()`
+
+
+### What is the expected behavior?
+
+The output of the Aer Estimator should be similar to the one of the BackendEstimator, but it only produces a similar output for the first parameter value of the batch.
+
+### Suggested solutions
+
+Look closer at how this parameter binding is done with this parameter setting involved for the primitive and figure out what's yielding the discrepancy.
+

@@ -1,0 +1,69 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.13.3
+- **Python version**: 3.11.8
+- **Operating system**: Arch Linux
+
+### What is the current behavior?
+The `ccz` gate isn't accepted by the `statevector_simulator`.
+
+Note that it is possible that the problem also happens with other gates or simulators, I haven't tested them.
+
+
+### Steps to reproduce the problem
+```python
+from qiskit_aer import Aer
+from qiskit import QuantumCircuit
+
+qc = QuantumCircuit(3)
+qc.ccz(0, 1, 2)
+
+sv_sim = Aer.get_backend('statevector_simulator')
+result = sv_sim.run(qc).result()
+```
+
+
+### What is the expected behavior?
+`result` should not raise an error. Instead, the following error is returned:
+```
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/home/tristan/bigfiles/PythonVenvs/quantum/lib/python3.11/site-packages/qiskit_aer/jobs/utils.py", line 42, in _wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tristan/bigfiles/PythonVenvs/quantum/lib/python3.11/site-packages/qiskit_aer/jobs/aerjob.py", line 114, in result
+    return self._future.result(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 456, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/usr/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tristan/bigfiles/PythonVenvs/quantum/lib/python3.11/site-packages/qiskit_aer/backends/aerbackend.py", line 445, in _execute_circuits_job
+    aer_circuits, idx_maps = assemble_circuits(circuits)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tristan/bigfiles/PythonVenvs/quantum/lib/python3.11/site-packages/qiskit_aer/backends/aer_compiler.py", line 953, in assemble_circuits
+    aer_circuits, idx_maps = zip(*[assemble_circuit(circuit) for circuit in circuits])
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tristan/bigfiles/PythonVenvs/quantum/lib/python3.11/site-packages/qiskit_aer/backends/aer_compiler.py", line 953, in <listcomp>
+    aer_circuits, idx_maps = zip(*[assemble_circuit(circuit) for circuit in circuits])
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tristan/bigfiles/PythonVenvs/quantum/lib/python3.11/site-packages/qiskit_aer/backends/aer_compiler.py", line 684, in assemble_circuit
+    num_of_aer_ops += _assemble_op(
+                      ^^^^^^^^^^^^^
+  File "/home/tristan/bigfiles/PythonVenvs/quantum/lib/python3.11/site-packages/qiskit_aer/backends/aer_compiler.py", line 825, in _assemble_op
+    aer_circ.gate(name, qubits, params, [], conditional_reg, aer_cond_expr,
+ValueError: Invalid gate name :"ccz"
+```
+Note that replacing `ccz` by `ccx` makes the code run.
+
+
+### Suggested solutions
+
+

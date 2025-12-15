@@ -1,0 +1,37 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.13.0
+- **Python version**: 3.10.13
+- **Operating system**: macOS 14.1
+
+### What is the current behavior?
+
+`AerSimulator` becomes `BackendV2` but `AerSimulator.coupling_map` does not seem properly generated.
+
+
+### Steps to reproduce the problem
+
+```python
+from qiskit_aer import AerSimulator
+
+backend = AerSimulator(coupling_map=[[0,1]])
+print('backend.coupling_map:', backend.coupling_map, type(backend.coupling_map))
+print('backend.configuration().coupling_map:', backend.configuration().coupling_map)
+```
+
+output
+```
+backend.coupling_map: None <class 'NoneType'>  # expected `CouplingMap`
+backend.configuration().coupling_map: [[0, 1]]
+```
+
+### What is the expected behavior?
+
+`AerSimulator.coupling_map` returns the coupling_map instead of None.
+
+### Suggested solutions
+
+`AerSimulator.set_options` allows users modify coupling map on-demand. It might be good to overload `BackendV2.coupling_map` to generate a coupling map dynamically.

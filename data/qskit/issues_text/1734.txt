@@ -1,0 +1,57 @@
+### Informations
+
+- **Qiskit Aer version**: `0.11.2` for both `qiskit-aer` and `qiskit-aer-gpu`
+- **Python version**: `3.9.13`
+- **Operating system**: Ubuntu 21.10 (RTX 3060, CUDA 12.0, Driver 525.85.12)
+
+### What is the current behavior?
+
+If ran inside a `multiprocessing` context, the `aer_simulator_statevector` simulator crashs resulting in a `SIGABORT` (exit code -6) as soon as `device` is set to `GPU`.
+
+### Steps to reproduce the problem
+
+1. pip-Install `qiskit, qiskit-aer` and `qiskit-aer-gpu`.
+2. Run the following piece of code:
+
+```
+from qiskit import *
+from qiskit.providers.aer import AerError
+import math
+
+from multiprocessing import Process
+
+def sim():
+    qc = QuantumCircuit(1, 1)
+    qc.h(0)
+    qc.measure_all()
+
+    try:
+        simulator_gpu = Aer.get_backend('aer_simulator_statevector')
+        simulator_gpu.set_options(device='GPU')
+    except AerError as err:
+        print(err)
+
+    result=execute(qc,backend=simulator_gpu)
+    print(result.result().get_counts(qc))
+
+if __name__ == '__main__':
+    procs = [Process(target=sim) for _ in range(1)]
+    for p in procs:
+        p.start()
+    for p in procs:
+        p.join()
+        print(p.pid, p.exitcode)
+
+    # sim()
+```
+
+When run, a `SIGABORT` exit code and process ids are reported:
+```
+3689708 -6
+```
+
+### What is the expected behavior?
+
+The script should output the results of the simulation, e.g. `{'1 0': 516, '0 0': 508}`. This happens if one executes the `sim()` function without `multiprocessing` - hence the simulation with GPU enabled does work on this system - just not inside a `Process`.
+
+

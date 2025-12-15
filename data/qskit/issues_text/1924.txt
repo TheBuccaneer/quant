@@ -1,0 +1,103 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:0.12.2
+- **Python version**:3.8.10
+- **Operating system**:Ubuntu 20/04
+
+### What is the current behavior?
+
+I tried to compile QIskit-aer-gpu using source code on Ubuntu, which I downloaded first
+
+wget https://developer.download.nvidia.com/compute/cuquantum/redist/cuquantum/linu  X-ray x86_64 / cuquantum - Linux - x86_64-23.03.0.20 - archive. Tar. Xz
+
+
+
+wget  https://developer.download.nvidia.com/compute/cutensor/redist/libcutensor/linux-x86_64/libcutensor-linux-x86_64-1.7.0.1- archive.tar.xz
+
+I unzip it to /usr/local and download the source code for qiskit-aer
+
+cd qiskit-aer-main
+
+Run the script 
+python. /setup.py bdist_wheel -- -DAER_THRUST_BACKEND= CUDA-DCUQUANTUM_ROOT =/usr/local/cuquantum -DCUTENSOR_ROOT=/usr/local/cutensor -DAER_ENABLE_CUQUANTUM=True -DCUQUANTUM_STATIC=True -DDISABLE_CONAN=ON
+
+
+### Steps to reproduce the problem
+The following error has occurred
+`
+/home/era/gwb/qiskit-aer-main/src/framework/linalg/enable_if_numeric.hpp(35): error: namespace "std" has no member "enable_if_t"
+  using enable_if_numeric_t = std::enable_if_t<is_numeric_scalar<T>::value>;
+                                   ^
+
+/home/era/gwb/qiskit-aer-main/src/framework/linalg/enable_if_numeric.hpp(35): error: expected a ";"
+  using enable_if_numeric_t = std::enable_if_t<is_numeric_scalar<T>::value>;
+                                              ^
+
+/home/era/gwb/qiskit-aer-main/src/framework/linalg/vector.hpp(38): warning #1650-D: result of call is not used
+    posix_memalign(&data, 64, sizeof(T) * size);
+    ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/home/era/gwb/qiskit-aer-main/src/framework/results/data/subtypes/data_map.hpp(28): error: "auto" function requires a trailing return type
+    auto &value() { return data_; }
+    ^
+
+/home/era/gwb/qiskit-aer-main/src/framework/results/data/subtypes/data_map.hpp(67): error: "auto" function requires a trailing return type
+    auto &value() { return data_; }
+    ^
+
+/home/era/gwb/qiskit-aer-main/src/framework/circuit.hpp(86): error: "auto" function requires a trailing return type
+    inline const auto &opset() const { return opset_; }
+                 ^
+
+/home/era/gwb/qiskit-aer-main/src/framework/circuit.hpp(89): error: "auto" function requires a trailing return type
+    inline const auto &qubits() const { return qubitset_; }
+                 ^
+
+/home/era/gwb/qiskit-aer-main/src/framework/circuit.hpp(92): error: "auto" function requires a trailing return type
+    inline const auto &memory() const { return memoryset_; }
+                 ^
+
+/home/era/gwb/qiskit-aer-main/src/framework/circuit.hpp(95): error: "auto" function requires a trailing return type
+    inline const auto &registers() const { return registerset_; }
+                 ^
+
+/home/era/gwb/qiskit-aer-main/src/framework/circuit.hpp(98): error: "auto" function requires a trailing return type
+    inline const auto &qubit_map() const { return qubitmap_; }
+                 ^
+
+/home/era/gwb/qiskit-aer-main/src/framework/rng.hpp(93): error: identifier "Float" is undefined
+              typename = std::enable_if_t<std::is_floating_point<Float>::value>>
+                                                                 ^
+
+/home/era/gwb/qiskit-aer-main/src/framework/rng.hpp(93): error: mismatched delimiters in default argument expression
+              typename = std::enable_if_t<std::is_floating_point<Float>::value>>
+                         ^
+
+/home/era/gwb/qiskit-aer-main/src/framework/rng.hpp(99): error: expected a "," or ">"
+    std::mt19937_64 rng;
+                       ^
+
+/home/era/gwb/qiskit-aer-main/src/framework/rng.hpp(83): error: namespace "std" has no member "enable_if_t"
+              typename = std::enable_if_t<std::is_integral<Integer>::value>>
+                              ^
+
+/home/era/gwb/qiskit-aer-main/src/framework/rng.hpp(83): error: expected a "," or ">"
+              typename = std::enable_if_t<std::is_integral<Integer>::value>>
+
+`
+When I change the CXX_STANDARD 14 in the CMakeLists.txt file to CXX_STANDARD 17
+
+The same error occurs
+
+### What is the expected behavior?
+The whl file should be compiled under the dist folder
+
+
+### Suggested solutions
+
+

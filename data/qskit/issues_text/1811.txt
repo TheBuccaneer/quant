@@ -1,0 +1,40 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:
+- **Python version**:
+- **Operating system**:
+
+### What is the current behavior?
+
+A circuit with reset operation(s) is not guaranteed to be deterministic when `shots=None`, a setting which is supposed to cause probabilities to be calculated exactly.
+
+### Steps to reproduce the problem
+
+```python
+from qiskit_aer.primitives import Sampler as AerSampler
+qc = QuantumCircuit(2, 2)
+qc.h(0)
+qc.cx(0, 1)
+qc.reset(0)
+qc.measure(0, 0)
+qc.measure(1, 1)
+AerSampler().run(qc, shots=None).result().quasi_dists
+```
+
+is not deterministic.  The last line evaluates to (on successive runs):
+- `[{0: 0.5166015625, 2: 0.4833984375}]`
+- `[{0: 0.4833984375, 2: 0.5166015625}]`
+- `[{0: 0.505859375, 2: 0.494140625}]`
+
+### What is the expected behavior?
+
+Should evaluate to `[{0: 0.5, 2: 0.5}]`
+
+### Suggested solutions
+
+[none]
+
+Similar to #1810, I have created my own Sampler implementation based on Qiskit Terra's Statevector that supports resets exactly: https://github.com/Qiskit-Extensions/circuit-knitting-toolbox/blob/main/circuit_knitting_toolbox/utils/simulation.py

@@ -1,0 +1,76 @@
+### Informations
+
+- **Qiskit Aer version**: 0.12.2 * (tried 0.11.2 and 0.13.0 too)
+- **Python version**: 3.10.6
+- **Operating system**: Ubuntu 22.04.2 LTS
+
+### What is the current behavior?
+
+Import qiskit-aer-gpu is not currently working due to ImportError: libcustatevec.so.1 #1874 
+So I am trying building from source with the -DCUQUANTUM_STATIC=true
+
+However I get the following error when building from source. 
+
+```
+[1/11] Building CUDA object qiskit_aer/backends/wrappers/CMakeFiles/controller_wrappers.dir/bindings.cc.o
+FAILED: qiskit_aer/backends/wrappers/CMakeFiles/controller_wrappers.dir/bindings.cc.o 
+/usr/local/cuda-12.2/bin/nvcc -forward-unknown-to-host-compiler -DAER_CUSTATEVEC -DAER_CUTENSORNET -DAER_THRUST_SUPPORTED=TRUE -DSPDLOG_COMPILED_LIB -DSPDLOG_FMT_EXTERNAL -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CUDA -Dcontroller_wrappers_EXPORTS -I/usr/include/python3.10 -I/usr/local/lib/python3.10/dist-packages/pybind11/include -I"/content/gdrive/My Drive/qiskit-aer/src" -isystem=/root/.conan/data/nlohmann_json/3.1.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include -isystem=/root/.conan/data/spdlog/1.9.2/_/_/package/31e6795216638db627af7c0892b2003a552f33eb/include -isystem=/root/.conan/data/fmt/8.0.1/_/_/package/ab262367005d9815ff9c0df299cf52bb8511be00/include -isystem=/root/.conan/data/muparserx/4.0.8/_/_/package/038f8796e196b3dba76fcc5fd4ef5d3d9c6866ec/include -g --generate-code=arch=compute_75,code=[compute_75,sm_75] -Xcompiler=-fPIC -Xcompiler=-fvisibility=hidden  --compiler-options -fopenmp --compiler-options -I/usr/local/lib/python3.10/dist-packages/cuquantum/include --compiler-options -I/usr/local/lib/python3.10/dist-packages/cutensor/include -std=c++14  -gencode arch=compute_75,code=sm_75 -DAER_THRUST_CUDA -I/content/gdrive/My Drive/qiskit-aer/src -isystem /content/gdrive/My Drive/qiskit-aer/src/third-party/headers -use_fast_math --expt-extended-lambda -MD -MT qiskit_aer/backends/wrappers/CMakeFiles/controller_wrappers.dir/bindings.cc.o -MF qiskit_aer/backends/wrappers/CMakeFiles/controller_wrappers.dir/bindings.cc.o.d -x cu -c '/content/gdrive/My Drive/qiskit-aer/qiskit_aer/backends/wrappers/bindings.cc' -o qiskit_aer/backends/wrappers/CMakeFiles/controller_wrappers.dir/bindings.cc.o
+nvcc fatal   : A single input file is required for a non-link phase when an outputfile is specified
+```
+
+And 
+
+```
+[2/11] Building CUDA object qiskit_aer/backends/wrappers/CMakeFiles/controller_wrappers.dir/__/__/__/src/simulators/statevector/qv_avx2.cpp.o
+FAILED: qiskit_aer/backends/wrappers/CMakeFiles/controller_wrappers.dir/__/__/__/src/simulators/statevector/qv_avx2.cpp.o
+nvcc fatal   : A single input file is required for a non-link phase when an outputfile is specified
+```
+
+```
+ninja: build stopped: subcommand failed.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/dist-packages/skbuild/setuptools_wrap.py", line 674, in setup
+    cmkr.make(make_args, install_target=cmake_install_target, env=env)
+  File "/usr/local/lib/python3.10/dist-packages/skbuild/cmaker.py", line 697, in make
+    self.make_impl(clargs=clargs, config=config, source_dir=source_dir, install_target=install_target, env=env)
+  File "/usr/local/lib/python3.10/dist-packages/skbuild/cmaker.py", line 742, in make_impl
+    raise SKBuildError(msg)
+
+An error occurred while building with CMake.
+  Command:
+    /usr/local/lib/python3.10/dist-packages/cmake/data/bin/cmake --build . --target install --config Debug --
+  Install target:
+    install
+  Source directory:
+    /content/gdrive/My Drive/qiskit-aer
+  Working directory:
+    /content/gdrive/My Drive/qiskit-aer/_skbuild/linux-x86_64-3.10/cmake-build
+Please check the install target is valid and see CMake's output for more information.
+
+```
+
+### Steps to reproduce the problem
+
+I am using:
+cuda 12.2
+g++ 8.4.0 (I saw in the building information to use a g++ version not newer than 8)
+Also installed last version of Ninja
+
+To reproduce
+`git clone https://github.com/Qiskit/qiskit-aer`
+`git checkout -f a8bfca9`
+
+Install dependencies
+
+Then build
+`!python3 ./setup.py bdist_wheel --build-type=Debug -- -DCMAKE_MAKE_PROGRAM="/content/gdrive/MyDrive/Colab Notebooks/ninja/build-cmake/ninja" -DAER_THRUST_BACKEND=CUDA -DCUQUANTUM_ROOT="/usr/local/lib/python3.10/dist-packages/cuquantum" -DCUTENSOR_ROOT="/usr/local/lib/python3.10/dist-packages/cutensor" -DAER_ENABLE_CUQUANTUM=true -DCMAKE_CXX_COMPILER=g++-8 -DCMAKE_CUDA_COMPILER=/usr/local/cuda-12.2/bin/nvcc -DCUQUANTUM_STATIC=true --`
+
+This is running on the google colab environment but I also tried localy on my computer, same problem occurs.
+
+### What is the expected behavior?
+
+Build the library and end without error
+
+### Suggested solutions
+
+I have no clue, can someone help ?

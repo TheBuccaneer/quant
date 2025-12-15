@@ -1,0 +1,43 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: qiskit==0.44.3, qiskit-terra==0.25.3, qiskit-aer==0.13.1
+- **Python version**: Python 3.10.13
+- **Operating system**: macOS 14.1.1
+
+### What is the current behavior?
+
+Importing AerSimulator causes an import error with DiagonalGate.
+
+
+### Steps to reproduce the problem
+
+```
+from qiskit_aer import AerSimulator
+print('success')
+```
+
+qiskit==0.44.3, qiskit-terra==0.25.3, qiskit-aer==0.13.1
+```
+ImportError: cannot import name 'DiagonalGate' from 'qiskit.circuit.library' (/.../lib/python3.10/site-packages/qiskit/circuit/library/__init__.py)
+```
+
+qiskit==0.44.3, qiskit-terra==0.25.3, qiskit-aer==0.13.0
+```
+success
+```
+
+qiskit==0.45.0, qiskit-terra==0.45.0, qiskit-aer==0.13.1
+```
+success
+```
+
+### What is the expected behavior?
+
+No error with qiskit==0.44.3, qiskit-terra==0.25.3, qiskit-aer==0.13.1
+
+### Suggested solutions
+
+

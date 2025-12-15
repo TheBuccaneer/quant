@@ -1,0 +1,57 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:0.15.0
+- **Python version**:Python 3.12.4
+- **Operating system**:Ubuntu 22.04.3 LTS
+
+### What is the current behavior?
+
+When I use `measure_active` to measure all used qubits, an error is thrown:
+
+```
+Traceback (most recent call last):
+  File "/home/sampler_usage.py", line 19, in <module>
+    print(job.result()[0].data.meas.get_int_counts())
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'DataBin' object has no attribute 'meas'
+```
+
+However, this error does not occur when using `measure_all` or run this circuit using `AerSimulator` directly.
+
+
+### Steps to reproduce the problem
+
+Here is the code that triggers the error:
+
+```
+from qiskit.circuit import QuantumCircuit
+from qiskit import transpile
+
+qc = QuantumCircuit(1)
+qc.x(0)
+qc.measure_active()
+
+from qiskit_aer import AerSimulator
+
+backend1 = AerSimulator()
+qc1 = transpile(qc, backend=backend1)
+print(qc1)
+
+from qiskit.primitives import StatevectorSampler
+
+statevectorsampler = StatevectorSampler()
+pub = (qc1)
+job = statevectorsampler.run([pub])
+print(job.result()[0].data.meas.get_int_counts())
+```
+
+### What is the expected behavior?
+
+No errors should be thrown.
+
+### Suggested solutions
+
+

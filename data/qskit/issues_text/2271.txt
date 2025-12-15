@@ -1,0 +1,126 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:0.15.1
+- **Python version**:3.12
+- **Operating system**:linux
+
+### What is the current behavior?
+For a fixed QuantumCircuit with custom unitary gate matrix, QiskitAer is producing different statevector simulation results for qiskit v.1.2.4 and v.1.3.0
+
+
+### Steps to reproduce the problem
+Using `qiskit-aer=0.15.1`, run the following script with `qiskit==1.2.4` and `qiskit==1.3.0` will reproduce different statevector results
+```python
+import qiskit
+
+from qiskit_aer import AerSimulator
+from qiskit.circuit.library import UnitaryGate
+from qiskit.quantum_info import random_unitary
+
+import numpy as np
+
+def get_qiskit_unitary_gate(rng, control=None):
+    rand_unitary = random_unitary(4, seed=rng)
+    gate = UnitaryGate(rand_unitary)
+    print(f"unitary gate matrix:")
+    print(gate)
+    if control is None:
+        return gate
+    else:
+        return gate.control(control)
+    
+def get_qiskit_multi_control_circuit():
+    qubits = qiskit.QuantumRegister(5)
+    circuit = qiskit.QuantumCircuit(qubits)
+    for q in qubits:
+        circuit.h(q)
+    qs = list(qubits)
+
+    rng = np.random.default_rng(1234)
+    for i in range(2):
+        rng.shuffle(qs)
+        ccu_gate = get_qiskit_unitary_gate(rng, control=2)
+        print(f"{i}th gate on {qs}")
+        circuit.append(ccu_gate, qs[:4])
+    circuit.p(0.1, qubits[0])
+    return circuit
+
+print(f"{qiskit.__version__=}")
+
+circuit = get_qiskit_multi_control_circuit()
+print(circuit)
+
+circuit.save_statevector()
+
+# Transpile for simulator
+simulator = AerSimulator(method='statevector')
+circ = qiskit.transpile(circuit, simulator)
+
+# Run and get statevector
+result = simulator.run(circ).result()
+sv = np.asarray(result.get_statevector(circ))
+print("Sum of state vector:", sv.sum())
+```
+
+### What is the expected behavior?
+The gate matrices defining the custom unitary gates are identical between `qiskit==1.2.4` and `qiskit==1.3.0` and therefore the returned statevector should be the same. On my end I have the following results:
+
+`qiskit==1.2.4`
+```
+qiskit.__version__='1.2.4'
+unitary gate matrix:
+Instruction(name='unitary', num_qubits=2, num_clbits=0, params=[array([[ 0.26093746+0.18318812j,  0.12558674-0.38936694j,
+         0.56486648-0.53659333j, -0.03587912+0.35025885j],
+       [-0.5208327 +0.41955884j,  0.38293134-0.20373037j,
+        -0.26997299-0.01611016j,  0.47100825+0.26375647j],
+       [-0.18047959-0.0114164j ,  0.42182388+0.05310412j,
+         0.01892911-0.48459796j, -0.10334574-0.73530097j],
+       [-0.44557601+0.46884564j, -0.63238151+0.25262043j,
+         0.15882664-0.24378088j, -0.17446941-0.05317653j]])])
+0th gate on [Qubit(QuantumRegister(5, 'q1'), 0), Qubit(QuantumRegister(5, 'q1'), 4), Qubit(QuantumRegister(5, 'q1'), 1), Qubit(QuantumRegister(5, 'q1'), 3), Qubit(QuantumRegister(5, 'q1'), 2)]
+unitary gate matrix:
+Instruction(name='unitary', num_qubits=2, num_clbits=0, params=[array([[-0.41490662-0.1027918j , -0.45229939-0.45892536j,
+         0.1965442 +0.27907236j,  0.53283662+0.04090535j],
+       [-0.54960898-0.38886747j, -0.18060452+0.35532657j,
+        -0.42299907-0.41452735j,  0.00811512+0.19238008j],
+       [-0.48710529+0.16105765j,  0.30802545-0.50934349j,
+         0.16188328-0.37911161j, -0.36497996-0.28166686j],
+       [ 0.16591044+0.27066769j,  0.26600357-0.02948626j,
+         0.10303047-0.5934482j ,  0.6357136 +0.24628756j]])])
+1th gate on [Qubit(QuantumRegister(5, 'q1'), 1), Qubit(QuantumRegister(5, 'q1'), 4), Qubit(QuantumRegister(5, 'q1'), 2), Qubit(QuantumRegister(5, 'q1'), 0), Qubit(QuantumRegister(5, 'q1'), 3)]                      
+Sum of state vector: (3.450103311811794-0.308774856832824j)
+```
+
+`qiskit==1.3.0`
+```
+qiskit.__version__='1.3.0'
+unitary gate matrix:
+Instruction(name='unitary', num_qubits=2, num_clbits=0, params=[array([[ 0.26093746+0.18318812j,  0.12558674-0.38936694j,
+         0.56486648-0.53659333j, -0.03587912+0.35025885j],
+       [-0.5208327 +0.41955884j,  0.38293134-0.20373037j,
+        -0.26997299-0.01611016j,  0.47100825+0.26375647j],
+       [-0.18047959-0.0114164j ,  0.42182388+0.05310412j,
+         0.01892911-0.48459796j, -0.10334574-0.73530097j],
+       [-0.44557601+0.46884564j, -0.63238151+0.25262043j,
+         0.15882664-0.24378088j, -0.17446941-0.05317653j]])])
+0th gate on [Qubit(QuantumRegister(5, 'q1'), 0), Qubit(QuantumRegister(5, 'q1'), 4), Qubit(QuantumRegister(5, 'q1'), 1), Qubit(QuantumRegister(5, 'q1'), 3), Qubit(QuantumRegister(5, 'q1'), 2)]
+unitary gate matrix:
+Instruction(name='unitary', num_qubits=2, num_clbits=0, params=[array([[-0.41490662-0.1027918j , -0.45229939-0.45892536j,
+         0.1965442 +0.27907236j,  0.53283662+0.04090535j],
+       [-0.54960898-0.38886747j, -0.18060452+0.35532657j,
+        -0.42299907-0.41452735j,  0.00811512+0.19238008j],
+       [-0.48710529+0.16105765j,  0.30802545-0.50934349j,
+         0.16188328-0.37911161j, -0.36497996-0.28166686j],
+       [ 0.16591044+0.27066769j,  0.26600357-0.02948626j,
+         0.10303047-0.5934482j ,  0.6357136 +0.24628756j]])])
+1th gate on [Qubit(QuantumRegister(5, 'q1'), 1), Qubit(QuantumRegister(5, 'q1'), 4), Qubit(QuantumRegister(5, 'q1'), 2), Qubit(QuantumRegister(5, 'q1'), 0), Qubit(QuantumRegister(5, 'q1'), 3)]                        
+Sum of state vector: (2.6579282427026834+2.2212546524499133j)
+```
+
+From our experiment, I believe the results from `qiskit=1.2.4` are correct. There might be some parsing issue between `qiskit-aer` and `qiskit==1.3.0`
+### Suggested solutions
+
+

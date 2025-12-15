@@ -1,0 +1,220 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:
+  0.17.2
+
+- **Python version**:
+  Python 3.12.2
+
+- **Operating system**:
+  Linux (Endeavour OS which is an Arch variant)
+
+### What is the current behavior?
+I am trying to run a trotter simulation with Jordan Wigner mapping involving 100+ qubits. To be able to run these many qubits, I am using the AerSimulator with matrix_product_state method. After six trotter steps it crashed because it requires too much memory. I am trying to experiment with modifying these backend options to reduce memory consumption.
+
+```
+method: matrix_product_state
+precision: single
+zero_threshold: 1e-05
+validation_threshold: 1e-05
+max_parallel_threads: 1
+max_memory_mb: 30000
+matrix_product_state_max_bond_dimension: None
+matrix_product_state_truncation_threshold: 1e-05
+mps_log_data: True
+chop_threshold: 1e-05
+mps_parallel_threshold: 129
+mps_lapack: True
+```
+These values were used for one such run. I do not see any change in the memory consumption by changing precision from double to single,  matrix_product_state_max_bond_dimension from None to 64 and setting various thresholds much above the default. It seems that the simulator does not follow these backend settings.
+
+Here are the outputs from various runs with the backend options displayed when I ran the code in the next section on my computer:
+
+```
+$ python trotter 
+Backend options:
+method: matrix_product_state
+precision: double
+zero_threshold: 1e-05
+validation_threshold: 1e-05
+max_parallel_threads: 1
+max_memory_mb: 30000
+matrix_product_state_max_bond_dimension: 64
+matrix_product_state_truncation_threshold: 1e-05
+mps_log_data: True
+chop_threshold: 1e-05
+mps_parallel_threshold: 129
+mps_lapack: True
+Simulating 100 qubits with MPS backend
+Required memory for 0 time steps: 0.0 GB
+Required memory for 1 time steps: 0.0 GB
+Required memory for 2 time steps: 0.003 GB
+Required memory for 3 time steps: 0.05 GB
+Required memory for 4 time steps: 0.8 GB
+Required memory for 5 time steps: 12.801 GB
+Simulation failed and returned the following error message:
+ERROR:  [Experiment 0] Insufficient memory to run circuit circuit-46 using the matrix_product_state simulator. Required memory: 204806M, max memory: 30000M
+Required memory for 6 time steps: 204.806 GB
+Traceback (most recent call last):
+  File "/home/sanket/git/deuteron/notebooks/trotter.py", line 55, in <module>
+    counts_from_result = result.get_counts()
+                         ^^^^^^^^^^^^^^^^^^^
+  File "/home/sanket/.conda/envs/qiskit-2/lib/python3.12/site-packages/qiskit/result/result.py", line 256, in get_counts
+    exp = self._get_experiment(key)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sanket/.conda/envs/qiskit-2/lib/python3.12/site-packages/qiskit/result/result.py", line 385, in _get_experiment
+    raise QiskitError(result_status, ", ", exp_status)
+qiskit.exceptions.QiskitError: 'ERROR:  [Experiment 0] Insufficient memory to run circuit circuit-46 using the matrix_product_state simulator. Required memory: 204806M, max memory: 30000M ,  ERROR: Insufficient memory to run circuit circuit-46 using the matrix_product_state simulator. Required memory: 204806M, max memory: 30000M'
+
+$ python trotter 
+Backend options:
+method: matrix_product_state
+precision: single
+zero_threshold: 1e-05
+validation_threshold: 1e-05
+max_parallel_threads: 1
+max_memory_mb: 30000
+matrix_product_state_max_bond_dimension: 64
+matrix_product_state_truncation_threshold: 1e-05
+mps_log_data: True
+chop_threshold: 1e-05
+mps_parallel_threshold: 129
+mps_lapack: True
+Simulating 100 qubits with MPS backend
+Required memory for 0 time steps: 0.0 GB
+Required memory for 1 time steps: 0.0 GB
+Required memory for 2 time steps: 0.003 GB
+Required memory for 3 time steps: 0.05 GB
+Required memory for 4 time steps: 0.8 GB
+Required memory for 5 time steps: 12.801 GB
+Simulation failed and returned the following error message:
+ERROR:  [Experiment 0] Insufficient memory to run circuit circuit-46 using the matrix_product_state simulator. Required memory: 204806M, max memory: 30000M
+Required memory for 6 time steps: 204.806 GB
+Traceback (most recent call last):
+  File "/home/sanket/git/deuteron/notebooks/trotter.py", line 55, in <module>
+    counts_from_result = result.get_counts()
+                         ^^^^^^^^^^^^^^^^^^^
+  File "/home/sanket/.conda/envs/qiskit-2/lib/python3.12/site-packages/qiskit/result/result.py", line 256, in get_counts
+    exp = self._get_experiment(key)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sanket/.conda/envs/qiskit-2/lib/python3.12/site-packages/qiskit/result/result.py", line 385, in _get_experiment
+    raise QiskitError(result_status, ", ", exp_status)
+qiskit.exceptions.QiskitError: 'ERROR:  [Experiment 0] Insufficient memory to run circuit circuit-46 using the matrix_product_state simulator. Required memory: 204806M, max memory: 30000M ,  ERROR: Insufficient memory to run circuit circuit-46 using the matrix_product_state simulator. Required memory: 204806M, max memory: 30000M'
+
+$ python trotter 
+Backend options:
+method: matrix_product_state
+precision: single
+zero_threshold: 1e-05
+validation_threshold: 1e-05
+max_parallel_threads: 1
+max_memory_mb: 30000
+matrix_product_state_max_bond_dimension: None
+matrix_product_state_truncation_threshold: 1e-05
+mps_log_data: True
+chop_threshold: 1e-05
+mps_parallel_threshold: 129
+mps_lapack: True
+Simulating 100 qubits with MPS backend
+Required memory for 0 time steps: 0.0 GB
+Required memory for 1 time steps: 0.0 GB
+Required memory for 2 time steps: 0.003 GB
+Required memory for 3 time steps: 0.05 GB
+Required memory for 4 time steps: 0.8 GB
+Required memory for 5 time steps: 12.801 GB
+Simulation failed and returned the following error message:
+ERROR:  [Experiment 0] Insufficient memory to run circuit circuit-46 using the matrix_product_state simulator. Required memory: 204806M, max memory: 30000M
+Required memory for 6 time steps: 204.806 GB
+Traceback (most recent call last):
+  File "/home/sanket/git/deuteron/notebooks/trotter.py", line 56, in <module>
+    counts_from_result = result.get_counts()
+                         ^^^^^^^^^^^^^^^^^^^
+  File "/home/sanket/.conda/envs/qiskit-2/lib/python3.12/site-packages/qiskit/result/result.py", line 256, in get_counts
+    exp = self._get_experiment(key)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sanket/.conda/envs/qiskit-2/lib/python3.12/site-packages/qiskit/result/result.py", line 385, in _get_experiment
+    raise QiskitError(result_status, ", ", exp_status)
+qiskit.exceptions.QiskitError: 'ERROR:  [Experiment 0] Insufficient memory to run circuit circuit-46 using the matrix_product_state simulator. Required memory: 204806M, max memory: 30000M ,  ERROR: Insufficient memory to run circuit circuit-46 using the matrix_product_state simulator. Required memory: 204806M, max memory: 30000M'
+```
+
+
+
+### Steps to reproduce the problem
+Execute this code: 
+
+```
+import numpy as np
+from qiskit import QuantumCircuit, transpile
+from qiskit.result import ProbDistribution
+from qiskit.synthesis import SuzukiTrotter
+from qiskit.transpiler import CouplingMap
+from qiskit_aer import AerSimulator
+from qiskit_addon_utils.problem_generators import generate_time_evolution_circuit, generate_xyz_hamiltonian
+
+backend_options = {
+                   'method': 'matrix_product_state', # Modified to use MPS to be able to simulate more qubits
+                   'precision': 'single', # Modified to reduce memory usage
+                   'zero_threshold': 1e-5,  # Modified to reduce memory usage
+                   'validation_threshold': 1e-5, # Modified to reduce memory usage
+                   'max_parallel_threads': 1, # Modified to make sure parallelism is not used
+                   'max_memory_mb': 30_000, # Modified
+
+                   # MPS specific options
+                   #'matrix_product_state_max_bond_dimension': 64, # Modified to reduce memory usage
+                   'matrix_product_state_max_bond_dimension': None, # No limit on bond dimension
+                   'matrix_product_state_truncation_threshold': 1e-05, # Modified to reduce memory usage
+                   'mps_log_data': True,  # Modified to enable logging MPS data
+                   'chop_threshold': 1e-05, # Modified to reduce memory usage  # To reduce memory usage
+                   'mps_parallel_threshold': 129, # Modified to make sure parallelism is not used
+                   'mps_lapack': True, # Does lapack take less memory?
+                   }
+
+
+print("Backend options:")
+for key, value in backend_options.items():
+    print(f"{key}: {value}")
+
+num_qubits = 100
+backend = AerSimulator(**backend_options)
+if backend.num_qubits < num_qubits:
+    backend.set_max_qubits(num_qubits)
+
+ic = QuantumCircuit(num_qubits)
+ic.ry(np.pi/2, num_qubits//2)
+
+cm = CouplingMap.from_line(num_qubits)
+h = generate_xyz_hamiltonian(coupling=cm, coupling_constants=(1.0, 1.0, 0.0), ext_magnetic_field=[0.0, 0.0, 2.0])
+dt = 0.1
+trotter_step = generate_time_evolution_circuit(operator=h, synthesis=SuzukiTrotter(), time=dt)
+
+shots = 4096
+distributions = []
+
+max_steps = 6
+print(f"Simulating {num_qubits} qubits with MPS backend")
+for i in range(0, max_steps + 1):
+    qc = ic.copy().compose(trotter_step.repeat(reps=i))
+    qc.measure_all()
+    qc_t = transpile(circuits=qc, backend=backend, optimization_level=3)
+    result = backend.run([qc_t], shots=shots).result()
+    print(f"Required memory for {i} time steps: {result.results[0].metadata['required_memory_mb']/1000} GB")
+    counts_from_result = result.get_counts()
+    probabilities = {k: counts_from_result.get(np.binary_repr(1 << k, width=qc.num_qubits), 0.0) / shots for k in range(qc.num_qubits)}
+    prob_distribution = ProbDistribution(data=probabilities)
+    distributions.append(prob_distribution)
+
+#print(distributions)
+```
+
+
+### What is the expected behavior?
+I should see a change in the memory consumption when I modify those parameters like `mps_max_bond_dimension` .
+
+
+### Suggested solutions
+Possibly the the C++ code for MPS simulator is not using all of those parameters or overwriting some of them before running the circuits.  May be check for that.
+
+[Here](https://quantumcomputing.stackexchange.com/q/44665/19840) is the link to the Stack Exchange question I asked on this.

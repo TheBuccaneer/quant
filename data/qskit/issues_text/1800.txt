@@ -1,0 +1,65 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+qiskit version: 0.11.2
+python version: 3.10.9
+Operating System: Ubuntu 18.04.6 LTS
+
+### What is the current behavior?
+I have installed qiskit-aer-gpu on my system having GPU: NVIDIA GeForce GTX 980 Ti. This gpu has CC of 5.2 and Cuda version installed is 12.1. My driver version is 530.30.02.
+
+The output of nvidia-smi is:
+
++---------------------------------------------------------------------------------------+
+| NVIDIA-SMI 530.30.02              Driver Version: 530.30.02    CUDA Version: 12.1     |
+|-----------------------------------------+----------------------+----------------------+
+| GPU  Name                  Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf            Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|                                         |                      |               MIG M. |
+|=========================================+======================+======================|
+|   0  NVIDIA GeForce GTX 980 Ti       On | 00000000:03:00.0 Off |                  N/A |
+| 22%   34C    P8               13W / 250W|     10MiB /  6144MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+                                                                                         
++---------------------------------------------------------------------------------------+
+| Processes:                                                                            |
+|  GPU   GI   CI        PID   Type   Process name                            GPU Memory |
+|        ID   ID                                                             Usage      |
+|=======================================================================================|
+|    0   N/A  N/A      1241      G   /usr/lib/xorg/Xorg                            3MiB |
+|    0   N/A  N/A      2366      G   /usr/lib/xorg/Xorg                            3MiB |
++---------------------------------------------------------------------------------------+
+
+I think I have all the prerequisites for executing qiskit on my GPU (drivers and cuda >= 10.1), but once it run, it generates above error. Not sure is it compatibility issue or any other installation which needs to be done. The code I am running is working fine with qiskit-aer but when I chose GPU my device things got wrong. Program I am running is:
+
+from qiskit import *
+from qiskit.circuit.library import *
+from qiskit.providers.aer import *
+
+sim = AerSimulator(method='statevector', device='GPU')
+#sim = AerSimulator(method='statevector')
+shots = 100
+depth=10
+qubits = 25
+circuit = transpile(QuantumVolume(qubits, depth, seed=0),
+backend=sim,
+optimization_level=0)
+circuit.measure_all()
+result = execute(circuit,sim,shots=shots,seed_simulator=12345).result()
+print(result)
+
+### Steps to reproduce the problem
+
+With cuda and qiskit-aer-gpu installation on my GPU having CC 5.2 and Cuda version 12.1, I am not able to execute while selecting device=GPU
+
+### What is the expected behavior?
+As mentioned in github page, I have installed all requirements and was expecting above code to run.
+
+
+### Suggested solutions
+Please answer if there is any other requirement which needs to be met and also update it here as well.
+
+

@@ -1,0 +1,20 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: latest
+- **Python version**:
+- **Operating system**:
+
+### What is the current behavior?
+The `EstimatorV2` `run` call waits for results to come back in the main Python thread, thus blocking any further work.
+
+### Steps to reproduce the problem
+Any call to `EstimatorV2`
+
+### What is the expected behavior?
+Calls to `run` return a job, but otherwise do not block the main process.
+
+### Suggested solutions
+Remove the internal calls that wait on the results

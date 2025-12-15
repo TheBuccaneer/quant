@@ -1,0 +1,28 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: latest
+- **Python version**:
+- **Operating system**:
+
+### What is the current behavior?
+
+Estimator is returning a complex type for the variance
+
+```python
+EstimatorResult(values=array([0.4376]), metadata=[{'shots': 10000, 'variance': (0.80850624+0j), 'simulator_metadata': [{'parallel_state_update': 8, 'parallel_shots': 1, 'sample_measure_time': 0.010197875, 'noise': 'ideal', 'batched_shots_optimization': False, 'remapped_qubits': False, 'device': 'CPU', 'active_input_qubits': [0, 1, 2, 3, 4, 5], 'measure_sampling': True, 'num_clbits': 6, 'input_qubit_map': [[0, 0], [1, 1], [2, 2], [3, 3], [4, 4], [5, 5]], 'num_qubits': 6, 'method': 'statevector', 'fusion': {'applied': False, 'max_fused_qubits': 5, 'threshold': 14, 'enabled': True}}]}])
+```
+
+### Steps to reproduce the problem
+
+
+
+### What is the expected behavior?
+Variance should be real
+
+
+### Suggested solutions
+
+

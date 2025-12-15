@@ -1,0 +1,46 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:  0.12.0
+- **Python version**: 3.11.0a2 (installed via pyenv)
+- **Operating system**: Fedora 36
+
+### What is the current behavior?
+Hi team! I miss you! :D
+
+Running a test of a component that uses qiskit-aer under the hood, I got this SIGSEV.
+
+```
+Thread 1 "python" received signal SIGSEGV, Segmentation fault.
+type_qualname (type=0x1bdfe50, context=0x0) at Objects/typeobject.c:507
+507	Objects/typeobject.c: Directory not empty.
+(gdb) bt
+#0  type_qualname (type=0x1bdfe50, context=0x0) at Objects/typeobject.c:507
+#1  0x0000000000497ab4 in type_getattro (type=0x1bdfe50, name=0x7fffc17ee770) at Objects/typeobject.c:3997
+#2  0x00000000004712d2 in PyObject_GetAttr (v=0x1bdfe50, name=0x7fffc17ee770) at Objects/object.c:925
+#3  0x000000000047145b in PyObject_GetAttrString (name=<optimized out>, v=0x1bdfe50) at Objects/object.c:818
+#4  PyObject_GetAttrString (v=0x1bdfe50, name=<optimized out>) at Objects/object.c:809
+#5  0x00007fffa316addd in pybind11::detail::accessor<pybind11::detail::accessor_policies::str_attr>::get_cache() const ()
+   from /home/jgomez/.pyenv/versions/3.11.0a2/envs/qiskit11/lib/python3.11/site-packages/qiskit_aer/backends/controller_wrappers.cpython-311-x86_64-linux-gnu.so
+#6  0x00007fffa317c1a7 in pybind11::cpp_function::initialize_generic(std::unique_ptr<pybind11::detail::function_record, pybind11::cpp_function::InitializingFunctionRecordDeleter>&&, char const*, std::type_info const* const*, unsigned long) ()
+   from /home/jgomez/.pyenv/versions/3.11.0a2/envs/qiskit11/lib/python3.11/site-packages/qiskit_aer/backends/controller_wrappers.cpython-311-x86_64-linux-gnu.so
+#7  0x00007fffa3191237 in void bind_aer_controller<pybind11::module_>(pybind11::module_) ()
+   from /home/jgomez/.pyenv/versions/3.11.0a2/envs/qiskit11/lib/python3.11/site-packages/qiskit_aer/backends/controller_wrappers.cpython-311-x86_64-linux-gnu.so
+#8  0x00007fffa30960ae in PyInit_controller_wrappers ()
+```
+Does this look like something needs to be fixed around pybind11?
+
+
+### Steps to reproduce the problem
+I can provide you with a test case in case you want to reproduce it, but unfortunately, I cannot share it here.
+
+
+### What is the expected behavior?
+
+
+
+### Suggested solutions
+
+

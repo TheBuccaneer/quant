@@ -1,0 +1,15 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+- **Qiskit Aer version**: 0.12.1, 0.12.2
+- **Python version**: 3.8.16
+- **Operating system**:  Mac Ventura 13.4.1 (Intel Mac)
+
+I tried to execute the following code, segmentation fault occurs. If I use Qiskit Aer 0.12.0, I can execute it. 
+```
+from qiskit_aer.quantum_info.states import AerStatevector
+from qiskit.circuit.library import QFT
+
+AerStatevector(QFT(4), method='statevector')
+```

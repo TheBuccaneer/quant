@@ -1,0 +1,82 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.13.0
+- **Python version**: 3.11.4
+- **Operating system**: macOS 11.7.10
+
+### What is the current behavior?
+
+When the next code is executed:
+
+```
+from qiskit_ibm_provider import IBMProvider
+from qiskit_aer import AerSimulator
+
+provider=IBMProvider()
+backend=provider.get_backend("ibm_nairobi")
+backend=AerSimulator.from_backend(backend)
+
+```
+The next error appears:
+
+```
+KeyError                                  Traceback (most recent call last)
+File /Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/qiskit/providers/models/backendconfiguration.py:383, in QasmBackendConfiguration.__getattr__(self, name)
+    382 try:
+--> 383     return self._data[name]
+    384 except KeyError as ex:
+
+KeyError: 'description'
+
+The above exception was the direct cause of the following exception:
+
+AttributeError                            Traceback (most recent call last)
+Cell In[3], line 3
+      1 #Consigo imitar las características del computador real
+      2 #utilizando el método from_backend
+----> 3 backend_aer=AerSimulator.from_backend(backend)
+
+File /Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/qiskit_aer/backends/aer_simulator.py:843, in AerSimulator.from_backend(cls, backend, **options)
+    840         options["noise_model"] = noise_model
+    842 # Initialize simulator
+--> 843 sim = cls(configuration=configuration, properties=properties, **options)
+    844 return sim
+
+File /Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/qiskit_aer/backends/aer_simulator.py:706, in AerSimulator.__init__(self, configuration, properties, provider, **backend_options)
+    702 # Cache basis gates since computing the intersection
+    703 # of noise model, method, and config gates is expensive.
+    704 self._cached_basis_gates = self._BASIS_GATES["automatic"]
+--> 706 super().__init__(
+    707     configuration, properties=properties, provider=provider, backend_options=backend_options
+    708 )
+
+File /Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/qiskit_aer/backends/aerbackend.py:75, in AerBackend.__init__(self, configuration, properties, defaults, backend_options, provider)
+     70 configuration.simulator = True
+     71 configuration.local = True
+     72 super().__init__(
+     73     provider=provider,
+     74     name=configuration.backend_name,
+---> 75     description=configuration.description,
+     76     backend_version=configuration.backend_version,
+     77 )
+     79 # Initialize backend properties and pulse defaults.
+     80 self._properties = properties
+
+File /Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/qiskit/providers/models/backendconfiguration.py:385, in QasmBackendConfiguration.__getattr__(self, name)
+    383     return self._data[name]
+    384 except KeyError as ex:
+--> 385     raise AttributeError(f"Attribute {name} is not defined") from ex
+
+AttributeError: Attribute description is not defined
+```
+
+### Steps to reproduce the problem
+
+This only happens with qiskit_aer 0.13.0, with qiskit_aer 0.12.2 it works
+
+
+
+

@@ -1,0 +1,40 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: latest
+- **Python version**:
+- **Operating system**:
+
+### What is the current behavior?
+The Aer simulators have `num_qubits` in their configuration.  However, the simulators do not obey this value, and one can send circuits wider than this limit.  E.g. this works:
+
+```python
+
+qc = QuantumCircuit(32)
+qc.x(range(32))
+qc.measure_all()
+
+sim = Aer.get_backend('qasm_simulator')
+print(sim.configuration().num_qubits)
+sim.configuration().num_qubits
+job = sim.run(qc)
+
+```
+
+on my machine even though the `num_qubits` argument returns 30.
+
+This causes issues because some routines look at `num_qubits` when performing because this number usually has consequences when running on real machines.  So when this limit can be bypassed without warning then things can break.  A specific example is M3 in the Runtime sampler where users calling `ibmq_qasm_simulator` are actually dispatched to Aer simulator.  In that case, people expect 32 qubits since that is what the `ibmq_qasm_simulator` reports, but Aer is reporting 31 qubits.
+
+### Steps to reproduce the problem
+Run above
+
+
+### What is the expected behavior?
+`num_qubits` should be respected like it is on real-hardware, unless interoperability between sims and real hardware is not a concern.
+
+
+### Suggested solutions
+
+

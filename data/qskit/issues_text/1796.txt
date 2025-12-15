@@ -1,0 +1,61 @@
+### Environment
+
+- **Qiskit Terra version**:  0.23.3
+- **Qiskit Aer version**: 0.12.0
+- **Python version**: 3.11.3 (in conda env)
+- **Operating system**: Windows 11 x86 
+
+
+### What is happening?
+
+`execute(...).result().data()` throws an error, the following is the Result Object for `execute(...).result()`
+```py
+result = Result(
+  backend_name='unitary_simulator', backend_version='0.12.0', qobj_id='', job_id='<JOBID>', success=False, 
+  results=[
+    ExperimentResult(shots=0, success=False, meas_level=2, data=ExperimentResultData(), 
+    status="ERROR: Circuit circuit-91 contains invalid instructions {\"instructions\": {save_unitary}} for \"statevector\" method.", seed_simulator=0, 
+    metadata={
+      'batched_shots_optimization': False, 'method': 'statevector', 'active_input_qubits': [0, 1, 2, 3, 4, 5, 6, 7], 'device': 'CPU', 'remapped_qubits': False, 'num_qubits': 8, 'num_clbits': 8, 'input_qubit_map': [[0, 0], [1, 1], [2, 2], [3, 3], [4, 4], [5, 5], [6, 6], [7, 7]], 'measure_sampling': False, 'noise': 'ideal'
+      }, time_taken=0.0)
+    ], 
+    date="2023-04-22T18:08:15.097784", status="ERROR:  [Experiment 0] Circuit circuit-91 contains invalid instructions {\"instructions\": {save_unitary}} for \"statevector\" method.", header=None, 
+    metadata={
+      'parallel_experiments': 1, 'omp_enabled': True, 'max_memory_mb': 8033, 'max_gpu_memory_mb': 0, 'num_processes_per_experiments': 1, 'mpi_rank': 0, 'num_mpi_processes': 1, 'time_taken_execute': 0.0002807
+    }, time_taken=0.0010290145874023438
+)
+```
+
+
+### How can we reproduce the issue?
+
+```py
+import numpy as np
+from qiskit import (transpile, execute,  Aer)
+from qiskit.circuit.random import random_circuit
+
+backend = Aer.get_backend('unitary_simulator')
+
+def getRandCircuitUnitary(n=8):
+  rnd = np.random.randint(1, 100)
+  circ = random_circuit(n, rnd, measure=True)
+  trc = transpile(circ, backend=backend)
+  job = execute(trc, backend, shots=1024).result()
+  print(job.data())
+#   return job.data()['unitary']
+  return "it reachs here"
+
+if __name__ == "__main__":
+        A = getRandCircuitUnitary()
+        print(A)
+```
+
+
+### What should happen?
+
+To print "job.data()['unitary']" (expected to print a matrix) when uncommented
+When uncommented it errors out on both `job.data()['unitary']` and `job.data()`
+
+### Any suggestions?
+
+I am unaware of how the library works sorry, however this might be related Qiskit/qiskit-terra#1374

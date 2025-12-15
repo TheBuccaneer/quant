@@ -1,0 +1,80 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.11.2
+- **Python version**: 3.9.6
+- **Operating system**: Darwin
+
+### What is the current behavior?
+The execution time of `AerSampler` increases too fast with the number of circuits. 
+
+### Steps to reproduce the problem
+
+```
+from qiskit import QuantumCircuit 
+from qiskit.circuit.library import TwoLocal
+from qiskit.circuit import ParameterVector
+from qiskit.primitives import Sampler
+from qiskit_aer.primitives import Sampler as AerSampler
+from qiskit_machine_learning.neural_networks import SamplerQNN
+
+import torch
+import numpy as np
+
+import time
+
+n_qubits = 2
+
+feature_map = QuantumCircuit(n_qubits)
+omega = ParameterVector('Ω', n_qubits)
+for qubit in range(n_qubits):
+    feature_map.h(qubit)
+    feature_map.ry(omega[0], qubit)
+
+ansatz = TwoLocal(num_qubits=n_qubits, reps=3, rotation_blocks=['ry'], entanglement_blocks=['cz'], entanglement='linear').decompose('TwoLocal')
+
+circuit = QuantumCircuit(n_qubits, n_qubits)
+circuit.compose(feature_map, inplace=True)
+circuit.compose(ansatz, inplace=True)
+circuit.measure(range(0, n_qubits), range(0, n_qubits))
+circuit.draw('mpl')
+
+ref_sampler = Sampler()
+aer_sampler = AerSampler()
+initial_weights = np.random.randn(ansatz.num_parameters)
+
+for batch_size in [40, 80, 160, 320]:
+    print(f'Run with batch_size = {batch_size}')
+    inputs = torch.rand(batch_size, feature_map.num_parameters)
+    weights = np.broadcast_to(initial_weights, (batch_size, len(initial_weights)))
+    parameter_values = np.concatenate([inputs, weights], axis=1)
+    for sampler in [ref_sampler, aer_sampler]:
+        begin = time.process_time()
+        sampler.run([circuit]*batch_size, parameter_values, shots=None)
+        end = time.process_time()
+        print(f'{sampler.__class__} takes {end-begin:.2f}s')
+```
+
+Output is:
+Run with batch_size = 40
+<class 'qiskit.primitives.sampler.Sampler'> takes 0.03s
+<class 'qiskit_aer.primitives.sampler.Sampler'> takes 0.15s
+Run with batch_size = 80
+<class 'qiskit.primitives.sampler.Sampler'> takes 0.05s
+<class 'qiskit_aer.primitives.sampler.Sampler'> takes 0.35s
+Run with batch_size = 160
+<class 'qiskit.primitives.sampler.Sampler'> takes 0.15s
+<class 'qiskit_aer.primitives.sampler.Sampler'> takes 1.45s
+Run with batch_size = 320
+<class 'qiskit.primitives.sampler.Sampler'> takes 0.19s
+<class 'qiskit_aer.primitives.sampler.Sampler'> takes 5.90s
+
+### What is the expected behavior?
+I would expect the execution time of `AerSampler` to be similar to that of `Sampler`. In the worst case (no optimization), the execution time grows linearly with the number of circuits.
+
+
+### Suggested solutions
+
+

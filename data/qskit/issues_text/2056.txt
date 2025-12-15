@@ -1,0 +1,50 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.13.3
+- **Python version**: 3.11.6
+- **Operating system**: Arch Linux
+
+### What is the current behavior?
+
+Circuits that could be simulated with MPS before commit 39487dbf8cfe002dbf50cbadd923609c933a4a30 cannot be simulated anymore because the simulator reports an incorrect amount of required memory.
+
+### Steps to reproduce the problem
+
+In the following circuit:
+```python
+from qiskit import QuantumCircuit, transpile
+from qiskit_aer import AerSimulator
+
+n=50
+simulator = AerSimulator(method='matrix_product_state', n_qubits=n)
+
+qc = QuantumCircuit(n)
+for _ in range(15):
+    for i in range(n-1):
+        qc.cx(i, i+1)
+
+qc.measure_all()
+
+transpiled_qc = transpile(qc, simulator)
+job = simulator.run(transpiled_qc)
+print(job.result().get_counts())
+```
+
+The simulation fails with error: 
+```
+ERROR:  [Experiment 0] Insufficient memory to run circuit circuit-158 using the matrix_product_state simulator. Required memory: 1638412M, max memory: 64016M
+```
+
+### What is the expected behavior?
+
+The circuit should be able to be simulated. Using commit 5e77fc83dde114aba7e4f27d6d0247d6081bbb58, the simulation runs successfully and outputs the correct result:
+```
+{'00000000000000000000000000000000000000000000000000': 1024}
+```
+
+### Suggested solutions
+
+I think the issue is that the MPS simulator assumes it will need more memory that it actually needs. There should be a way to run the simulation anyway.

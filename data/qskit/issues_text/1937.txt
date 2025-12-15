@@ -1,0 +1,37 @@
+
+### Informations
+
+- **Qiskit Aer version**: 0.12.2
+- **Python version**: 3.10
+- **Operating system**: WSL - Ubuntu
+
+### What is the current behavior?
+
+When building a noise model from a backend with a non zero temperature, the excited state population is not correctly computed.
+The Maxwell Boltzmann distribution is computed in qiskit_aer.noise.device.models._excited_population(freq, temperature) where the frequency and temperature are normally in GHz and mK, but the frequency is passed in Hertz, yielding a 1e9 error in exp_param and an incorrect population.
+
+The frequency is taken from relax_params in qiskit_aer.noise.device.models._device_thermal_relaxation_error, called in qiskit_aer.noise.device.models_basic_device_target_gate_errors, where the params are taken from Target.qubit_properties, that is an IBMQubitProperties object, where the frequency is stored in Hz.
+
+### Steps to reproduce the problem
+Build a noise model from backend with non zero temperature : 
+```
+from qiskit_aer.noise import NoiseModel
+provider = IBMProvider()
+machine='ibmq_jakarta'
+model = NoiseModel.from_backend(provider .get_backend(machine), temperature=10)
+
+```
+On my end this yields a warning : 
+`qiskit_aer/noise/device/models.py:394: RuntimeWarning: overflow encountered in exp  exp_param = exp((47.99243 * freq) / abs(temperature))`
+
+And then look at freq in qiskit_aer.noise.device.models._excited_population, it's in Hz.
+
+
+### What is the expected behavior?
+
+The frequency should be expected in Hz, and a factor of 1e-9 should be added to the exp_param computation.
+
+
+### Suggested solutions
+
+Change the function to accept freq in Hz and then add a 1e-9 factor in exp_param.

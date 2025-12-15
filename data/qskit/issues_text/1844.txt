@@ -1,0 +1,63 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.12.0
+- **Python version**: 3.9
+- **Operating system**: Linux
+
+### What is the current behavior?
+
+Setting the `shots` of a `Sampler` to a `float` results in it failing, but not until the job is executed.
+
+```
+Traceback (most recent call last):
+  File "/home/garrison/serverless/aer-fail.py", line 10, in <module>
+    job.result()
+  File "/home/garrison/serverless/.direnv/python-3.9.7/lib/python3.9/site-packages/qiskit/primitives/primitive_job.py", line 55, in result
+    return self._future.result()
+  File "/home/garrison/miniconda3/lib/python3.9/concurrent/futures/_base.py", line 445, in result
+    return self.__get_result()
+  File "/home/garrison/miniconda3/lib/python3.9/concurrent/futures/_base.py", line 390, in __get_result
+    raise self._exception
+  File "/home/garrison/miniconda3/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/home/garrison/serverless/.direnv/python-3.9.7/lib/python3.9/site-packages/qiskit_aer/primitives/sampler.py", line 106, in _call
+    result = self._backend.run(
+  File "/home/garrison/serverless/.direnv/python-3.9.7/lib/python3.9/site-packages/qiskit_aer/backends/aerbackend.py", line 218, in run
+    return self._run_circuits(circuits, parameter_binds, **run_options)
+  File "/home/garrison/serverless/.direnv/python-3.9.7/lib/python3.9/site-packages/qiskit_aer/backends/aerbackend.py", line 237, in _run_circuits
+    config = generate_aer_config(circuits, self.options, **run_options)
+  File "/home/garrison/serverless/.direnv/python-3.9.7/lib/python3.9/site-packages/qiskit_aer/backends/aer_compiler.py", line 363, in generate_aer_config
+    setattr(config, key, value)
+TypeError: (): incompatible function arguments. The following argument types are supported:
+    1. (self: qiskit_aer.backends.controller_wrappers.AerConfig, arg0: int) -> None
+
+Invoked with: <qiskit_aer.backends.controller_wrappers.AerConfig object at 0x7f921dac88b0>, 1.5
+```
+
+### Steps to reproduce the problem
+
+```python
+from qiskit import QuantumCircuit
+from qiskit_aer.primitives import Sampler
+
+qc = QuantumCircuit(1, 1)
+qc.x(0)
+qc.measure(0, 0)
+
+sampler = Sampler(run_options={"shots": 1.5})
+job = sampler.run(qc)
+job.result()
+```
+
+### What is the expected behavior?
+
+The code above fails on the final line, but it could fail sooner, when the `Sampler` is created with `shots` set to a float.
+
+This is creating a usability issue for us in the circuit-knitting-toolbox, where users often do some math to determine a suitable shots count.  If they forget to round the value and convert it to an `int`, they currently get the above error when they go to execute the circuit using the toolbox.  We've found that because the error comes then from deep inside the circuit-knitting-toolbox, the user is typically unaware that their own error caused it.
+
+### Suggested solutions
+
+Check the type of `shots` when the sampler is constructed.  Don't wait until `result()` is called on the job.  Provide a clear error message when it is a float.

@@ -1,0 +1,27 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:
+- **Python version**:
+- **Operating system**:
+
+### What is the current behavior?
+
+When Conan 2.0 is used to compile Aer, conan command fails with following message:
+
+> conan install: error: unrecognized arguments: -e=CONAN_CMAKE_PROGRAM=/tmp/pip-build-env-2heyx8vq/overlay/lib/python3.11/site-packages/cmake/data/bin/cmake
+
+### Steps to reproduce the problem
+
+1. Install the latest conan
+2. Build Aer
+
+### What is the expected behavior?
+
+Install finishes without errors.
+
+### Suggested solutions
+
+Migrate Conan from 1.X to 2.X.

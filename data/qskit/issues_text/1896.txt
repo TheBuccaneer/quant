@@ -1,0 +1,35 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.12.2
+- **Python version**: 3.10.12
+- **Operating system**: Ubuntu 22.04
+
+### What is the current behavior?
+
+When trying to import the noise model of `ibmq_guadalupe`, the following error occurs in `thermal_relaxation_error()`:
+`NoiseError: 'Invalid T_2 relaxation time parameter: T_2 greater than 2 * T_1.'`
+This error looks similar to [#1818](https://github.com/Qiskit/qiskit-aer/pull/1818)
+
+### Steps to reproduce the problem
+
+The error can be reproduced with the following code:
+```
+from qiskit_ibm_provider import IBMProvider
+from qiskit_aer import AerSimulator
+from qiskit_aer.noise import NoiseModel
+
+provider = IBMProvider()
+backend_device = provider.get_backend(name='ibmq_guadalupe')
+noise_model = NoiseModel.from_backend(backend_device)
+```
+
+### What is the expected behavior?
+
+The code should return the noise model associated with the `ibm_guadalupe` machine. Unlike guadalupe, the other hardware do not produce an error when their noise model are imported.
+
+### Suggested solutions
+
+It seems like the problem is coming from the characteristics of the machine itself, most likely T1 or T2 for one of the qubits is not calculated properly.

@@ -1,0 +1,72 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.15.1
+- **Python version**: 3.12.6
+- **Operating system**: 24.1.0 Darwin Kernel Version 24.1.0
+
+### What is the current behavior?
+
+The `seed_simulator `parameter in Qiskit’s Aer simulator backend accepts various input types (e.g., integers, floats, strings) with undocumented and inconsistent behaviour. This could lead to unexpected results or user confusion.
+
+
+### Steps to reproduce the problem
+
+```
+from qiskit import QuantumCircuit, Aer, transpile
+
+qc = QuantumCircuit(2, 2)
+
+qc.u(np.pi, 1, 1, 0)  # U gate with angle np.pi
+qc.rx(np.pi**50, 0)    # RX gate with a large angle
+qc.ry(np.pi**50, 0)    # RY gate with a large angle
+qc.u(np.random.rand() * 2 * np.pi, np.random.rand() * 2 * np.pi, np.random.rand() * 2 * np.pi, 0)
+qc.u(np.random.rand() * 2 * np.pi, np.random.rand() * 2 * np.pi, np.random.rand() * 2 * np.pi, 1)
+qc.cx(0, 1)
+
+qc.measure_all()
+
+simulator = Aer.get_backend("statevector_simulator")
+transpiled_qc = transpile(qc, simulator)
+
+ , 
+
+# Test seed_simulator with various types
+seeds = ["42", "-42", "42.3", "-42.3", -42, 42.4, 42, 2**63-1, None, 0, 0.0, -0.0, 1.0, -1.0, 1e3, -1e3, "\t42\n", True, b"42", None, "abc", "4ab", 1 + 2j, -3j, "inf", "nan", "-inf", (x for x in range(42)), "9" * 1000, object(), {"seed": 42}, [42], (42,), {42}]
+for seed in seeds:
+    try:
+        job = simulator.run(transpiled_qc, seed_simulator=seed)
+        print(f"Seed {seed} accepted.")
+    except Exception as e:
+        print(f"Seed {seed} rejected with error: {e}")
+```
+
+
+**Characteristic Observed Results**
+
+- Integer (42, -42): Accepted ✅
+- String ("42", "-42"): Accepted (probably, implicitly converted to integer) ✅
+- Float (42.4): Accepted (probably, implicitly truncated to integer) ✅
+- None: Accepted (likely defaulting to internal seeding) ✅
+- True: Accepted - Likely to convert to 1 and 0 (implicit integer conversion) ✅
+- "\t42\n": Accepted (likely stripped and converted to 42) ✅
+- (42): Accepted ✅
+- b"42": Accepted ✅
+- [42], {42}, {"seed": 42}, object(): Rejected with TypeError ❌
+- Invalid strings ("abc", "4ab", "42.3", "-42.3"): Rejected with TypeError ❌
+- "9" * 1000: Rejected (likely attempting to interpret the excessively large value of "9" * 1000 as an integer. The resulting integer exceeds the maximum size supported by the underlying implementation, likely causing the function to reject it outright with a TypeError) ❌
+
+
+### What is the expected behavior?
+
+- The parameter should only accept integers or None, and strict type checking should enforce this.
+- If implicit conversions are intended, this behaviour must be documented.
+
+
+### Suggested solutions
+
+1. Enforce Type Checking: Ensure only valid input types (e.g., int, None, bool, string representations of integers) are accepted, with clear error messages for invalid inputs.
+2. Clarify Documentation: Update documentation to clearly specify acceptable input types for seed_simulator.
+3. Prevent Implicit Conversion: Avoid automatic conversions (e.g., from float or string to integer) and provide explicit error messages when needed.

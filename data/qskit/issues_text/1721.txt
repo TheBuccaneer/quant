@@ -1,0 +1,106 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.11.2
+- **Python version**: 3.10.9
+- **Operating system**: Ubuntu 22.04.1 LTS
+
+### What is the current behavior?
+Aer seems not using GPU full-clock speed, it supposes use full 2520mhz, but it only uses 300-400mhz when train pytorch Neural network even trains slower than using CPU(13700k). it used to train 1 min each epoch, but now it needs around 10min, CPU need 9min.
+
+
+### Steps to reproduce the problem
+I can't reproduce the problem because I realize it after I retrain pytorch hybrid model and meet training time going up significantly, so I run another test to compare GPU and CPU speed.
+```
+from qiskit import *
+from qiskit.circuit.library import *
+from qiskit.providers.aer import *
+import matplotlib.pyplot as plt
+
+sim = AerSimulator(method='statevector', device='GPU')
+CPU_sim = AerSimulator(method='statevector', device='CPU')
+
+shots = 100
+depth=10
+
+time_thrust= []
+time_cuStateVec= []
+time_CPU = []
+qubits_list = []
+
+for qubits in range (15, 26):
+    qubits_list.append(qubits)
+    circuit = QuantumVolume(qubits, depth, seed=0)
+    circuit.measure_all()
+    circuit = transpile(circuit, sim)
+    result = sim.run(circuit,sim,shots=shots,seed_simulator=12345,fusion_threshold=20,cuStateVec_enable=False).result()
+    time_thrust.append(float(result.to_dict()['results'][0]['time_taken']))
+
+    result_CPU = CPU_sim.run(circuit,CPU_sim,shots=shots,seed_simulator=12345,fusion_threshold=20).result()
+    time_CPU.append(float(result_CPU.to_dict()['results'][0]['time_taken']))
+
+plt.yscale("log")
+plt.plot(qubits_list, time_thrust, marker="o", label='ThrustGPU')
+plt.plot(qubits_list, time_CPU, 'g', marker="x", label='time_CPU')
+plt.legend()
+plt.xlabel("# of qubits")
+plt.ylabel("Simulation time (s)")
+```
+![image](https://user-images.githubusercontent.com/43441314/217268421-d7b8fb9d-7749-4040-8620-10087cdfce36.png)
+
+I also run this:
+```
+import matplotlib.pyplot as plt
+import numpy as np
+
+from qiskit import BasicAer, Aer
+from qiskit_aer.backends import AerSimulator
+from qiskit.circuit.library import ZZFeatureMap
+from qiskit_machine_learning.algorithms import QSVC
+from qiskit.utils import QuantumInstance, algorithm_globals
+from qiskit_machine_learning.datasets import ad_hoc_data
+from qiskit_machine_learning.kernels import QuantumKernel
+import time
+
+seed = 12345
+algorithm_globals.random_seed = seed
+adhoc_dimension = 3
+train_features, train_labels, test_features, test_labels, adhoc_total = ad_hoc_data(
+    training_size=200,
+    test_size=5,
+    n=adhoc_dimension,
+    gap=0.3,
+    plot_data=False,
+    one_hot=False,
+    include_sample_total=True,
+)
+for device in ['CPU', 'GPU']:
+    start = time.time()
+    feature_map = ZZFeatureMap(feature_dimension=adhoc_dimension, reps=2, entanglement="linear")
+
+    simulator = AerSimulator(method='statevector', device=device)
+
+    zz_kernel = QuantumKernel(feature_map=feature_map, quantum_instance=simulator)
+    qsvc = QSVC(quantum_kernel=zz_kernel)
+    qsvc.fit(train_features, train_labels)
+    qsvc_score = qsvc.score(test_features, test_labels)
+
+    #print(f"QSVC classification test score: {qsvc_score}")
+    print(f"{device}Time elapsed:{time.time() - start}")
+```
+output:
+```
+CPUTime elapsed:2.490027666091919
+GPUTime elapsed:3.124454975128174
+```
+
+### What is the expected behavior?
+GPU should have significant improvement in training time since I am using RTX4080.
+
+### Suggested solutions
+not sure what happen, but I guess something wrong under the hood since I have no such issue with pennylane and pytorch pre-trained model.
+
+Any suggestion will be appreciated!!! 
+

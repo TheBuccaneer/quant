@@ -1,0 +1,66 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Information
+
+- **Qiskit Aer version**: 0.12.0
+- **Python version**: 3.9.13
+- **Operating system**: Ubuntu 20.04.2 LTS
+
+### What is the current behavior?
+The qiskit Estimator produces incorrect results. I ran simulations with Estimator in qiskit primitive, and qiskit_aer Estimator with approximation=True. These two match, but qiskit_aer with approximation=False provides incorrect results. This can be fixed by turning 'abelian_grouping=False' in qiskit_aer Estimator which when ran with abelian_grouping=False, starts giving results that agree with Estimator in qiskit and qiskit_aer with approximation=True.
+
+
+### Steps to reproduce the problem
+```from qiskit.quantum_info import SparsePauliOp
+from qiskit.primitives import Estimator
+from qiskit_aer.primitives import Estimator as AerEstimator
+from qiskit.circuit.library import TwoLocal
+import numpy as np
+
+ansatz = TwoLocal(rotation_blocks="ry", entanglement_blocks="cz",num_qubits=4)
+# initial_point = np.random.random(ansatz.num_parameters)
+
+# Following initial point leads to a big difference in energies from various estimators
+initial_point = np.array([0.838932,   0.96709863, 0.99168545, 0.84940739, 0.39887082, 0.86779403,
+ 0.59997695, 0.98569116, 0.16204096, 0.2505683,  0.47193679, 0.27389835,
+ 0.5467451,  0.88992847, 0.89534069, 0.9529084])
+print(initial_point)
+spo = SparsePauliOp(['IIII', 'IIIZ', 'IIZI', 'IZII', 'ZIII', 'IIZZ', 'IZIZ', 'ZIIZ', 'IZZI', 'ZIZI', 'ZZII', 'IIII', 'YYYY', 'XXYY', 'YYXX', 'XXXX', 'IIII'],
+              coeffs=[-0.81054798+0.j,  0.17218393+0.j, -0.22575349+0.j,  0.17218393+0.j,
+ -0.22575349+0.j,  0.12091263+0.j,  0.16892754+0.j,  0.16614543+0.j,
+  0.16614543+0.j,  0.17464343+0.j,  0.12091263+0.j,  0.        +0.j,
+  0.0452328 +0.j,  0.0452328 +0.j,  0.0452328 +0.j,  0.0452328 +0.j,
+  0.        +0.j])
+
+# Four estimators for comparison:
+qiskit_estimator = Estimator()
+aer_estimator = AerEstimator()
+aer_approx_estimator = AerEstimator(approximation=True)
+aer_estimator_ag_off = AerEstimator(abelian_grouping=False)
+
+# Running four jobs:
+qiskit_estimator_result = qiskit_estimator.run(circuits=ansatz,observables=spo,parameter_values=initial_point)
+aer_estimator_result = aer_estimator.run(circuits=ansatz,observables=spo,parameter_values=initial_point)
+aer_estimator_ag_off_result = aer_estimator_ag_off.run(circuits=ansatz,observables=spo,parameter_values=initial_point)
+aer_approx_estimator_result = aer_approx_estimator.run(circuits=ansatz,observables=spo,parameter_values=initial_point)
+
+# Comparing the results, it will be see that aer_estimator result
+# is off. It can be fixed by turning the abelian_grouping off
+# This implies that the error is very likely in how observable
+# estimates are calculated from abelian grouped Paulis
+
+print(qiskit_estimator_result.result().values) # -0.35082164
+print(aer_estimator_result.result().values)    # -0.72337013
+print(aer_approx_estimator_result.result().values) # -0.35082164
+print(aer_estimator_ag_off_result.result().values) # -0.34557155
+```
+
+
+### What is the expected behavior?
+The expected behavior is that all the qiskit_aer Estimator results match with Estimator results using qiskit Estimator.
+
+
+### Suggested solutions
+Something goes wrong in constructing observable estimators from the communicating Pauli groups. People who wrote that piece of code should be consulted.
+

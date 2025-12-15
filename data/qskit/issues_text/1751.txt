@@ -1,0 +1,51 @@
+
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.11.2
+- **Python version**: 3.10.4
+- **Operating system**: 13.2.1
+
+### What is the current behavior?
+Deprecation warning
+
+
+### Steps to reproduce the problem
+
+```
+import qiskit
+from qiskit_experiments.library import StateTomography
+
+# For simulation
+from qiskit.providers.aer import AerSimulator
+
+import numpy as np
+
+qc_bell = qiskit.QuantumCircuit(2)
+qc_bell.h(0)
+qc_bell.cx(0, 1)
+
+#Simulate the outcome
+qc_bell.save_statevector()          
+qobj = qiskit.assemble(qc_bell)     
+sim = qiskit.Aer.get_backend('aer_simulator') 
+
+sim.options.max_parallel_experiments=3  # Commenting out line this removes warning
+
+result = sim.run(qobj).result() 
+
+
+# QST Experiment
+qstexp1 = StateTomography(qc_bell)
+shotVal = 1e2
+qstdata1 = qstexp1.run(sim, shots=shotVal, seed_simulation=100).block_for_results()
+```
+
+### What is the expected behavior?
+No warning 
+
+
+### Suggested solutions
+Warning suggests use `omp_set_max_active_levels instead.`

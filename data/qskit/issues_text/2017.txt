@@ -1,0 +1,57 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:  0.13.1
+- **Python version**: python 3.12.1 (pip 23.2.2)
+- **Operating system**: Windows 11 64-bit 23H2 build 22631.2715
+
+### What is the current behavior?
+Installing qiski-aer via pip is fails with error code C1060: compiler is out of heap space. Failure is always on pybind_result.hpp
+Checked system resources and confirmed that the system is not running out of memory, the compiler seems to be hitting
+some limit.
+Attaching a snippet of the output here: 
+```
+      C:\Users\home\AppData\Local\Temp\pip-install-um7anyj7\qiskit-aer_6747576a7a0d4313bcfbbce5c14a7066\src\framework/results/pybind_result.hpp(50): fatal error C1060: compiler is out of heap space
+      ninja: build stopped: subcommand failed.
+      Traceback (most recent call last):
+        File "C:\Users\home\AppData\Local\Temp\pip-build-env-cqa8b2xa\overlay\Lib\site-packages\skbuild\setuptools_wrap.py", line 674, in setup
+          cmkr.make(make_args, install_target=cmake_install_target, env=env)
+        File "C:\Users\home\AppData\Local\Temp\pip-build-env-cqa8b2xa\overlay\Lib\site-packages\skbuild\cmaker.py", line 697, in make
+          self.make_impl(clargs=clargs, config=config, source_dir=source_dir, install_target=install_target, env=env)
+        File "C:\Users\home\AppData\Local\Temp\pip-build-env-cqa8b2xa\overlay\Lib\site-packages\skbuild\cmaker.py", line 742, in make_impl
+          raise SKBuildError(msg)
+
+      An error occurred while building with CMake.
+        Command:
+          'C:\Users\home\AppData\Local\Temp\pip-build-env-cqa8b2xa\overlay\Lib\site-packages\cmake\data\bin/cmake.exe' --build . --target install --config Release --
+        Install target:
+          install
+        Source directory:
+          C:\Users\home\AppData\Local\Temp\pip-install-um7anyj7\qiskit-aer_6747576a7a0d4313bcfbbce5c14a7066
+        Working directory:
+          C:\Users\home\AppData\Local\Temp\pip-install-um7anyj7\qiskit-aer_6747576a7a0d4313bcfbbce5c14a7066\_skbuild\win-amd64-3.12\cmake-build
+      Please check the install target is valid and see CMake's output for more information.
+
+      [end of output]
+
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+  ERROR: Failed building wheel for qiskit-aer
+Failed to build qiskit-aer
+ERROR: Could not build wheels for qiskit-aer, which is required to install pyproject.toml-based projects
+```
+
+If more of the output is required, let me know (it is quite long...)
+
+### Steps to reproduce the problem
+execute `pip install qiskit-aer`
+
+
+### What is the expected behavior?
+For qiskit-aer to install via pip.
+
+
+### Suggested solutions
+Reading https://learn.microsoft.com/en-us/cpp/error-messages/compiler-errors-1/fatal-error-c1060?view=msvc-170 leads me to believe that a compiler switch passed to MSVC might allow the compiler to use more memory when loading header files?
+

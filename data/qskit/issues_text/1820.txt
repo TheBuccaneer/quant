@@ -1,0 +1,55 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.12.0
+- **Python version**: 3.10.11
+- **Operating system**: Fedora 38
+
+### What is the current behavior?
+If you run the Estimator with `shots=None` the result has `shots=1024`.
+
+
+### Steps to reproduce the problem
+```python
+from qiskit import QuantumCircuit, QuantumRegister, transpile
+from qiskit.quantum_info import SparsePauliOp
+from qiskit_aer.primitives import Estimator
+
+hamiltonian = SparsePauliOp("X")
+qubits = QuantumRegister(1)
+circuit = QuantumCircuit(qubits)
+circuit.measure_all()
+
+estimator = Estimator()
+job = estimator.run(circuit, hamiltonian, shots=None)
+result = job.result()
+result.metadata
+```
+```
+[{'shots': 1024,
+  'variance': (0.9972190856933594+0j),
+  'simulator_metadata': [{'noise': 'ideal',
+    'batched_shots_optimization': False,
+    'measure_sampling': True,
+    'parallel_shots': 1,
+    'remapped_qubits': False,
+    'active_input_qubits': [0],
+    'num_clbits': 1,
+    'parallel_state_update': 8,
+    'sample_measure_time': 0.000191442,
+    'num_qubits': 1,
+    'device': 'CPU',
+    'input_qubit_map': [[0, 0]],
+    'method': 'stabilizer',
+    'fusion': {'enabled': False}}]}]
+```
+
+### What is the expected behavior?
+`shots` should be None. I'm not sure what `variance` here means but if it depends on the number of shots then it is also incorrect.
+
+
+### Suggested solutions
+
+

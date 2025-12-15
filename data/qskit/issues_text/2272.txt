@@ -1,0 +1,70 @@
+### Informations
+
+- **Qiskit Aer version**: 0.15.1
+- **Python version**: 3.12.7
+- **Operating system**: RedHatEnterprise 8.6
+
+### What is the current behavior?
+Unitary matrix simulation fails with the following error:
+```
+ERROR:  [Experiment 0] ChunkContainer::StoreUintParams size = 4107/266 iChunk = 0 : cudaErrorInvalidValue
+Traceback (most recent call last):
+```
+
+
+### Steps to reproduce the problem
+```python
+import time
+from qiskit import QuantumCircuit, transpile
+from qiskit_aer import AerSimulator
+from qiskit.quantum_info import random_unitary
+
+seed = 42
+
+def create_random_unitary(num_qubits, seed=None):
+    return random_unitary(2 ** num_qubits, seed=seed)
+
+num_qubits = 11
+
+circuit = QuantumCircuit(num_qubits)
+
+gate1_qubits = list(range(0, num_qubits))
+
+# Gate 2 spans the second set of qubits
+gate2_qubits = list(range(0, num_qubits))
+
+left_unitary = create_random_unitary(len(gate1_qubits), seed)
+right_unitary = create_random_unitary(len(gate2_qubits), seed)
+
+circuit.unitary(left_unitary, gate1_qubits)
+circuit.unitary(right_unitary, gate2_qubits)
+
+# save a fig of the circuit in pics folder
+circuit.draw(output='mpl', filename=f'pics/{num_qubits}.png')
+
+simulator = AerSimulator(method='unitary', device='GPU')
+
+circuit.save_unitary()
+# transpiled_circuit = transpile(circuit, simulator) ## doesn't matter
+
+start_time = time.time()
+
+job = simulator.run(circuit)
+result = job.result()
+unitary_matrix = result.get_unitary(circuit)
+
+end_time = time.time()
+
+execution_time_ms = (end_time - start_time) * 1000
+
+print(execution_time_ms)
+```
+
+
+### What is the expected behavior?
+To run the simulation
+
+
+### Suggested solutions
+None
+

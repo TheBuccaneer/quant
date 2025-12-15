@@ -1,0 +1,58 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.12.1
+- **Python version**: 3.8
+- **Operating system**: mac
+
+### What is the current behavior?
+The following circuit has two angle parameters `s` and `t`, and it fails in the estimator with:
+`ERROR: Failed to load circuits: Invalid parameterization: instruction param position out of range`
+
+```py
+from qiskit.circuit import QuantumCircuit, ClassicalRegister, Parameter
+from qiskit.quantum_info import SparsePauliOp
+from qiskit_aer.primitives import Estimator
+
+estimator = Estimator(run_options={'shots': 1000})
+t = Parameter('t')
+s = Parameter('s')
+
+# dynamic circuit
+circ2 = QuantumCircuit(4)
+circ2.add_register(ClassicalRegister(2, 'cr'))
+circ2.cx(0, 2)
+circ2.cx(1, 2)
+circ2.rz(t, 2)
+circ2.h(2)
+circ2.measure(2, 0)
+circ2.z(0).c_if(0, 1)
+circ2.z(1).c_if(0, 1)
+circ2.barrier()
+#circ2.x(2).c_if(0, 1)
+circ2.h(0)
+circ2.cx(0, 3)
+circ2.cx(1, 3)
+circ2.rz(s, 3)
+circ2.h(3)
+circ2.measure(3, 0)
+circ2.z(0).c_if(0, 1)
+circ2.z(1).c_if(0, 1)
+circ2.barrier()
+print(circ2.draw(fold=60))
+
+obs2 = SparsePauliOp('IIZY')
+values2 = [[1.57, 1.56]]
+res2 = estimator.run(circ2, obs2, values2).result()
+print(res2)
+```
+
+
+But it works when the parameters are removed and replaced with concrete angles.
+
+This may be related to how the instructions and parameters of the circuit are parsed with Aer. In terra this should be trivial to bind a circuit with a list of parameters so I'm not sure why it fails in Aer / if it's trying to do something custom?
+
+
+

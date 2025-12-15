@@ -1,0 +1,31 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.17.1
+- **Python version**: 3.9-3.13
+- **Operating system**: Windows
+
+### What is the current behavior?
+`test_multictrl_gate` is failing due to low fidelity (going as low as 0.7 from what we observed) for the following unlucky combination:
+1. Unitary Simulator
+2. Using `thrust`.
+3. On Windows, compiling with MSVC 19.44.
+
+The failure can be seen [here](https://github.com/Qiskit/qiskit-aer/actions/runs/17708625534/job/50326444843?pr=2370).
+
+
+### Steps to reproduce the problem
+Unknown. Attempts to reproduce the error locally using the same OS and compiler failed.
+
+
+### What is the expected behavior?
+Fidelity should be around 0.99999, as usual.
+
+
+### Suggested solutions
+A possible explanation of the behavior is a possible bug in the `thrust` version in use (the very old 1.9.5 version). A recent forced update of the CI/CD compiler from visual studio 19 to visual studio 22 have triggered this problem, so it seems to be more likely the result of a library problem.
+
+However, to update to a new `thrust` version we'll need to update to `conan` version 2.x which would probably be a complex process by itself.
+

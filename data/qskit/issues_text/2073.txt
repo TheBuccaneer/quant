@@ -1,0 +1,29 @@
+### Informations
+
+- **Qiskit Aer version**: Latest dev version, main branch.
+- **Python version**: Irrelevant, as I'm compiling it into a c++ project.
+- **Operating system**: Windows 11.
+
+### What is the current behavior?
+
+The problem appears for the default 'statevector' simulation.
+
+I used the qiskit aer simulator to up to 27 qubits lately, also my own simulator (qcsim: https://github.com/aromanro/QCSim) in a c++ project. To ensure that the results are ok, I have some tests that at the end of the simulations they check the outcome by comparing the amplitudes from both simulators.
+
+I noticed that getting the amplitudes like that is really slow for qiskit aer (compared with qcsim).
+
+I know that flush_ops() needs to be called to have the ops actually applied, I ensured that it is actually called at the end of the simulation, so that's not the reason of the slow behavior for the `amplitude` call.
+
+### Steps to reproduce the problem
+
+Just use a > 20 qubits simulator and try getting the amplitudes for all states.
+
+### What is the expected behavior?
+
+I expected it to be much faster... not as fast as qcsim, as there is more involved (qcsim is very simple and it simply does this: https://github.com/aromanro/QCSim/blob/75e009f76828ee444566502242f56d359b310573/QCSim/QubitRegister.h#L33) but aer is much slower. Unfortunately this might prevent me to use it for some things in that project.
+
+### Suggested solutions
+
+One workaround I found for what I do (unfortunately I cannot give details because I signed an NDA, I must ask for approval) is to use `move_to_vector`, but unfortunately this is destructive for the internal state... maybe the `amplitude` and `probability` calls could be improved somehow to be faster?
+
+

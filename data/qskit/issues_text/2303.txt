@@ -1,0 +1,149 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.16.0
+- **Python version**: 3.12.3
+- **Operating system**: Linux
+
+### What is the current behavior?
+I was exploring the sqd-addon with custom molecules and parameters. I wanted to see how the algorithm runs ideally, with a noiseless simulator, so I applied to the [01_chemistry_hamiltonian.ipynb](https://github.com/Qiskit/qiskit-addon-sqd/blob/main/docs/tutorials/01_chemistry_hamiltonian.ipynb) a miminal problem (H2 molecule, 4 qubits), to be run both in noisy and noiseless conditions, using `qiskit-aer`.  
+
+The backend has been set as follows:
+```
+target_backend = FakeSherbrooke()
+backend = AerSimulator.from_backend(target_backend)
+backend.set_options(noise_model=None)
+```
+I toggle the noisy/noiseless simulation simply by commenting the line `backend.set_options(noise_model=None)`. The algorithm should return many different bitstrings related to possible electronic configurations, as it actually does when it is not noiseless (so, when I comment the line `backend.set_options(noise_model=None)` everything is okay).
+But when I remove the noise_model, the output is always an array of `0`'s, no matter how many shots I use.
+
+
+### Steps to reproduce the problem
+This code is taken basically as it is from the above linked tutorial, with a different target molecule. The first part of the code is related to the chemistry side, and it is not the core of the problem. However, I'm leaving it here so that you have everything you need to make it run:
+
+```
+import numpy as np
+import pyscf
+import pyscf.cc
+import pyscf.mcscf
+import ffsim
+from qiskit import QuantumCircuit, QuantumRegister
+from qiskit_ibm_runtime.fake_provider import FakeSherbrooke
+from qiskit_aer import AerSimulator
+from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
+from qiskit_ibm_runtime import SamplerV2 as Sampler
+
+
+# Specify molecule properties
+open_shell = False
+spin_sq = 0
+
+# Build the molecule
+mol = pyscf.gto.Mole()
+mol.build(
+    atom=[["H", (0, 0, 0)], ["H", (0, 0.742, 0)]],
+    basis="STO-3G",
+    unit="Angstrom",
+)
+
+
+# Define active space
+n_frozen = 0
+active_space = range(n_frozen, mol.nao_nr())
+
+# Get molecular integrals
+scf = pyscf.scf.RHF(mol).run()
+num_orbitals = len(active_space)
+n_electrons = int(sum(scf.mo_occ[active_space]))
+
+num_elec_a = (n_electrons + mol.spin) // 2
+num_elec_b = (n_electrons - mol.spin) // 2
+cas = pyscf.mcscf.CASCI(scf, num_orbitals, (num_elec_a, num_elec_b))
+mo = cas.sort_mo(active_space, base=0)
+hcore, nuclear_repulsion_energy = cas.get_h1cas(mo)
+eri = pyscf.ao2mo.restore(1, cas.get_h2cas(mo), num_orbitals)
+
+# Compute exact energy
+exact_energy = cas.run().e_tot
+
+
+# Next, let's create the ansatz
+# The LUCJ ansatz is a parametrized quantum circuit, and we will initialize it with t2 and t1 amplitudes obtained from a CCSD calculation.
+# Get CCSD t2 amplitudes for initializing the ansatz
+froz = [i for i in range(mol.nao_nr()) if i not in active_space] if n_frozen > 0 else 0
+ccsd = pyscf.cc.CCSD(scf, frozen=froz).run()
+t1 = ccsd.t1
+t2 = ccsd.t2
+
+# Create the UCJ Circuit
+n_reps = 2
+alpha_alpha_indices = [(p, p+1) for p in range(num_orbitals - 1)]
+alpha_beta_indices = [(p, p) for p in range(0, num_orbitals, 4)]
+
+ucj_op = ffsim.UCJOpSpinBalanced.from_t_amplitudes(
+    t2=t2,
+    t1=t1,
+    n_reps=n_reps,
+    interaction_pairs=(alpha_alpha_indices, alpha_beta_indices),
+)
+
+nelec = (num_elec_a, num_elec_b)
+
+# Create an empty quantum circuit
+qubits = QuantumRegister(2*num_orbitals, name="q")
+print(f"Number of qubits: {2*num_orbitals}")
+circuit = QuantumCircuit(qubits)
+
+# Prepare HF state as the reference state and append it to the quantum circuit
+circuit.append(ffsim.qiskit.UCJOpSpinBalancedJW(ucj_op), qubits)
+circuit.measure_all()
+# circuit.draw()
+
+
+# Set up the backend
+target_backend = FakeSherbrooke()
+backend = AerSimulator.from_backend(target_backend)
+backend.set_options(noise_model=None)
+
+
+spin_a_layout = [0, 14, 18, 19, 20, 33, 39, 40, 41, 53, 60, 61, 62, 72, 81, 82][:num_orbitals]
+spin_b_layout = [2, 3, 4, 15, 22, 23, 24, 34, 43, 44, 45, 54, 64, 65, 66, 73][:num_orbitals]
+layout = spin_a_layout + spin_b_layout
+
+pass_manager = generate_preset_pass_manager(
+    optimization_level=0, backend=backend, initial_layout=layout
+)
+
+
+pass_manager.pre_init = ffsim.qiskit.PRE_INIT
+isa_circuit = pass_manager.run(circuit)
+print(f"Gate counts (w/ pre-init passes): {isa_circuit.count_ops()}")
+
+
+# Run the simulation
+shots = 10000
+sampler = Sampler(mode=backend)
+job = sampler.run([isa_circuit], shots=shots)
+
+primitive_result = job.result()
+pub_result = primitive_result[0]
+counts = pub_result.data.meas.get_counts()
+
+print(counts)
+```
+
+
+### What is the expected behavior?
+The expected output is something like:
+`{'0000': 7698, '0100': 447, '1000': 494, '0001': 336, '0010': 468, '0011': 186, '0101': 38, '1010': 36, '1100': 177, '1001': 44, '0111': 10, '0110': 33, '1011': 14, '1101': 8, '1110': 9, '1111': 2}`
+This has been taken from the noisy simulation.
+
+On the opposite, when I'm running it noiselessly, the output is:
+`{'0000': 10000}`
+which of course is a wrong behavior.
+
+### Suggested solutions
+I've no idea of where the problem could lie, I guess I'd start from the effects of the noise model. Before opening this issue, [I opened a similar one](https://github.com/Qiskit/qiskit-addon-sqd/issues/129) in the `qiskit-addon-sqd` repo, but I've been addressed to the aer community.
+

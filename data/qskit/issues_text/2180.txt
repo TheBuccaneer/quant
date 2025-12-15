@@ -1,0 +1,61 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.14.2
+- **Python version**: 3.12.3
+- **Operating system**: macOS 14.0 (23A344), Apple M1 Pro
+
+### What is the current behavior?
+
+AerCompiler does not support Binary.Op.SHIFT_LEFT and Binary.Op.SHIFT_RIGHT. However, other types of binary and unary operations are fine.
+
+```
+File ~/miniforge3/envs/py12_qiskit/lib/python3.12/site-packages/qiskit_aer/backends/aer_compiler.py:743, in _assemble_binary_operator(op)
+    [741]    return _BINARY_OP_MAPPING[op]
+    [742] else:
+--> [743]     raise AerError(f"unknown op: {op}")
+
+AerError: 'unknown op: Binary.Op.SHIFT_LEFT'
+```
+
+### Steps to reproduce the problem
+
+```python
+from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
+from qiskit.circuit.classical import expr
+from qiskit_aer import AerSimulator
+
+clbits = ClassicalRegister(2)
+qubits = QuantumRegister(2)
+qc = QuantumCircuit(qubits, clbits)
+qc.measure(qubits, clbits)
+with qc.if_test(expr.equal(expr.shift_left(clbits, 1), 0b10)):
+    qc.reset(qubits[0])
+    qc.x(0)
+
+simulator = AerSimulator()
+counts = simulator.run(qc).result().get_counts()
+```
+
+### What is the expected behavior?
+
+In `Binary.Op` at `qiskit.circuit.classical.expr`,  there are support for SHIFT_LEFT and SHIFT_RIGHT. However, in `aer_compiler.py`, we do not have support for these two, while for all other operations we have support:
+```python
+_BINARY_OP_MAPPING = {
+    Binary.Op.BIT_AND: AerBinaryOp.BitAnd,
+    Binary.Op.BIT_OR: AerBinaryOp.BitOr,
+    Binary.Op.BIT_XOR: AerBinaryOp.BitXor,
+    Binary.Op.LOGIC_AND: AerBinaryOp.LogicAnd,
+    Binary.Op.LOGIC_OR: AerBinaryOp.LogicOr,
+    Binary.Op.EQUAL: AerBinaryOp.Equal,
+    Binary.Op.NOT_EQUAL: AerBinaryOp.NotEqual,
+    Binary.Op.LESS: AerBinaryOp.Less,
+    Binary.Op.LESS_EQUAL: AerBinaryOp.LessEqual,
+    Binary.Op.GREATER: AerBinaryOp.Greater,
+    Binary.Op.GREATER_EQUAL: AerBinaryOp.GreaterEqual,
+}
+```
+
+### Suggested solutions

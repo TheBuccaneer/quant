@@ -1,0 +1,25 @@
+Hi everyone, 
+The below line of code produces a warning:
+`from qiskit.providers.aer.noise import NoiseModel, depolarizing_error, amplitude_damping_error`
+
+```
+DeprecationWarning: Importing from 'qiskit.providers.aer' is deprecated. Import from 'qiskit_aer' instead, which should work identically.
+  from qiskit.providers.aer.noise import NoiseModel, depolarizing_error, amplitude_damping_error 
+``` 
+now, when I change the code to below:
+` from qiskit_aer import NoiseModel, depolarizing_error, amplitude_damping_error`
+
+I am getting the error:
+ ```
+   from qiskit_aer import NoiseModel, depolarizing_error, amplitude_damping_error
+ImportError: cannot import name 'NoiseModel' from 'qiskit_aer' 
+```
+This is all related to qiskit presently I have in my conda environment.
+```
+qiskit==0.46.0
+      - qiskit-aer==0.13.3
+      - qiskit-ibmq-provider==0.20.2
+      - qiskit-terra==0.46.0
+```
+Please suggest some solution.
+Thank you for great help. 

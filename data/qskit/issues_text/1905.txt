@@ -1,0 +1,39 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:
+
+0.13.0 - from VERSION.txt  
+
+- **Python version**:
+
+3.11.4
+
+- **Operating system**:
+
+Windows 11.
+
+### What is the current behavior?
+
+This is how the definition looks now in the code:
+`void insert_sim_op(std::vector<Operations::Op> &ops, char *name, const reg_t &qubits) const`
+
+...but it's called sometimes with a `const char*`, for example in `CacheBlocking::restore_qubits_order` there are calls like `insert_sim_op(ops, "begin_blocking", qubitMap_)`.
+
+Compiling this with the latest VC++ fails.
+
+### Steps to reproduce the problem
+
+I was trying to compile (actually, I succeeded after changing the above to `const char*` and having a little bit of joy with libraries) a c++ project to have the qiskit aer simulator available in it. Since I couldn't build the usual way (troubles with conan), I simply included the needed headers, linked the proper libs and included qv_avx2.cpp in the visual studio project and after making a proxy class I managed to have something working.
+
+### What is the expected behavior?
+
+Compiling without an error.
+
+### Suggested solutions
+
+Change it to `void insert_sim_op(std::vector<Operations::Op> &ops, const char *name, const reg_t &qubits) const` (both for the definition and the declaration, of course). 
+
+

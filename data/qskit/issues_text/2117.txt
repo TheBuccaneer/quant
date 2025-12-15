@@ -1,0 +1,64 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.14.1
+- **Python version**: 3.11
+- **Operating system**: mac
+
+### What is the current behavior?
+
+Minor issue in EstimatorV2 __init__ - can't specify method in options, 
+
+```python
+from qiskit_aer.primitives import EstimatorV2
+
+options = {
+    "backend_options": {
+        "method" : "matrix_product_state"
+    }
+}
+estimator = EstimatorV2(options=options)
+
+```
+
+Fails with 
+
+```python
+--->  self._backend = AerSimulator(method=method, **self.options.backend_options)
+
+TypeError: qiskit_aer.backends.aer_simulator.AerSimulator() got multiple values for keyword argument 'method'
+```
+
+
+### Steps to reproduce the problem
+See code above
+
+
+### What is the expected behavior?
+Should be able to specify the method at the options level
+
+
+### Suggested solutions
+Combine the dicts like this
+
+
+```python
+    def __init__(
+        self,
+        *,
+        options: dict | None = None,
+    ):
+        """
+        Args:
+            options: The options to control the default precision (``default_precision``),
+                the backend options (``backend_options``), and
+                the runtime options (``run_options``).
+        """
+        self._options = Options(**options) if options else Options()
+        method = "density_matrix" if "noise_model" in self.options.backend_options else "automatic"
+        ops = dict(method=method) 
+        ops.update(self.options.backend_options)
+        self._backend = AerSimulator(**ops)
+```

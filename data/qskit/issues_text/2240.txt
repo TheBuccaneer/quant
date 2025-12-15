@@ -1,0 +1,73 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:
+
+Latest dev version from main branch.
+
+- **Python version**:
+
+Irrelevant, as it's called from C/C++.
+
+- **Operating system**:
+
+Windows, Linux, MacOS
+
+### What is the current behavior?
+
+Not all api calls work for all simulators. They do work for example for the statevector one, but some fail - throwing an exception - when using the MPS simulator, for example.
+
+### Steps to reproduce the problem
+
+Configure the MPS simulator instead of the default.
+Call any function that is implemented using `state->apply_mc...` (I think all implemented like that will fail, since they are not implemented by the MPS simulator). If I recall correctly, there are others that might fail besides those, but I will have to check.
+
+### What is the expected behavior?
+
+Calls should succed, applying the operation.
+
+### Suggested solutions
+
+There are workarounds, already mentioned in this related issue: https://github.com/Qiskit/qiskit-aer/issues/2221
+
+For example `aer_apply_x` could be implemented using `apply_x` instead of `apply_mcx`. Various other gates might not have such an easy change, but still they can be implemented, for example the `aer_apply_rx` could be implemented with something like:
+```
+   const Types::qubits_vector qubits = { qubit };
+   const cmatrix_t rx = AER::Linalg::Matrix::rx(theta);
+   state->apply_unitary(qubits, rx);
+```
+or the more complex ones like 'aer_apply_crx', with something like:
+```
+   const Types::qubits_vector qubits = { ctrl_qubit, tgt_qubit };
+
+   cmatrix_t mat(4, 4);
+   mat(0, 0) = 1;
+   mat(2, 2) = 1;
+
+   const double t2 = theta * 0.5;
+
+   const complex_t i(0., 1.);
+   mat(1, 1) = std::cos(t2);
+   mat(1, 3) = -i * std::sin(t2);
+   mat(3, 1) = mat(1, 3);
+   mat(3, 3) = mat(1, 1);
+
+   state->apply_unitary(qubits, mat);
+```
+or for `aer_apply_crz':
+
+```
+   const Types::qubits_vector qubits = { ctrl_qubit, tgt_qubit };
+
+   const double t2 = theta * 0.5;
+   AER::cvector_t v = { {1, 0}, std::polar(1., -t2), {1, 0}, std::polar(1., t2) };
+				
+   state->apply_diagonal_matrix(qubits, v);
+```
+and so on...
+
+I think I could do the changes, if considered worthy.
+
+

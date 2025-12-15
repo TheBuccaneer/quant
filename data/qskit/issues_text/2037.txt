@@ -1,0 +1,71 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.13.2 *(qiskit-aer-gpu)*
+- **Python version**:3.8.18
+- **Operating system**:Ubuntu 20.04
+
+### What is the current behavior?
+When I install **qiskit-aer-gpu** version **0.13.2** I cannot find any backends that support **GPU**
+
+
+### Steps to reproduce the problem
+```` bash
+nvidia-smi
+Fri Jan 19 17:08:07 2024       
++---------------------------------------------------------------------------------------+
+| NVIDIA-SMI 545.23.08              Driver Version: 545.23.08    CUDA Version: 12.3     |
+|-----------------------------------------+----------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                         |                      |               MIG M. |
+|=========================================+======================+======================|
+|   0  NVIDIA RTX A6000               On  | 00000000:01:00.0 Off |                  Off |
+| 30%   49C    P2              73W / 300W |   1656MiB / 49140MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+|   1  NVIDIA RTX A6000               On  | 00000000:41:00.0 Off |                  Off |
+| 40%   64C    P2              97W / 300W |  34867MiB / 49140MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+conda create -n test python=3.8
+conda activate test
+pip install pandas==1.5.2 pillow==10.2.0 qiskit-aer-gpu==0.13.2
+pip list | grep qiskit
+qiskit                   0.45.2
+qiskit-aer               0.12.2
+qiskit-aer-gpu           0.13.2
+qiskit-algorithms        0.2.0
+qiskit-optimization      0.6.0
+qiskit-terra             0.45.2
+```` 
+Executing a small test file
+```` python
+import qiskit_aer
+p = qiskit_aer.AerProvider()
+for i, b in enumerate(p.backends()):
+  print(i, b, b.available_devices())
+````
+shows 
+```` bash
+0 aer_simulator ('CPU',)
+1 aer_simulator_statevector ('CPU',)
+2 aer_simulator_density_matrix ('CPU',)
+3 aer_simulator_stabilizer ('CPU',)
+4 aer_simulator_matrix_product_state ('CPU',)
+5 aer_simulator_extended_stabilizer ('CPU',)
+6 aer_simulator_unitary ('CPU',)
+7 aer_simulator_superop ('CPU',)
+8 qasm_simulator None
+9 statevector_simulator ('CPU',)
+10 unitary_simulator ('CPU',)
+````
+### What is the expected behavior?
+I would expect to see some `(GPU,)` supporting devices as well.
+
+
+### Suggested solutions
+Give some hints, what might be wrong.
+

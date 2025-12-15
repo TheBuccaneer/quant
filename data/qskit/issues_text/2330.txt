@@ -1,0 +1,119 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+- **Qiskit version**: 1.3.1
+- **Qiskit Aer version**: 0.15.1
+- **Python version**: 3.11.11
+- **Operating system**: macOS 15.3.1
+
+### What is the current behavior?
+
+When the transpiler processes a complex unitary gate, the statevectors before and after transpilation differ significantly.
+
+
+
+### Steps to reproduce the problem
+Please see the sample code and output below.
+```python
+from qiskit import QuantumCircuit, transpile
+from qiskit.quantum_info import Statevector
+from qiskit_aer import AerSimulator
+import numpy as np
+
+
+def compare_statevectors(vec1, vec2, tol=1e-10):
+    """Compares two statevectors and prints significant differences."""
+    differences = np.abs(vec1 - vec2)
+    max_diff = np.max(differences)
+    print(f"Max difference: {max_diff}")
+    if max_diff > tol:
+        print("Significant differences found:")
+        for i, diff in enumerate(differences):
+            if diff > tol:
+                print(f"Index {i}: {vec1[i]} vs {vec2[i]} (diff={diff})")
+    else:
+        print("Statevectors are effectively identical.")
+
+
+circuit_qasm = """
+OPENQASM 2.0;
+include "qelib1.inc";
+gate circuit_876 q0,q1 { u(pi/2,-pi/2,-3.064825151817163) q0; u(0.1011056998161648,-pi/2,pi/4) q1; cx q0,q1; u(pi/2,0,pi/2) q0; u(1.4702087094713374,1.4691752037207921,-3.1313531404558756) q1; cx q0,q1; u(pi/2,-pi/4,-pi/2) q0; u(3.0404869537736285,2.279426988419714,pi/2) q1; }
+gate circuit_879 q0,q1 { u(pi/2,-pi/2,-pi) q0; u(1.6719020266110614,-pi/2,-pi) q1; cx q0,q1; u(pi/2,0,pi/2) q0; u(1.4702087094713374,1.4691752037207921,-3.1313531404558756) q1; cx q0,q1; u(pi/2,pi/2,-pi) q0; u(0.10110569981616473,0,-pi/2) q1; }
+gate circuit_882 q0,q1 { u(0,-pi,-pi) q0; u(pi/2,-pi,-0.10110569981616457) q1; cx q0,q1; u(pi,1.3258176636680323,1.3258176636680323) q0; u(pi/2,3.0404869537736285,-pi) q1; }
+gate circuit_885 q0,q1 { u(0,-pi,-pi) q0; u(0,-pi/2,pi/2) q1; cx q0,q1; u(0,-2.297438667476622,2.297438667476622) q0; u(0,-0.024692629465313587,0.024692629465313587) q1; }
+gate unitary q0,q1,q2 { circuit_876 q0,q1; u(0,0,-pi/4) q2; cx q0,q2; u(0,0,-pi/4) q2; cx q1,q2; u(0,0,-pi/4) q2; cx q0,q2; u(0,0,-pi/4) q2; cx q1,q2; circuit_879 q0,q1; u(pi/8,0,0) q2; u(pi/2,0,pi) q2; cx q0,q2; u(pi/2,0,pi) q2; u(-pi/8,0,0) q2; u(pi/2,0,pi) q2; cx q1,q2; u(pi/2,0,pi) q2; u(pi/8,0,0) q2; u(pi/2,0,pi) q2; cx q0,q2; circuit_882 q0,q1; u(pi/2,0,pi) q2; u(-pi/8,0,0) q2; u(0,0,-pi/2) q2; cx q0,q2; cx q1,q2; cx q0,q2; u(0,0,-pi/2) q2; cx q1,q2; circuit_885 q0,q1; }
+
+qreg q[3];
+h q[2];
+unitary q[0],q[1],q[2];
+"""
+
+qc = QuantumCircuit.from_qasm_str(circuit_qasm)
+orig_statevector = Statevector(qc)
+
+qc_transpiled = transpile(
+    qc,
+    AerSimulator(),
+    basis_gates=["u1", "u2", "u3", "cx"],
+    optimization_level=0,
+)
+qc_transpiled_statevector = Statevector(qc_transpiled)
+
+if orig_statevector.equiv(qc_transpiled_statevector):
+    print("All is well!")
+else:
+    print(f"Original circuit:\n{qc.draw()}")
+    print("Statevectors are not equivalent!")
+    print(f"Original statevector:\n{orig_statevector}")
+    print(f"Transpiled statevector:\n{qc_transpiled_statevector}")
+    compare_statevectors(orig_statevector, qc_transpiled_statevector)
+
+```
+
+Output:
+```
+Original circuit:
+          ┌──────────┐
+q_0: ─────┤0         ├
+          │          │
+q_1: ─────┤1 Unitary ├
+     ┌───┐│          │
+q_2: ┤ H ├┤2         ├
+     └───┘└──────────┘
+Statevectors are not equivalent!
+Original statevector:
+Statevector([-9.40079751e-01-3.40954632e-01j,
+             -3.76681054e-17-4.74248683e-17j,
+             -2.45988515e-16-4.23620507e-17j,
+              1.23464702e-16-3.82809142e-17j,
+             -3.24078969e-16+1.85188292e-17j,
+             -1.00243208e-16-7.05536340e-17j,
+             -5.31903194e-17+2.13000210e-17j,
+             -1.59669526e-16+1.76998804e-17j],
+            dims=(2, 2, 2))
+Transpiled statevector:
+Statevector([-6.64736767e-01-2.41091332e-01j,
+             -9.02128759e-16-2.44080512e-16j,
+             -6.10622664e-16+6.66133815e-16j,
+             -1.99577279e-15+1.09641688e-15j,
+             -6.64736767e-01-2.41091332e-01j,
+             -1.11531194e-15-3.06562651e-16j,
+             -3.88578059e-16+1.11022302e-16j,
+             -9.65017035e-16+3.63343801e-16j],
+            dims=(2, 2, 2))
+Max difference: 0.7071067811865475
+Significant differences found:
+Index 0: (-0.9400797513798399-0.34095463194627074j) vs (-0.6647367670568486-0.24109133232617208j) (diff=0.292893218813452)
+Index 4: (-3.240789685895638e-16+1.8518829236219046e-17j) vs (-0.664736767056849-0.241091332326172j) (diff=0.7071067811865475)
+```
+
+### What is the expected behavior?
+The statevectors before and after transpilation should be identical, except for numerical precision errors.
+
+
+### Suggested solutions
+None at the moment.
+
+

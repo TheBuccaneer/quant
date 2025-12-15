@@ -1,0 +1,66 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.14.1   
+- **Python version**: 3.11
+- **Operating system**: Mac
+
+### What is the current behavior?
+Expectation values or counts of Clifford circuits that should be +1 or -1 are sometimes flipped. 
+
+
+### Steps to reproduce the problem
+```python
+import qiskit
+from qiskit import qpy
+from qiskit_aer import AerSimulator
+
+from qiskit import ClassicalRegister
+from qiskit.quantum_info import random_clifford
+
+nq = 5
+# obs = 'IZ' + "I"*(nq-2)
+qcs = []
+for n in range(200):
+    rc = random_clifford(nq)
+    qc = rc.to_circuit()
+    cr = ClassicalRegister(1)
+    qc.add_bits(cr)
+    qc.measure(1, cr[0])
+    qcs += [qc]
+
+
+shots = 1e4
+simulator = AerSimulator(method="stabilizer")
+result = simulator.run(qcs, shots=1e4)
+counts_stab = result.result().get_counts()
+
+simulator = AerSimulator(method="statevector")
+result = simulator.run(qcs, shots=1e4)
+counts_state = result.result().get_counts()
+
+import numpy as np
+from matplotlib import pyplot as plt
+shots = 1e4
+data0 = np.array([x.get("1",0)/shots for x in counts_stab])
+data1 = np.array([x.get("1",0)/shots for x in counts_state])
+plt.plot(data0, label ='stabilizer')
+plt.plot(data1, label ='statevec')
+plt.ylabel('Prob of 1')
+plt.xlabel('Random clifford instance')
+
+```
+<img width="677" alt="image" src="https://github.com/Qiskit/qiskit-aer/assets/15937254/8d11024a-13a3-4765-bc5f-1243823a8f25">
+
+
+
+### What is the expected behavior?
+
+The stabilizer should agree with statvec, density matrix, etc. 
+@smajumderibm and I find that this is not always the case. 
+
+### Suggested solutions
+
+

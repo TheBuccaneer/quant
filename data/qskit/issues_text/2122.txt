@@ -1,0 +1,37 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.14.1
+- **Python version**: 3.11
+- **Operating system**: Mac
+
+### What is the current behavior?
+When running sim with rz gates, the extended_stabilizer fails, see code
+
+
+### Steps to reproduce the problem
+```python
+from qiskit_aer.primitives import EstimatorV2 
+qc = QuantumCircuit(2)
+qc.rz(np.pi/2,0) # Clifford gates
+qc.cx(0,1)
+qc.measure_all()
+
+simulator = AerSimulator(method='extended_stabilizer')
+simulator.run(qc)
+```
+returns
+```python
+Simulation failed and returned the following error message:
+ERROR: CH::State: Invalid gate operation 'rz'. [Experiment 0] CH::State: Invalid gate operation 'rz'.
+```
+
+### What is the expected behavior?
+Ideally since we transpile all circuits down to rz gates, for verification, we want to be able to simulate these. Ideally the method could be able to resolve `rz` gates that are Clifford and `ecr` gates.
+
+
+### Suggested solutions
+
+

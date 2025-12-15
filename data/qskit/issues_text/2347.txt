@@ -1,0 +1,37 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.17.1
+- **Python version**: 3.11
+- **Operating system**: Linux
+
+### What is the current behavior?
+
+
+When sampling - using Aer 0.17.1 - from a circuit with some custom unitaries, I'm seeing _markedly_ different counts being returned.
+
+* With Qiskit 1.4.3
+```
+Counts: {'011011': 38, '101100': 149, '001111': 123, '101010': 55, '111111': 48, '000011': 401, '000111': 135, '100100': 149, '100101': 37, '001101': 131, '110101': 47, '000010': 378, '110111': 46, '010100': 161, '010111': 47, '001100': 417, '001000': 388, '111101': 57, '101101': 42, '010000': 413, '100000': 417, '100110': 34, '101110': 48, '111001': 51, '001010': 166, '111100': 123, '110000': 411, '110001': 151, '011101': 46, '011010': 43, '000001': 470, '100001': 136, '010101': 41, '000000': 1230, '011110': 35, '100111': 48, '000100': 439, '111011': 57, '011000': 131, '001011': 160, '011100': 144, '110010': 151, '011001': 48, '101000': 127, '110110': 39, '100011': 131, '110100': 134, '111110': 65, '000110': 140, '010001': 136, '100010': 122, '111000': 145, '010011': 147, '011111': 59, '010010': 132, '001001': 140, '001110': 149, '101011': 49, '101111': 44, '101001': 42, '111010': 41, '010110': 34, '000101': 148, '110011': 134}
+```
+* With Qiskit 2.0.2
+```
+Counts: {'000011': 1700, '000010': 1630, '000000': 5015, '000001': 1655}
+```
+
+Tagging @fpietra and @matteacrossi who've been investigating this issue on our side. I've also opened https://github.com/Qiskit/qiskit/issues/14569, as I don't know whether the problem lies with Qiskit, Aer, or the interaction of the two
+
+### Steps to reproduce the problem
+
+
+The reproducer circuit and script are in this [repo](https://github.com/Algorithmiq/tmp-qiskit2-issue) Building the two Dockerfiles will provide two images with the dependencies to run the comparison for the two different qiskit versions.
+
+### What is the expected behavior?
+
+I'd expect the behavior from qiskit 1.4.3 to be preserved with the new major release series. I'm not sure whether this is a problem with Qiskit Aer though.
+
+### Suggested solutions
+
+

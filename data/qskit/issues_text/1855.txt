@@ -1,0 +1,42 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.12.0
+- **Python version**: 3.10
+- **Operating system**: Ubuntu 22.04
+
+### What is the current behavior?
+
+Attempt to compute unitary of circuit containing C5X gate fails with the following message:
+
+```
+Simulation failed and returned the following error message:
+ERROR:  [Experiment 0] Circuit test contains invalid instructions {"gates": {mcx_gray}} for "unitary" method.
+```
+
+### Steps to reproduce the problem
+
+```python
+from qiskit import QuantumCircuit, QuantumRegister
+from qiskit_aer import Aer
+
+qkc = QuantumCircuit(name="test")
+r = QuantumRegister(6, "q") # no problem with 5
+qkc.add_register(r)
+qkc.mcx(r[:-1], r[-1])
+
+qkc.save_unitary()
+qkb = Aer.get_backend("aer_simulator_unitary")
+
+h = qkb.run(qkc)
+```
+
+### What is the expected behavior?
+
+The `run()` command should succeed.
+
+### Suggested solutions
+
+

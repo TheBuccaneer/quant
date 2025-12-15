@@ -1,0 +1,32 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- Qiskit Aer version: 0.12.0
+- Python version: 
+- Operating system: 
+
+### What is the current behavior?
+Not able to execute the code taken from the Qiskit tutorials. 
+
+`<ipython-input-3-7b667a2e8e7c>:24: DeprecationWarning: Using a qobj for run() is deprecated as of qiskit-aer 0.9.0 and will be removed no sooner than 3 months from that release date. Transpiled circuits should now be passed directly using backend.run(circuits, **run_options).
+ job = self.backend.run(q_obj, **{'parameter_binds': None})`
+
+`TypeError: AerBackend._run_qobj() got multiple values for argument 'parameter_binds'`
+
+
+How should I modify the code inorder to execute ?
+
+### Steps to reproduce the problem
+
+
+
+### What is the expected behavior?
+
+
+
+
+### Suggested solutions
+
+

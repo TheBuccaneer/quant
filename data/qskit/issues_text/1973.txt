@@ -1,0 +1,80 @@
+### Informations
+
+- **Qiskit version**: 0.44.3
+- **Qiskit Aer version**: 0.13.0
+- **Python version**: 3.11.4
+- **Operating system**: Windows 10 64bit
+
+### What is the current behavior?
+File [c:\Users\Administrator\AppData\Local\Programs\Python\Python311\Lib\site-packages\qiskit_aer\__init__.py:69](file:///C:/Users/Administrator/AppData/Local/Programs/Python/Python311/Lib/site-packages/qiskit_aer/__init__.py:69)
+     65     np.dot(np.zeros(100), np.zeros(100))
+     66 # ... ¯\_(ツ)_/¯
+     67 
+     68 # pylint: disable=wrong-import-position
+---> 69 from qiskit_aer.aerprovider import AerProvider
+     70 from qiskit_aer.jobs import AerJob, AerJobSet
+     71 from qiskit_aer.aererror import AerError
+
+File [c:\Users\Administrator\AppData\Local\Programs\Python\Python311\Lib\site-packages\qiskit_aer\aerprovider.py:20](file:///C:/Users/Administrator/AppData/Local/Programs/Python/Python311/Lib/site-packages/qiskit_aer/aerprovider.py:20)
+     17 from qiskit.providers import ProviderV1 as Provider
+     18 from qiskit.providers.providerutils import filter_backends
+---> 20 from .backends.aer_simulator import AerSimulator
+     21 from .backends.qasm_simulator import QasmSimulator
+     22 from .backends.statevector_simulator import StatevectorSimulator
+
+File [c:\Users\Administrator\AppData\Local\Programs\Python\Python311\Lib\site-packages\qiskit_aer\backends\__init__.py:17](file:///C:/Users/Administrator/AppData/Local/Programs/Python/Python311/Lib/site-packages/qiskit_aer/backends/__init__.py:17)
+      1 # This code is part of Qiskit.
+      2 #
+      3 # (C) Copyright IBM 2018, 2019.
+   (...)
+     10 # copyright notice, and modified files need to carry a notice indicating
+     11 # that they have been altered from the originals.
+     13 """
+     14 Aer Provider Simulator Backends
+     15 """
+---> 17 from .aer_simulator import AerSimulator
+     18 from .qasm_simulator import QasmSimulator
+     19 from .statevector_simulator import StatevectorSimulator
+
+File [c:\Users\Administrator\AppData\Local\Programs\Python\Python311\Lib\site-packages\qiskit_aer\backends\aer_simulator.py:24](file:///C:/Users/Administrator/AppData/Local/Programs/Python/Python311/Lib/site-packages/qiskit_aer/backends/aer_simulator.py:24)
+     21 from qiskit.transpiler.target import target_to_backend_properties
+     23 from ..version import __version__
+---> 24 from .aerbackend import AerBackend, AerError
+     25 from .backend_utils import (
+     26     cpp_execute_circuits,
+     27     cpp_execute_qobj,
+   (...)
+     31     BASIS_GATES,
+     32 )
+     34 # pylint: disable=import-error, no-name-in-module, abstract-method
+
+File [c:\Users\Administrator\AppData\Local\Programs\Python\Python311\Lib\site-packages\qiskit_aer\backends\aerbackend.py:36](file:///C:/Users/Administrator/AppData/Local/Programs/Python/Python311/Lib/site-packages/qiskit_aer/backends/aerbackend.py:36)
+     34 from ..noise.noise_model import NoiseModel, QuantumErrorLocation
+     35 from ..noise.errors.quantum_error import QuantumChannelInstruction
+---> 36 from .aer_compiler import compile_circuit, assemble_circuits, generate_aer_config
+     37 from .backend_utils import format_save_type, circuit_optypes
+     38 from .name_mapping import NAME_MAPPING
+
+File [c:\Users\Administrator\AppData\Local\Programs\Python\Python311\Lib\site-packages\qiskit_aer\backends\aer_compiler.py:45](file:///C:/Users/Administrator/AppData/Local/Programs/Python/Python311/Lib/site-packages/qiskit_aer/backends/aer_compiler.py:45)
+     42 from qiskit_aer.noise import NoiseModel
+     44 # pylint: disable=import-error, no-name-in-module
+---> 45 from qiskit_aer.backends.controller_wrappers import (
+     46     AerUnaryExpr,
+     47     AerUnaryOp,
+     48     AerBinaryExpr,
+     49     AerBinaryOp,
+     50     AerUintValue,
+     51     AerBoolValue,
+     52     AerUint,
+     53     AerBool,
+     54     AerCast,
+     55     AerVar,
+     56     AerCircuit,
+     57     AerConfig,
+     58 )
+     60 from .backend_utils import circuit_optypes
+     61 from ..library.control_flow_instructions import AerMark, AerJump
+ImportError: DLL load failed while importing controller_wrappers: Impossibile trovare il modulo specificato.
+
+### Steps to reproduce the problem
+Trying a demo script in a notebook python. As soon as I added the import of AerSimulator it throws this error. Tried with qsikit-aer 0.12 version too. Tried with python 3.11.0 too.

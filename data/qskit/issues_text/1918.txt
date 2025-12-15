@@ -1,0 +1,71 @@
+### Informations
+
+- **Qiskit Aer version**:
+
+0.13.0 - from VERSION.txt
+
+- **Python version**:
+
+3.11.4
+
+- **Operating system**:
+
+Windows 11.
+
+### What is the current behavior?
+
+I'm using the simulator (only the C++ code) in a Visual Studio project (as also described briefly here: https://github.com/Qiskit/qiskit-aer/issues/1905). Works nicely in debug, I managed to compile de code with Visual Studio as described in the mentioned issue and with cmake by doing this change: https://github.com/Qiskit/qiskit-aer/issues/1906. As far as I tested until now, it seems to work fine... in debug mode. I tried to compile a release in Visual Studio, which failed with 
+
+```
+1>PATH\qiskit-aer\src\simulators\statevector\qv_avx2.cpp(785): error C4789: buffer 'vimags' of size 64 bytes will be overrun; 32 bytes will be written starting at offset 96
+1>PATH\qiskit-aer\src\simulators\statevector\qv_avx2.cpp(784): error C4789: buffer 'vreals' of size 64 bytes will be overrun; 32 bytes will be written starting at offset 96
+1>PATH\qiskit-aer\src\simulators\statevector\qv_avx2.cpp(781): error C4789: buffer 'vimags' of size 64 bytes will be overrun; 32 bytes will be written starting at offset 64
+1>PATH\qiskit-aer\src\simulators\statevector\qv_avx2.cpp(780): error C4789: buffer 'vreals' of size 64 bytes will be overrun; 32 bytes will be written starting at offset 64
+```
+
+
+### Steps to reproduce the problem
+
+Start a Visual Studio console project, include all necessary headers and libs, compile in release mode.
+
+Probably it would need some additional flags in order to have it compiled successfully, I'm not yet sure why it fails in release but in debug it does not. Might be a VC++ bug, I'm not familiar enough with avx2 code to know what's the cause here... the solution below is basically equivalent code and it compiles fine, so it's probably a VC++ issue.
+
+### What is the expected behavior?
+
+Not failing the compilation.
+
+### Suggested solutions
+
+The problem is in `qv_avx.cpp`, the `case 2` and `case 3` in this `for`:
+
+```
+for (size_t j = 1; j < 4; ++j) {
+      switch (j) {
+      case 1:
+        vreals[i + j] = _mm256_permute4x64_pd(vreals[i], PERM_D_Q0Q1_0);
+        vimags[i + j] = _mm256_permute4x64_pd(vimags[i], PERM_D_Q0Q1_0);
+        break;
+      case 2:
+        vreals[i + j] = _mm256_permute4x64_pd(vreals[i], PERM_D_Q0Q1_1);
+        vimags[i + j] = _mm256_permute4x64_pd(vimags[i], PERM_D_Q0Q1_1);
+        break;
+      case 3:
+        vreals[i + j] = _mm256_permute4x64_pd(vreals[i], PERM_D_Q0Q1_2);
+        vimags[i + j] = _mm256_permute4x64_pd(vimags[i], PERM_D_Q0Q1_2);
+        break;
+      }
+```
+
+I replaced the `for` with 
+
+```
+    vreals[i + 1] = _mm256_permute4x64_pd(vreals[i], PERM_D_Q0Q1_0);
+    vimags[i + 1] = _mm256_permute4x64_pd(vimags[i], PERM_D_Q0Q1_0);
+    vreals[i + 2] = _mm256_permute4x64_pd(vreals[i], PERM_D_Q0Q1_1);
+    vimags[i + 2] = _mm256_permute4x64_pd(vimags[i], PERM_D_Q0Q1_1);
+    vreals[i + 3] = _mm256_permute4x64_pd(vreals[i], PERM_D_Q0Q1_2);
+    vimags[i + 3] = _mm256_permute4x64_pd(vimags[i], PERM_D_Q0Q1_2);
+```
+
+and like that it compiles the release as well.
+I only unrolled the `for`, avoiding the `switch` inside the `for`, the issue seems to originate from VC++ but anyway maybe this change makes sense even without a compiler issue?

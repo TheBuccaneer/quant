@@ -1,0 +1,53 @@
+### Environment
+
+- **Qiskit Terra version**: 
+- 0.22.2
+- **Python version**: 
+- 3.9.6
+- **Operating system**: 
+mac OS Ventura 13.2.1 (MBP 2021 Apple M1 Pro)
+
+### What is happening?
+
+I am writing code to do noisy simulations using the Aer simulator. When I execute my code in my local jupyter notebook, I will get the error.
+
+`The Kernel crashed while executing code in the the current cell or a previous cell. Please review the code in the cell(s) to identify a possible cause of the failure. Click [here](https://aka.ms/vscodeJupyterKernelCrash) for more info. View Jupyter [log](command:jupyter.viewOutput) for further details.
+Canceled future for execute_request message before replies were done
+`
+However, if I put my code on the online IBM-Quantum-Lab, I won't have this issue and my code can be executed normally.
+
+My noise model contains `depolarizing_noise` and `thermal_relaxation_error`. I tried to remove the `thermal_relaxation_error` out from my noise model, and my code can be executed locally without any problem.
+
+### How can we reproduce the issue?
+
+
+```
+from qiskit_aer.noise import (NoiseModel, thermal_relaxation_error, depolarizing_error)
+from qiskit import QuantumCircuit
+from qiskit_aer import QasmSimulator
+
+
+def get_noise_model(p_gate, t1, t2, time):
+    single_gate_error = depolarizing_error(p_gate/10, 1)
+    double_gate_error = depolarizing_error(p_gate, 2)
+    meas_error = thermal_relaxation_error(t1=t1, t2=t2, time=time)
+    noise_model = NoiseModel(basis_gates=['crx','cx', 'id', 'rz', 'sx', 'u1', 'u2', 'u3'])
+    noise_model.add_all_qubit_quantum_error(thermal_relaxation_error(t1=t1,t2=t2,time=time), ['id'])
+    noise_model.add_all_qubit_quantum_error(double_gate_error,['crz','cx'])
+    noise_model.add_all_qubit_quantum_error(single_gate_error,['rz', 'sx', 'u1', 'u2', 'u3'])
+    return noise_model
+
+qc = QuantumCircuit(1)
+noise_model = get_noise_model(p_gate=1e-3, t1 = 90, t2 = 120, time = 0.1)
+backend = QasmSimulator(method='statevector', noise_model=noise_model)
+res = backend.run(qc,optimization_level=0, shots=1000).result()
+```
+
+
+### What should happen?
+
+The code example above should be executed.
+
+### Any suggestions?
+
+I found that if I change `method='statevector'' to 'method='density_matrix'', the above code can be executed. However, the execution time will be far longer.

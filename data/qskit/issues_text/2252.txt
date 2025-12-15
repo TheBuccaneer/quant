@@ -1,0 +1,49 @@
+### Environment
+
+- **Qiskit version**: 1.2.4
+- **Python version**: Python 3.12.7
+- **Operating system**: Windows 11 23H2
+
+
+### What is happening?
+
+Wrong representation of the state vector after circuit execution when using `state.draw('latex')` function.
+
+### How can we reproduce the issue?
+
+When I run the following circuit
+```
+from qiskit import QuantumCircuit
+from qiskit.circuit.library.standard_gates import XGate
+from qiskit_aer import StatevectorSimulator
+
+num_qubits=4
+circuit = QuantumCircuit(num_qubits)
+cccx = XGate().control(num_ctrl_qubits=3, label=None, ctrl_state='100')
+circuit.x(2)
+circuit.compose(cccx, range(num_qubits), inplace=True)
+circuit.draw('mpl')
+```
+![Image](https://github.com/user-attachments/assets/a9665231-59b2-44c6-b741-a04d0ddca059)
+
+I do expect after state vector simulation to get `∣1100⟩`
+```
+job = StatevectorSimulator().run(circuit)
+state = job.result().get_statevector()
+state.draw('latex')
+```
+but instead `∣0100⟩`.
+
+### What should happen?
+
+So the community suggested trying another approach to display a state vector
+```
+from qiskit.quantum_info import Statevector
+statevector = Statevector(circuit)
+statevector.draw("latex") 
+```
+and it works as expected `∣1100⟩`.
+
+### Any suggestions?
+
+Probably `state.draw('latex')` has an issue with displaying a state vector.

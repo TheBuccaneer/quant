@@ -1,0 +1,47 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.17.0
+- **Qiskit Aer GPU version**: 0.15.1  
+- **Python version**: 3.12.9 
+- **Operating system**: Ubuntu 20.04.6 LTS (x86_64)
+
+### What is the current behavior?
+
+After installing Qiskit 2.0 and `qiskit-aer-gpu` 0.15.1, importing `AerSimulator` fails with:
+
+```plaintext
+>>> from qiskit_aer import AerSimulator
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File ".../site-packages/qiskit_aer/__init__.py", line 69, in <module>
+    from qiskit_aer.aerprovider import AerProvider
+  File ".../site-packages/qiskit_aer/aerprovider.py", line 20, in <module>
+    from .backends.aer_simulator import AerSimulator
+  File ".../site-packages/qiskit_aer/backends/aer_simulator.py", line 19, in <module>
+    from qiskit.providers import convert_to_target
+ImportError: cannot import name 'convert_to_target' from 'qiskit.providers'
+```
+
+
+### Steps to reproduce the problem
+1. Create a fresh Python 3.12 environment
+2. ```pip install qiskit==2.0.0```
+3. ```pip install qiskit-aer```
+4. ```pip install qiskit-aer-gpu```
+5. Run:
+```plaintext
+from qiskit_aer import AerSimulator
+```
+
+
+### What is the expected behavior?
+Should import correctly the AerSimulator
+
+
+
+### Suggested solutions
+Change the use of ```from qiskit.providers import convert_to_target``` to another equivalent approach given the new Qiskit 2.0 guidlines.
+

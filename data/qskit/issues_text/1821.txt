@@ -1,0 +1,37 @@
+### Environment
+
+- **Qiskit Terra version**: main @ bedecbdce563f4e83acc11c7ec5ca6878a36a4b7
+- **Python version**: 3.10
+- **Operating system**: macOS
+
+
+### What is happening?
+
+As reported in https://quantumcomputing.stackexchange.com/questions/32681/nonsensical-projection-of-initialized-qubits-in-qiskit, using the `AerSimulator` to run a circuit containing an `Initialize` instruction with an integer as parameter breaks, due to
+```
+Simulation failed and returned the following error message:
+ERROR: Failed to load qobj: Invalid qobj "initialize" instruction ("params" is incorrect length).
+```
+
+
+### How can we reproduce the issue?
+
+```python
+from qiskit import QuantumCircuit, Aer, transpile
+
+qc = QuantumCircuit(1)
+qc(1, [0])  # initialize to integer 1     
+
+backend = Aer.get_backend("aer_simulator")
+tqc = transpile(fivequbitcircuit, backend)
+job = backend.run(tqc, shots=1000)
+result = job.result()
+```
+
+### What should happen?
+
+The `Initialize` instruction should be supported by Aer.
+
+### Any suggestions?
+
+Not sure if this is something we should fix on the Terra side, as indeed the `.params` attribute it a list of length 1, which might be a bit confusing, or if this should be handled in Aer. The cleanest solution might be to convert the integer to a label in Terra's class, as that's already happening under the hood (and that's handled correctly by Aer).

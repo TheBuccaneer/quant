@@ -1,0 +1,46 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.13.0
+- **Python version**: 3.10.8
+- **Operating system**:
+
+### What is the current behavior?
+
+The custom noise is not applied when the circuit contains dynamic instructions. The output of the following example is `{'0 0': 1024}`, i.e. the result without noise. 
+
+```python
+from qiskit import QuantumCircuit
+
+from qiskit_aer.noise import NoiseModel, pauli_error
+from qiskit_aer import AerSimulator
+
+# Create the noise model
+p_error = 0.3
+
+readout_error = pauli_error([('X', p_error), ('I', 1 - p_error)])
+noise_bit_flip = NoiseModel()
+noise_bit_flip.add_all_qubit_quantum_error(readout_error, ['id'])
+
+backend = AerSimulator(noise_model=noise_bit_flip)
+
+test = QuantumCircuit(1,1)
+test.id(0)
+test.measure(0,0)
+with test.if_test((0, 1)):
+        test.x(0)
+test.measure_all()
+backend.run(test).result().get_counts()
+```
+
+However, when commenting out the lines containing dynamic instructions:
+```python
+with test.if_test((0, 1)):
+        test.x(0)
+```
+
+the output is `{'0 0': 730, '1 1': 294}`, as expected.
+
+

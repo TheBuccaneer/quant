@@ -1,0 +1,36 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.13.0
+- **Python version**: 3.10.8
+- **Operating system**:
+
+### What is the current behavior?
+The following code returns `{'0':1000}` with Aer 0.13.0:
+
+```python
+import numpy as np
+from qiskit_aer import QasmSimulator
+from qiskit import QuantumCircuit
+
+qc = QuantumCircuit(1)
+qc.ry(- np.pi / 2, 0)
+qc.rz(0, 0)
+qc.sx(0)
+qc.rz(np.pi / 2, 0)
+qc.sx(0)
+qc.rz(0, 0)
+qc.measure_all()
+QasmSimulator().run(qc, shots=1000).result().get_counts()
+```
+
+The expected result would be `{'1':1000}`, which is what older versions of Aer return. Furthermore, if instead of `qc.ry(np.pi/2,0)` a small angle is added:
+```python
+qc.ry(- np.pi / 2 + 0.000000001, 0)
+```
+
+the result is again correct. Alternatively, transpiling the circuit gives the correct result, but as far as I know, transpiling shouldn't be necessary to run on a `QasmSimulator`.
+
+

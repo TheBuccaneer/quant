@@ -1,0 +1,49 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.11.2 (qiskit-aer-gpu)
+- **Python version**: 3.8.10
+- **Operating system**: Ubuntu 20.04.5
+- **GPU information**: CUDA 11.8, Driver version 520.61.05, NVIDIA RTX A6000
+- **Qiskit version**: 0.41.0
+
+```python
+from qiskit import QuantumCircuit, Aer
+
+
+simulator= Aer.get_backend('aer_simulator_statevector')
+simulator.set_options(device='GPU')
+
+qc = QuantumCircuit(2)
+qc.rxx(0.3,0,1)
+qc.reset(0)
+qc.measure_all()
+
+
+result = simulator.run(qc, shots=10).result()
+print(result)
+```
+
+### What is the current behavior?
+
+`simulator.run` hangs indefinitely. The correct result is only returned in each of the following cases:
+- Removing the line `simulator.set_options(device='GPU')`, i.e. simulating using the CPU
+- removing the reset `qc.reset(0)`
+- setting `shots=1`
+
+
+### Steps to reproduce the problem
+
+Run the above code on a system with GPU.
+
+
+### What is the expected behavior?
+
+The simulation finishes and a result is printed.
+
+
+### Suggested solutions
+
+

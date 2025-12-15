@@ -1,12 +1,16 @@
 import requests
 import csv
 import sys
+import os
 from datetime import datetime
 
 def scrape_github_issues():
     all_issues = []
     page = 1
     per_page = 100
+    
+    # Create directory for issue texts
+    os.makedirs('issues_text', exist_ok=True)
     
     while True:
         url = "https://api.github.com/search/issues"
@@ -30,14 +34,24 @@ def scrape_github_issues():
             break
         
         for issue in issues:
+            issue_number = str(issue['number'])
+            
             all_issues.append({
                 'Project': 'NVIDIA/cuda-quantum',
-                'IssueID': str(issue['number']),
+                'IssueID': issue_number,
                 'URL': issue['html_url'],
                 'Title': issue['title'],
                 'Status': issue['state'],
                 'CreatedAt': issue['created_at']
             })
+            
+            # Save issue body to text file
+            body = issue.get('body', '')
+            if body:
+                filename = f"issues_text/{issue_number}.txt"
+                with open(filename, 'w', encoding='utf-8') as f:
+                    f.write(body)
+                print(f"  Saved issue #{issue_number}", file=sys.stderr)
         
         print(f"  Found {len(issues)} issues on page {page} (total so far: {len(all_issues)})", file=sys.stderr)
         
@@ -49,7 +63,7 @@ def scrape_github_issues():
     
     return all_issues
 
-def write_csv(issues, filename='cudaq_issues_raw.csv'):
+def write_csv(issues, filename='github_issues.csv'):
     with open(filename, 'w', newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=['Project', 'IssueID', 'URL', 'Title', 'Status', 'CreatedAt'])
         writer.writeheader()
@@ -60,3 +74,4 @@ if __name__ == '__main__':
     write_csv(issues)
     print(f"Total issues scraped: {len(issues)}", file=sys.stderr)
     print("CSV file created: github_issues.csv", file=sys.stderr)
+    print("Issue texts saved in: issues_text/", file=sys.stderr)

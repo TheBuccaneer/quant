@@ -1,0 +1,35 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.12 (the following works for 0.11)
+- **Python version**:
+- **Operating system**:
+
+### What is the current behavior?
+
+AerSimulator does not work for the circuit with barriers and parameters.
+
+### Steps to reproduce the problem
+
+```python
+from qiskit_aer import AerSimulator
+from qiskit.circuit.library import RealAmplitudes
+
+qc1 = RealAmplitudes(1, insert_barriers=True)
+AerSimulator().run(qc1.decompose(), parameter_binds=[{k: [0] for k in qc1.parameters}])
+```
+raises an error:
+```
+Simulation failed and returned the following error message:
+ERROR: Failed to load circuits: Invalid parameterized qobj: instruction position out of range
+```
+
+### What is the expected behavior?
+
+No error
+
+### Suggested solutions
+
+

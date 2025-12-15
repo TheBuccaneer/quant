@@ -1,0 +1,56 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+Maybe this is not considered a bug, but it stopped my work for a week while I was in many tries to solve it with no change except for different types of errors. 
+
+- **Qiskit Aer version**:0.14.2
+- **Python version**:3.12
+- **Operating system**:win11
+
+### What is the current behavior?
+`TypeError: (): incompatible function arguments. The following argument types are supported:
+    1. (self: qiskit_aer.backends.controller_wrappers.AerConfig, arg0: list[list[tuple[tuple[int, int], list[float]]]]) -> None
+
+Invoked with: <qiskit_aer.backends.controller_wrappers.AerConfig object at 0x000001C4AAA431B0>, [[[(4, 0), 0.7853981852531433], [(5, 0), 0.7853981852531433], [(6, 0), 0.7853981852531433], [(7, 0), 0.7853981852531433], [(11, 0), 0.7853981852531433], [(12, 0), 0.7853981852531433], [(13, 0), 0.7853981852531433], [(14, 0), 0.7853981852531433]]]`
+
+even if I changed it to `param_binds = [{str(self.thetas[k]) : params[k].item() for k in range(NUM_QUBITS)}]`, it keeps rejecting the second part for "TypeError: object of type 'float' has no len()", then with changing the second part to `param_binds = [{str(self.thetas[k]) : torch.Tensor([params[k].item()]) for k in range(NUM_QUBITS)}]` , TypeError: ParameterExpression with unbound parameters (dict_keys([Parameter(Theta0)])) cannot be cast to a float.
+
+now all my tries went to vain, and I need to use the updated versions of the libraries, because there are functions I need in my real project that is perfectly served with the new versions of the libraries.  
+
+
+### Steps to reproduce the problem
+I got the code from this repository [,](https://github.com/qiyaoliang/Quantum-Deep-Learning/blob/master/MNIST01-conv/mnist01-conv-01.ipynb) aiming to branch it but I need it to work first, so then I can add my updates on. However, in the function run, there is always this error no matter what how I change it, there will be an error.
+`def run(self, i):
+        params = i
+        print('params = {}'.format(len(params)))
+        backend = Aer.get_backend('qasm_simulator')
+        
+        ''' param_binds = [[{_:_}] for _ in range(NUM_QUBITS)] 
+        for k in range(NUM_QUBITS) :   
+            param_binds[k]=({(self.thetas[k]) : params[k].item()})
+        param_binds = [{}]
+        for k in range(NUM_QUBITS) :   
+            param_binds[(self.thetas[k])] = params[k].item()
+        param_binds = []
+        for k in range(self.n_qubits):
+              param_binds.append({str(self.thetas[k]): torch.tensor([params[k].item()])})'''
+        param_binds = [{self.thetas[k] : params[k].item() for k in range(NUM_QUBITS)}]
+        print(param_binds)
+
+        job_sim = backend.run(self.circuit,
+                              shots=self.shots,
+                              parameter_binds = param_binds)#[{self.thetas[k] : params[k].item() for k in range(2*NUM_QUBITS)}])
+#         
+        result_sim = job_sim.result()
+        counts = result_sim.get_counts(self.circuit)
+        return self.N_qubit_expectation_Z(counts,self.shots,NUM_QUBITS)`
+
+'''
+### What is the expected behavior?
+It is supposed to create the circuit and provide an illustration to it as it appears in the link above. 
+
+
+### Suggested solutions
+I know that the solution is to use the old versions, but I need the new versions in the same project too. Thus, I need to know what is the solution to represent the parameter list dynamically for the job to continue the work. Other files in the project link if using parameter lists like `param_binds = [{'theta': self.beta, 'phi': self.gamma}]` are working good. However, it always fails when it comes to dynamically assigning param_binds. Any solutions?
+

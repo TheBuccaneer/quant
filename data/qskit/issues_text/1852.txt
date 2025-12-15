@@ -1,0 +1,24 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.11.2 gpu
+- **Python version**: 3.10.6
+- **Operating system**: linux ubuntu 22.10
+
+### What is the current behavior?
+When trying to run the VQE tutorial, it works on qiskit aer cpu, 0.12.0. It fails on qiskit-aer-gpu 0.11.2
+There is no version 0.12 for gpu on pypi.
+
+### Steps to reproduce the problem
+run the vqe tutorial with qiskit aer gpu.
+
+
+### What is the expected behavior?
+that the versions will match
+
+
+### Suggested solutions
+
+update qiskit-aer-gpu.

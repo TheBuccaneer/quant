@@ -1,0 +1,34 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:
+- **Python version**: Python 3.8.10
+- **Operating system**: Linux (Ubuntu 22.04.1 LTS)
+
+### What is the current behavior?
+Importing any qiskit.aer module will log several messages of the form:
+
+```
+INFO:qiskit.compiler.assembler:Total Assembly Time - 0.13256 (ms)
+```
+
+### Steps to reproduce the problem
+
+Run the following Python program:
+
+```
+import logging
+logging.basicConfig(level="DEBUG")
+import qiskit.providers.aer
+```
+
+### What is the expected behavior?
+Importing a module ideally would not log any messages.
+
+
+### Suggested solutions
+The easiest option here would be to change [the backend detection code](https://github.com/Qiskit/qiskit-aer/blob/main/qiskit_aer/aerprovider.py#L33-L61) to run when the list of backends is requested, rather when in the constructor - happy to put a PR together for that.
+
+There was an alternative solution proposed in https://github.com/Qiskit/qiskit-terra/issues/7498#issuecomment-1012416337 which suggested (if I understand correctly) removing the assembling of circuits in `available_methods`/`available_devices` and replacing it with some metadata on the binary.

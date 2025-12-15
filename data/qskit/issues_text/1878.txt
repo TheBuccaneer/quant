@@ -1,0 +1,148 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.12.2
+- **Python version**:  3.11.3
+- **Operating system**: Archlinux
+
+### What is the current behavior?
+
+The following code leads to a segfault when running the simulator:
+```python
+from qiskit import ClassicalRegister, QuantumRegister, QuantumCircuit
+from qiskit import transpile
+from qiskit_aer.backends import AerSimulator
+
+n=39
+#n=52 # Doesn't segfault with n=52
+A = QuantumRegister(n)
+B = QuantumRegister(n)
+m = ClassicalRegister(len(A))
+qc = QuantumCircuit(A, B, m)
+qc.ccx(B[0], A[0], A[1])
+#qc.ccx(A[2], A[0], A[1]) # Using this gate will not segfault if n=39 but will segfault if n=81
+qc.measure(A, m)
+backend_sim = AerSimulator()
+transpiled = transpile(qc, backend_sim)
+print("Circuit transpiled.")
+job_sim = backend_sim.run(transpiled, shots=1) # This triggers a segmentation fault
+print("No segfault!")
+```
+
+When n=39 the circuit has 78 qubits, 39 classical bits and a single Toffoli gate. The simulation step segfaults. 
+However if n=52, the circuit runs without segfault. This also happens with different circuits. The process doesn't run out of memory.
+Also for n=39, doing the Toffoli gate between qubits from only register A doesn't result in segfault, but using qubits from both registers results in a segfault. But if we now set n=81, it segfaults in both cases. But if we set n=96, it doesn't segfault anymore.
+
+### Steps to reproduce the problem
+
+Run code above. It will print "Circuit transpiled." and then segfault. I tried it on ArchLinux and Windows.
+
+### What is the expected behavior?
+
+The program should not segfault.
+
+### Suggested solutions
+
+I have no idea where this bug comes from, it is really weird.
+
+Here is the core dump from the system logs:
+```
+Jul 24 10:58:46 computer systemd-coredump[79394]: [🡕] Process 79345 (python3) of user 1000 dumped core.
+                                                 
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/spatial/_qhull.cpython-311-x86_64-linux-gnu.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/spatial/_qhull.cpython-311-x86_64-linux-gnu.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/linalg/_interpolative.cpython-311-x86_64-linux-gnu.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/linalg/_interpolative.cpython-311-x86_64-linux-gnu.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/optimize/_cobyla.cpython-311-x86_64-linux-gnu.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/optimize/_cobyla.cpython-311-x86_64-linux-gnu.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/optimize/_lbfgsb.cpython-311-x86_64-linux-gnu.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/optimize/_lbfgsb.cpython-311-x86_64-linux-gnu.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/optimize/_trlib/_trlib.cpython-311-x86_64-linux-gnu.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/optimize/_trlib/_trlib.cpython-311-x86_64-linux-gnu.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/integrate/_lsoda.cpython-311-x86_64-linux-gnu.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/integrate/_lsoda.cpython-311-x86_64-linux-gnu.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/integrate/_dop.cpython-311-x86_64-linux-gnu.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/integrate/_dop.cpython-311-x86_64-linux-gnu.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/special/_specfun.cpython-311-x86_64-linux-gnu.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/special/_specfun.cpython-311-x86_64-linux-gnu.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/special/_ufuncs.cpython-311-x86_64-linux-gnu.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/special/_ufuncs.cpython-311-x86_64-linux-gnu.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/sparse/linalg/_eigen/arpack/_arpack.cpython-311-x86_64-linux-gnu.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/sparse/linalg/_eigen/arpack/_arpack.cpython-311-x86_64-linux-gnu.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/integrate/_vode.cpython-311-x86_64-linux-gnu.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/integrate/_vode.cpython-311-x86_64-linux-gnu.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/sparse/linalg/_dsolve/_superlu.cpython-311-x86_64-linux-gnu.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/sparse/linalg/_dsolve/_superlu.cpython-311-x86_64-linux-gnu.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/linalg/_flapack.cpython-311-x86_64-linux-gnu.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/linalg/_flapack.cpython-311-x86_64-linux-gnu.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/integrate/_quadpack.cpython-311-x86_64-linux-gnu.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/integrate/_quadpack.cpython-311-x86_64-linux-gnu.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy.libs/libopenblasp-r0-41284840.3.18.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy.libs/libopenblasp-r0-41284840.3.18.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/sparse/linalg/_isolve/_iterative.cpython-311-x86_64-linux-gnu.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/sparse/linalg/_isolve/_iterative.cpython-311-x86_64-linux-gnu.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/linalg/cython_blas.cpython-311-x86_64-linux-gnu.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/linalg/cython_blas.cpython-311-x86_64-linux-gnu.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/qiskit_aer/pulse/controllers/pulse_utils.cpython-311-x86_64-linux-gnu.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/qiskit_aer/pulse/controllers/pulse_utils.cpython-311-x86_64-linux-gnu.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/qiskit_aer.libs/libgfortran-91cc3cb1.so.3.0.0 without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/qiskit_aer.libs/libgfortran-91cc3cb1.so.3.0.0
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/linalg/cython_lapack.cpython-311-x86_64-linux-gnu.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/linalg/cython_lapack.cpython-311-x86_64-linux-gnu.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/qiskit_aer.libs/libgomp-a34b3233.so.1.0.0 without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/qiskit_aer.libs/libgomp-a34b3233.so.1.0.0
+                                                 Module /test/.venv/lib/python3.11/site-packages/qiskit_aer.libs/libopenblas-r0-f650aae0.3.3.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/qiskit_aer.libs/libopenblas-r0-f650aae0.3.3.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/optimize/__nnls.cpython-311-x86_64-linux-gnu.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/optimize/__nnls.cpython-311-x86_64-linux-gnu.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/qiskit_aer/backends/controller_wrappers.cpython-311-x86_64-linux-gnu.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/qiskit_aer/backends/controller_wrappers.cpython-311-x86_64-linux-gnu.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/linalg/_fblas.cpython-311-x86_64-linux-gnu.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/linalg/_fblas.cpython-311-x86_64-linux-gnu.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/Pillow.libs/libXau-154567c4.so.6.0.0 without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/Pillow.libs/libXau-154567c4.so.6.0.0
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/special/_ellip_harm_2.cpython-311-x86_64-linux-gnu.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/special/_ellip_harm_2.cpython-311-x86_64-linux-gnu.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/Pillow.libs/libtiff-189042a3.so.6.0.1 without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/Pillow.libs/libtiff-189042a3.so.6.0.1
+                                                 Module /test/.venv/lib/python3.11/site-packages/Pillow.libs/libopenjp2-20e347f0.so.2.5.0 without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/Pillow.libs/libopenjp2-20e347f0.so.2.5.0
+                                                 Module /test/.venv/lib/python3.11/site-packages/Pillow.libs/libjpeg-dab02bf4.so.62.3.0 without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/Pillow.libs/libjpeg-dab02bf4.so.62.3.0
+                                                 Module /test/.venv/lib/python3.11/site-packages/symengine.libs/libmpfr-aad5016b.so.6.1.0 without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/symengine.libs/libmpfr-aad5016b.so.6.1.0
+                                                 Module /test/.venv/lib/python3.11/site-packages/Pillow.libs/liblzma-9dd5c569.so.5.4.3 without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/Pillow.libs/liblzma-9dd5c569.so.5.4.3
+                                                 Module /test/.venv/lib/python3.11/site-packages/symengine.libs/libflint-b75bea04.so.15.0.1 without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/symengine.libs/libflint-b75bea04.so.15.0.1
+                                                 Module /test/.venv/lib/python3.11/site-packages/Pillow.libs/libxcb-cd9c1006.so.1.1.0 without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/Pillow.libs/libxcb-cd9c1006.so.1.1.0
+                                                 Module /test/.venv/lib/python3.11/site-packages/symengine/lib/symengine_wrapper.cpython-311-x86_64-linux-gnu.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/symengine/lib/symengine_wrapper.cpython-311-x86_64-linux-gnu.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/symengine.libs/libzstd-3c9d0529.so.1.5.2 without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/symengine.libs/libzstd-3c9d0529.so.1.5.2
+                                                 Module /test/.venv/lib/python3.11/site-packages/symengine.libs/libgmp-b6b552a9.so.10.4.1 without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/symengine.libs/libgmp-b6b552a9.so.10.4.1
+                                                 Module /test/.venv/lib/python3.11/site-packages/symengine.libs/libmpc-bf04043a.so.3.2.1 without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/symengine.libs/libmpc-bf04043a.so.3.2.1
+                                                 Module /test/.venv/lib/python3.11/site-packages/numpy.libs/libquadmath-96973f99.so.0.0.0 without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/numpy.libs/libquadmath-96973f99.so.0.0.0
+                                                 Module /test/.venv/lib/python3.11/site-packages/numpy.libs/libgfortran-040039e1.so.5.0.0 without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/numpy.libs/libgfortran-040039e1.so.5.0.0
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/integrate/_odepack.cpython-311-x86_64-linux-gnu.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/integrate/_odepack.cpython-311-x86_64-linux-gnu.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/linalg/_flinalg.cpython-311-x86_64-linux-gnu.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/scipy/linalg/_flinalg.cpython-311-x86_64-linux-gnu.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/numpy.libs/libopenblas64_p-r0-742d56dc.3.20.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/numpy.libs/libopenblas64_p-r0-742d56dc.3.20.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/numpy/linalg/_umath_linalg.cpython-311-x86_64-linux-gnu.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/numpy/linalg/_umath_linalg.cpython-311-x86_64-linux-gnu.so
+                                                 Module /test/.venv/lib/python3.11/site-packages/numpy/core/_multiarray_umath.cpython-311-x86_64-linux-gnu.so without build-id.
+                                                 Module /test/.venv/lib/python3.11/site-packages/numpy/core/_multiarray_umath.cpython-311-x86_64-linux-gnu.so
+                                                 Stack trace of thread 79391:
+                                                 #0  0x00007fb5e76497bb n/a (/test/.venv/lib/python3.11/site-packages/qiskit_aer/backends/controller_wrappers.cpython-311-x86_64-linux-gnu.so + 0x497bb)
+                                                 #1  0x5445445f3131444e n/a (n/a + 0x0)
+                                                 ELF object binary architecture: AMD x86-64
+```

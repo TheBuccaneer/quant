@@ -1,0 +1,33 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.13.3
+- **Python version**: 3.10.12
+- **Operating system**: Google Colab
+
+### What is the current behavior?
+I am currently practicing the codes using Google Colab. It was working perfect till 13th of February and now it's throwing error even if I have installed the Aer package separately. Installed Qiskit and Aer as well but when importing Aer, it throws below error:
+
+ImportError: cannot import name 'Aer' from 'qiskit' (/usr/local/lib/python3.10/dist-packages/qiskit/__init__.py)
+
+<img width="701" alt="image" src="https://github.com/Qiskit/qiskit-aer/assets/22808995/fbb7f65b-c630-46b5-ae8b-983385e610a5">
+
+
+### Steps to reproduce the problem
+
+Open Google Colab
+Install below libraries: 
+!pip install qiskit
+!pip install qiskit-aer
+
+Then import Aer:
+from qiskit import Aer
+
+### What is the expected behavior?
+This should run without any error.
+
+### Suggested solutions
+None
+

@@ -1,0 +1,85 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.17.1
+- **Python version**: 3.12.7
+- **Operating system**: Windows 11
+- Qiskit version: 2.1.1
+
+### What is the current behavior?
+When invoking QasmSimulator.from_backend(backend) an error occurs:
+```
+AerError                                  Traceback (most recent call last)
+Cell In[4], [line 10](vscode-notebook-cell:?execution_count=4&line=10)
+      8 service = QiskitRuntimeService()
+      9 backend = service.backend("ibm_brisbane")
+---> [10](vscode-notebook-cell:?execution_count=4&line=10) backend_sim = QasmSimulator.from_backend(backend)
+
+File c:\Users\dsmel\anaconda3\envs\quantum\Lib\site-packages\qiskit_aer\backends\qasm_simulator.py:568, in QasmSimulator.from_backend(cls, backend, **options)
+    565         options["noise_model"] = noise_model
+    567 # Initialize simulator
+--> [568](file:///C:/Users/dsmel/anaconda3/envs/quantum/Lib/site-packages/qiskit_aer/backends/qasm_simulator.py:568) sim = cls(configuration=configuration, properties=properties, target=target, **options)
+    569 return sim
+
+File c:\Users\dsmel\anaconda3\envs\quantum\Lib\site-packages\qiskit_aer\backends\qasm_simulator.py:459, in QasmSimulator.__init__(self, configuration, properties, provider, **backend_options)
+    455 # Cache basis gates since computing the intersection
+    456 # of noise model, method, and config gates is expensive.
+    457 self._cached_basis_gates = self._DEFAULT_BASIS_GATES
+--> [459](file:///C:/Users/dsmel/anaconda3/envs/quantum/Lib/site-packages/qiskit_aer/backends/qasm_simulator.py:459) super().__init__(
+    460     configuration, properties, provider=provider, backend_options=backend_options
+    461 )
+
+File c:\Users\dsmel\anaconda3\envs\quantum\Lib\site-packages\qiskit_aer\backends\aerbackend.py:90, in AerBackend.__init__(self, configuration, properties, provider, target, backend_options)
+     88 # Set options from backend_options dictionary
+     89 if backend_options is not None:
+---> [90](file:///C:/Users/dsmel/anaconda3/envs/quantum/Lib/site-packages/qiskit_aer/backends/aerbackend.py:90)     self.set_options(**backend_options)
+     92 # build coupling map
+     93 if self.configuration().coupling_map is not None:
+
+File c:\Users\dsmel\anaconda3\envs\quantum\Lib\site-packages\qiskit_aer\backends\aerbackend.py:659, in AerBackend.set_options(self, **fields)
+    657 """Set the simulator options"""
+    658 for key, value in fields.items():
+--> [659](file:///C:/Users/dsmel/anaconda3/envs/quantum/Lib/site-packages/qiskit_aer/backends/aerbackend.py:659)     self.set_option(key, value)
+
+File c:\Users\dsmel\anaconda3\envs\quantum\Lib\site-packages\qiskit_aer\backends\qasm_simulator.py:613, in QasmSimulator.set_option(self, key, value)
+    608         raise AerError(
+    609             f"Invalid simulation method {value}. Available methods"
+    610             f" are: {self.available_methods()}"
+    611         )
+    612     self._set_method_config(value)
+--> [613](file:///C:/Users/dsmel/anaconda3/envs/quantum/Lib/site-packages/qiskit_aer/backends/qasm_simulator.py:613) super().set_option(key, value)
+    614 if key in ["method", "noise_model", "basis_gates"]:
+    615     self._cached_basis_gates = self._basis_gates()
+
+File c:\Users\dsmel\anaconda3\envs\quantum\Lib\site-packages\qiskit_aer\backends\aerbackend.py:646, in AerBackend.set_option(self, key, value)
+    644 else:
+    645     if not hasattr(self._options, key):
+--> [646](file:///C:/Users/dsmel/anaconda3/envs/quantum/Lib/site-packages/qiskit_aer/backends/aerbackend.py:646)         raise AerError(f"Invalid option {key}")
+    647     if value is not None:
+    648         # Only add an option if its value is not None
+    649         setattr(self._options, key, value)
+
+AerError: 'Invalid option target'
+```
+
+
+### Steps to reproduce the problem
+
+
+```
+from qiskit_ibm_runtime import QiskitRuntimeService
+from qiskit_aer import QasmSimulator
+service = QiskitRuntimeService()
+backend = service.backend("ibm_brisbane")
+backend_sim = QasmSimulator.from_backend(backend)
+```
+
+### What is the expected behavior?
+a valid QasmSimulator object is returned
+
+
+### Suggested solutions
+
+

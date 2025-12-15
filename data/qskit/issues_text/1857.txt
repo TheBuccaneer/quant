@@ -1,0 +1,63 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.12.1
+- **Python version**: 3.9
+- **Operating system**: MacOS
+
+### What is the current behavior?
+
+When trying to run experiments like PEC like with thousands of sampled circuits split into many Jobs, Python runs out of memory because all the circuits persist in memory inside `AerJobs.circuits`
+
+
+### Steps to reproduce the problem
+
+A toy example like this captures the problem
+
+```python
+from qiskit.circuit.random import random_circuit
+from qiskit import transpile
+
+# Random long circuit
+qc = transpile(random_circuit(4, 200, seed=123), basis_gates=["cx", "u"])
+qc.measure_all()
+
+backend = AerSimulator()
+num_jobs = 10
+job_size = 100
+
+# Run jobs in batches
+jobs = []
+for _ in range(num_jobs):
+    # Make batch of new circuits in memory as proxy for sampled batch
+    circs = [qc.copy() for _ in range(job_size)]
+    job = backend.run(circs)
+    jobs.append(job)
+```
+
+### What is the expected behavior?
+
+The general issue is a batch of unique circuits is run as a job, and then we wish to free the memory used by those circuits after the job starts so we can start generating a new batch of circuits without running out of memory. But currently this freeing can never happen as all circuits persist in the AerJobs
+
+### Suggested solutions
+
+One solution would be to not store the circuits in the job and deprecate the `AerJob.circuits` method. Alternatively having some way so that the circuits being stored is optional.
+
+Currently I am attempting to work around this by writing a function like
+
+```python
+def _scrub_job_metadata(job):
+    for attr in ["_qobj", "_circuits", "_noise_model", "_config"]:
+        if hasattr(job, attr):
+            setattr(job, attr, None)
+```
+and running the above jobs like:
+
+```python
+job = backend.run(circs)
+jobs.append(job)
+_scrub_job_metadata(job)
+```
+

@@ -1,0 +1,51 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:
+
+0.13.0 - from VERSION.txt
+
+- **Python version**:
+
+3.11.4
+
+- **Operating system**:
+
+Windows 11
+
+### What is the current behavior?
+
+Currently it's implemented with an rx operation like this:
+
+```
+// sqrt(NOT) gate
+void aer_apply_sx(void *handler, uint_t qubit) {
+  AER::AerState *state = reinterpret_cast<AER::AerState *>(handler);
+  state->apply_mcrx({qubit}, -M_PI / 4.0);
+};
+```
+
+This introduces a different global phase than the sx gate exposed to python (or described in qiskit documentation), for example. It's not a big issue, but I think it should have the same definition.
+
+### Steps to reproduce the problem
+
+Compare results obtained with the normal qiskit sx gate and those obtained with using the aer runtime 'aer_apply_sx'.
+
+### What is the expected behavior?
+
+Identical results.
+
+### Suggested solutions
+
+Replace implementation with:
+
+```
+void aer_apply_sx(void *handler, uint_t qubit) {
+  AER::AerState *state = reinterpret_cast<AER::AerState *>(handler);
+  state->apply_unitary({ qubit }, AER::Linalg::Matrix::SX);
+};
+```
+
+I'll make a pull request for this soon.

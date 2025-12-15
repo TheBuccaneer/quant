@@ -1,0 +1,49 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.12.2
+- **Python version**: 3.10.12
+- **Operating system**: Linux
+
+### What is the current behavior?
+
+When preparing the +X state and then measuring, AerSimulator gives results that are correlated across seed number when the circuit begins with a reset instruction.
+
+I studied the behavior more thoroughly in [this gist](https://gist.github.com/wshanks/f6c6f8358460f2fbca1d431e550670d8).
+
+### Steps to reproduce the problem
+
+Besides [the gist](https://gist.github.com/wshanks/f6c6f8358460f2fbca1d431e550670d8), one can look at the statistics of the counts for the following circuit as the seed number is varied. The counts should 2500 +/- sqrt(5000/4), but when looking at around 1000 consecutive seed numbers the variation is much less and the average off from 2500 by several standard deviations.
+
+```python
+from qiskit import QuantumCircuit
+
+from qiskit_aer import AerSimulator
+
+
+circ = QuantumCircuit(1, 1)
+circ.reset(0)
+circ.barrier(0)
+circ.barrier(0)
+circ.h(0)
+circ.barrier(0)
+circ.measure(0, 0)
+
+deviations = numpy.zeros(1000)
+for seed in range(len(deviations)):
+    backend = AerSimulator(seed_simulator=seed)
+    job = backend.run(circ, shots=5000)
+    deviations[seed] = job.result().get_counts()["0"] - 2500
+
+print(numpy.std(deviations))
+```
+
+### What is the expected behavior?
+
+Results not correlated with seed number, with the average around 50% probability for a +X state measurement.
+
+### Suggested solutions
+
+I am not sure, but it is possible that this behavior is related to https://github.com/Qiskit/qiskit-aer/issues/1888 and could be addressed by https://github.com/Qiskit/qiskit-aer/pull/1895 as well.

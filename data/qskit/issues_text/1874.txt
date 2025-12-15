@@ -1,0 +1,58 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: qiskit-aer-gpu 0.12.2
+- **Python version**: 3.11
+- **Operating system**: Ubuntu 22.04
+- **CUDA version**: 12.1.1 / 11.8.0
+
+### What is the current behavior?
+
+If I run the following procedure in a very clean environment, I will get a library load error and not be able to use qiskit_aer.
+
+```python
+>>> import qiskit_aer
+```
+
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  ...
+ImportError: libcustatevec.so.1: cannot open shared object file: No such file or directory
+
+### Steps to reproduce the problem
+
+1. Create a clean environment. For example, use the following docker images:
+
+- [docker/python311-ubutnu22/cuda121](https://github.com/derwind/cuquantum_on_colab/tree/qiskit-aer-gpu-0.12.2-py311/qiskit-aer-gpu/docker/python311-ubutnu22/cuda121)
+- [docker/python311-ubutnu22/cuda118](https://github.com/derwind/cuquantum_on_colab/tree/qiskit-aer-gpu-0.12.2-py311/qiskit-aer-gpu/docker/python311-ubutnu22/cuda118)
+
+2. Enter a clean environment. e.g., `docker run -it --rm --gpus all python311:ubuntu22-cuda121` if you will use docker images above.
+
+3. Set up `qiskit-aer-gpu` with the following steps
+
+```sh
+pip install qiskit
+pip uninstall -y qiskit-aer
+pip install "qiskit-aer-gpu==0.12.2"
+```
+
+(For CUDA 11.8 the last line would be `pip install "qiskit-aer-gpu-cu11==0.12.2"`.)
+
+4. Run `python -c "import qiskit_aer"`
+
+### What is the expected behavior?
+
+Importing `qiskit_aer` will successfully finish.
+
+### Suggested solutions
+
+It would be nice if the library paths (`LD_LIBRARY_PATH`) could be properly set. One work around would be:
+
+```sh
+mkdir -p /usr/local/nvidia/lib64
+ln -s /usr/local/lib/python3.11/site-packages/cuquantum/lib/libcustatevec.so.1 /usr/local/nvidia/lib64/libcustatevec.so.1
+ln -s /usr/local/lib/python3.11/site-packages/cuquantum/lib/libcutensornet.so.2 /usr/local/nvidia/lib64/libcutensornet.so.2
+ln -s /usr/local/lib/python3.11/site-packages/cutensor/lib/libcutensor.so.1 /usr/local/nvidia/lib64/libcutensor.so.1
+```

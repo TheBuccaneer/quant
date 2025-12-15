@@ -1,0 +1,84 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.13-0.15 (tested on multiple versions)
+- **Python version**: 3.10
+- **Operating system**: Ubuntu 20 and Windows 10 (tested multiple)
+
+### What is the current behavior?
+
+If I use `set_matrix_product_state` to set an initial state in the simulator - it's not loaded properly.
+
+
+### Steps to reproduce the problem
+
+Say I have the following MPS state:
+```
+import numpy as np
+import qiskit, qiskit_aer
+
+my_mps = ([(np.array([[1.+0.j, 0.+0.j]]), np.array([[0.+0.j, 1.+0.j]])), (np.array([[1.+0.j],
+       [0.+0.j]]), np.array([[0.+0.j],
+       [1.+0.j]]))], [np.array([0.70710678, 0.70710678])])
+```
+(it is in a canonical form and follows the paper which is cited in the mps simulator docs)
+It's very easy to check that the state here is a 2-qubit Bell state, with a statevector [1, 0, 0, 1] / sqrt(2).
+
+Now if I create a circuit and set it as init:
+```
+qc = qiskit.QuantumCircuit(2)
+qc.set_matrix_product_state(my_mps)
+```
+and execute it, for example, to see the resulting state:
+```
+simulator = qiskit_aer.AerSimulator(method="matrix_product_state")
+
+qc.save_statevector(label="sv")
+result = simulator.run(qc).result()
+data = result1.data(0)
+sv_result = data["sv"]
+print(sv_result)
+```
+I'll get
+```
+> Statevector([0.70710678+0.j, 0.        +0.j, 0.        +0.j,
+             0.        +0.j],
+            dims=(2, 2))
+```
+Interesting to note that Aer simulator returns not even a correct statevector, since it's not normalized.
+
+If I try to fetch mps state right after as:
+```
+qc = qiskit.QuantumCircuit(2)
+qc.set_matrix_product_state(my_mps)
+
+qc.save_matrix_product_state(label="my_mps")
+result = simulator.run(qc).result()
+data = result1.data(0)
+mps_result = data["my_mps"]
+print(mps_result)
+```
+I'll get
+```
+> ([(array([[1.+0.j, 0.+0.j]]), array([[0.+0.j, 1.+0.j]])), (array([[1.+0.j],
+       [0.+0.j]]), array([[0.+0.j],
+       [0.+0.j]]))], [array([0.70710678, 0.70710678])])
+```
+Note the missing 1 in the very last matrix
+
+p.s. If I do smth like:
+load statevector ([1,0,0,1]/sqrt(2)), and save mps right after and print obtained MPS
+it will be equal to `my_mps` except signs. For some reason values would look like `1.-0.j` and `0.-0.j`. However, mathematically everything is the same. If I load this state now - it'll be loaded properly. However I dont see a reason why values written as `0.-0.j` work whenever `0.+0.j` does not.
+
+Note that this example is just a simple Bell state. There are much more complex states where the same issue occurs
+
+### What is the expected behavior?
+
+An expected measured statevector should be [1,0,0,1]/sqrt(2).
+The saved mps should be the same as loaded one.
+
+### Suggested solutions
+
+Check what is happening inside the code, with complex values computations and/or phases.

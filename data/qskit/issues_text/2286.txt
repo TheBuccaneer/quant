@@ -1,0 +1,29 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: Latest development version
+- **Python version**: Doesn't matter, applies to all
+- **Operating system**: Doesn't matter, applies to all
+
+### What is the current behavior?
+
+The Matrix Product State simulator has bond dimension and singular values truncation threshold as static values.
+See here: https://github.com/Qiskit/qiskit-aer/blob/e26970a678b4f32d30732bd90ae5cfaa039fa5d7/src/simulators/matrix_product_state/matrix_product_state_tensor.hpp#L182
+
+The problem with this is that it affects all MPS simulators one creates. 
+
+### Steps to reproduce the problem
+
+Create a MPS simulator with default settings, execute a complex enough circuit in it, save its results.
+
+Create two MPS simulators, set a low bond dimension and a big truncation threshold on one (which would introduce quite big errors for many circuits). Execute the same complex circuit from above with both. Compare results among themselves and with the ones previously saved. 
+
+### What is the expected behavior?
+
+Each MPS simulator should have its own settings.
+
+### Suggested solutions
+
+Make them non static?

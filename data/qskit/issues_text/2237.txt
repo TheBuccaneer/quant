@@ -1,0 +1,27 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:
+- **Python version**:
+- **Operating system**:
+
+### What is the current behavior?
+
+It is omitted
+
+
+### Steps to reproduce the problem
+
+`AerSimulator().configuration().to_dict()["open_pulse"]`
+
+this will raise a KeyError
+
+### What is the expected behavior?
+
+The above is False.
+
+### Suggested solutions
+
+https://github.com/Qiskit/qiskit-aer/pull/2236

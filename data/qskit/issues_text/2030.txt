@@ -1,0 +1,97 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.14.0
+- **Python version**: 3.11.6
+- **Operating system**: Ubuntun 23.10
+
+### What is the current behavior?
+I am using QuantumVolume Circuit in order to test gpu and mpi bindings of qiskit-aer. Here is my code:
+
+```
+from qiskit import *
+from qiskit.circuit.library import *
+from qiskit_aer import *
+sim = AerSimulator(method='statevector',device='CPU', blocking_enable=True, blocking_qubits=10)
+shots = 100
+depth=10
+qubits =  25
+circuit = transpile(QuantumVolume(qubits, depth, seed=0),backend=sim,optimization_level=0)
+circuit.measure_all()
+result = execute(circuit,sim,shots=shots,seed_simulator=12345, blocking_enable=True, blocking_qubits=10).result()
+dict=result.to_dict()
+meta = dict['metadata']
+myrank = meta['mpi_rank']
+data = dict['results'][0]['data']['counts']
+print(meta)
+```
+I want performance to enhance as I use multiple processes which actually does, below are output along with `time_taken_execute`
+
+For 1 process without `mpirun`
+```
+python3 demo.py 
+{'time_taken_execute': 33.683060803, 'mpi_rank': 0, 'time_taken_parameter_binding': 7.0374e-05, 'num_mpi_processes': 1, 'num_processes_per_experiments': 1, 'omp_enabled': True, 'max_gpu_memory_mb': 0, 'max_memory_mb': 15903, 'parallel_experiments': 1}
+
+```
+With 2 processes, it takes a little higher than half time (16.5) 
+
+```
+mpirun -np 2 python3 demo.py 
+{'time_taken_execute': 18.483001342, 'mpi_rank': 0, 'time_taken_parameter_binding': 4.9669e-05, 'num_mpi_processes': 2, 'num_processes_per_experiments': 2, 'omp_enabled': True, 'max_gpu_memory_mb': 0, 'max_memory_mb': 15903, 'parallel_experiments': 1}
+{'time_taken_execute': 18.483079169, 'mpi_rank': 1, 'time_taken_parameter_binding': 4.3061e-05, 'num_mpi_processes': 2, 'num_processes_per_experiments': 2, 'omp_enabled': True, 'max_gpu_memory_mb': 0, 'max_memory_mb': 15903, 'parallel_experiments': 1}
+```
+With 4 processes, time again shrinks
+
+```
+mpirun -np 4 python3 demo.py 
+{'time_taken_execute': 11.243228198, 'mpi_rank': 0, 'time_taken_parameter_binding': 5.6152e-05, 'num_mpi_processes': 4, 'num_processes_per_experiments': 4, 'omp_enabled': True, 'max_gpu_memory_mb': 0, 'max_memory_mb': 15903, 'parallel_experiments': 1}
+{'time_taken_execute': 11.243233087, 'mpi_rank': 2, 'time_taken_parameter_binding': 4.5254e-05, 'num_mpi_processes': 4, 'num_processes_per_experiments': 4, 'omp_enabled': True, 'max_gpu_memory_mb': 0, 'max_memory_mb': 15903, 'parallel_experiments': 1}
+{'time_taken_execute': 11.243227508, 'mpi_rank': 1, 'time_taken_parameter_binding': 4.4745e-05, 'num_mpi_processes': 4, 'num_processes_per_experiments': 4, 'omp_enabled': True, 'max_gpu_memory_mb': 0, 'max_memory_mb': 15903, 'parallel_experiments': 1}
+{'time_taken_execute': 11.243323611, 'mpi_rank': 3, 'time_taken_parameter_binding': 5.0433e-05, 'num_mpi_processes': 4, 'num_processes_per_experiments': 4, 'omp_enabled': True, 'max_gpu_memory_mb': 0, 'max_memory_mb': 15903, 'parallel_experiments': 1}
+
+```
+
+I also try with 'device=GPU' and it decreases time even further
+
+```
+python3 demo-gpu.py 
+{'time_taken_execute': 9.47380009, 'mpi_rank': 0, 'time_taken_parameter_binding': 6.8782e-05, 'num_mpi_processes': 1, 'num_processes_per_experiments': 1, 'omp_enabled': True, 'max_gpu_memory_mb': 5933, 'max_memory_mb': 15903, 'parallel_experiments': 1}
+```
+
+However when I use multiple nodes, time taken increases significantly.
+```
+
+mpirun -np 5 -machinefile qiskit-aer-main/demo-files/machinefile.txt python3 demo.py 
+{'time_taken_execute': 220.749876697, 'mpi_rank': 0, 'time_taken_parameter_binding': 0.000168598, 'num_mpi_processes': 5, 'num_processes_per_experiments': 5, 'omp_enabled': True, 'max_gpu_memory_mb': 0, 'max_memory_mb': 15903, 'parallel_experiments': 1}
+{'time_taken_execute': 220.752292948, 'mpi_rank': 1, 'time_taken_parameter_binding': 4.6674e-05, 'num_mpi_processes': 5, 'num_processes_per_experiments': 5, 'omp_enabled': True, 'max_gpu_memory_mb': 0, 'max_memory_mb': 15903, 'parallel_experiments': 1}
+{'time_taken_execute': 220.752337457, 'mpi_rank': 3, 'time_taken_parameter_binding': 4.3804e-05, 'num_mpi_processes': 5, 'num_processes_per_experiments': 5, 'omp_enabled': True, 'max_gpu_memory_mb': 0, 'max_memory_mb': 15903, 'parallel_experiments': 1}
+{'time_taken_execute': 220.752293751, 'mpi_rank': 4, 'time_taken_parameter_binding': 4.4342e-05, 'num_mpi_processes': 5, 'num_processes_per_experiments': 5, 'omp_enabled': True, 'max_gpu_memory_mb': 0, 'max_memory_mb': 15903, 'parallel_experiments': 1}
+{'time_taken_execute': 220.752550029, 'mpi_rank': 2, 'time_taken_parameter_binding': 4.9177e-05, 'num_mpi_processes': 5, 'num_processes_per_experiments': 5, 'omp_enabled': True, 'max_gpu_memory_mb': 0, 'max_memory_mb': 15903, 'parallel_experiments': 1}
+```
+Same goes for GPU;
+
+```
+mpirun -np 2 -machinefile qiskit-aer-main/demo-files/machinefile.txt python3 demo-gpu.py 
+{'time_taken_execute': 173.50724778, 'mpi_rank': 1, 'time_taken_parameter_binding': 4.708e-05, 'num_mpi_processes': 2, 'num_processes_per_experiments': 2, 'omp_enabled': True, 'max_gpu_memory_mb': 5933, 'max_memory_mb': 15903, 'parallel_experiments': 1}
+{'time_taken_execute': 173.510036782, 'mpi_rank': 0, 'time_taken_parameter_binding': 4.967e-05, 'num_mpi_processes': 2, 'num_processes_per_experiments': 2, 'omp_enabled': True, 'max_gpu_memory_mb': 5933, 'max_memory_mb': 15903, 'parallel_experiments': 1}
+
+```
+
+I am unable to understand this drastic increase in time as both of my nodes are at distance of one hop to eachother and on same LAN. There cannot be any networking lag. 
+Also in all outputs where `np>1`, I found `'parallel_experiments': 1}`. Is this mean that my code is not running in parallel?
+
+ 
+
+### Steps to reproduce the problem
+
+Using mpirun command with multiple nodes
+
+### What is the expected behavior?
+
+Execution time should be significantly lesser when I use two nodes along with their GPUs.
+
+### Suggested solutions
+
+May be I need to change my code to handle parallel execution but I am not sure as all of qiskit examples using gpui and MPI I came across are doing nothing regarding MPI.

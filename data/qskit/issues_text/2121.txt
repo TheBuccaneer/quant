@@ -1,0 +1,45 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.14.1
+- **Python version**: 3.11
+- **Operating system**: Mac
+
+### What is the current behavior?
+
+Can't run extended stabilizer with Estimator, see code:
+
+
+### Steps to reproduce the problem
+```python
+from qiskit_aer.primitives import EstimatorV2 
+qc = QuantumCircuit(2)
+qc.sx(0)
+qc.cx(0,1)
+obs = ['ZI']
+
+options = {
+    "backend_options": {  
+        "method": "extended_stabilizer",
+    }
+}
+estimator = EstimatorV2(options=options)
+print(estimator._backend)
+job = estimator.run([(qc, obs)])
+
+```
+Return
+```python
+AerSimulator('aer_simulator_extended_stabilizer')
+Simulation failed and returned the following error message:
+ERROR:  [Experiment 0] Circuit circuit-394 contains invalid instructions {"instructions": {save_expval}} for "extended_stabilizer" method.Circuit circuit-394 contains invalid parameters  for "extended_stabilizer" method.
+```
+
+### What is the expected behavior?
+Should run extended stabilizer with Estimator.
+
+### Suggested solutions
+NA
+

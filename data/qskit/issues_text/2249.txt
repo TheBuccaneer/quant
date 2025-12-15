@@ -1,0 +1,47 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.15.1
+- **Python version**:
+- **Operating system**:
+
+### What is the current behavior?
+AerEstimatorV2 gives memory error when trying to execute small circuits that have been transpiled against larger backends.  Essentially it is the same issue as #2084 
+
+
+### Steps to reproduce the problem
+Try this circuit and operator transpiled against an Eagle machine
+
+```python
+
+N = 12
+qc = QuantumCircuit(N)
+
+qc.x(range(N))
+qc.h(range(N))
+
+for kk in range(N // 2, 0, -1):
+    qc.ch(kk, kk - 1)
+for kk in range(N // 2, N - 1):
+    qc.ch(kk, kk + 1)
+
+op = SparsePauliOp('Z'*12)
+
+```
+
+I currently get
+
+QiskitError: 'ERROR:  [Experiment 0] Insufficient memory to run circuit circuit-205 using the statevector simulator. Required memory: 18446744073709551615M, max memory: 127903M ,  ERROR: Insufficient memory to run circuit circuit-205 using the statevector simulator. Required memory: 18446744073709551615M, max memory: 127903M'
+
+But the active number of qubits is only 12
+
+### What is the expected behavior?
+
+The simulation should work if the number of active qubits is small enough to fit in memory 
+
+
+### Suggested solutions
+
+

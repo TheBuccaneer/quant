@@ -1,0 +1,24 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.17.1
+- **Python version**: 3.11.9
+- **Operating system**: Linux
+
+### What is the current behavior?
+If qiskit-aer is added in a C++ project as a third party library (as a header-only library, avoiding the wrappers), several "not a member" arise when compiling.
+
+
+### Steps to reproduce the problem
+Just add the src directory to the include path and compile an executable in C++ executing a circuit.
+
+
+### What is the expected behavior?
+A correct simulation process.
+
+
+### Suggested solutions
+Adding `#include "simulators/simulators.hpp"` to the src/simulators/circuit_executor.hpp completely solves the issue and enables the use of qiskit-aer as a third party library in a C++ project.
+

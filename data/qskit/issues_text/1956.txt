@@ -1,0 +1,24 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer 0.13.0**:
+- **Python 3.10.13**:
+- **Ubuntu 22.04.3 LTS**:
+
+### What is the current behavior?
+I am running Aer Sampler with qiskit-aer-gpu (0.13.0, same issue with 0.12.2 but no GPU). The Aer Sampler is used as part of the SamplerQNN (from ML 0.7.0). The circuit consists of RawFeatureVector and RealAmplitudes ansatz. Now regardless of device in use (CPU/GPU) and the method (statevector/tensor_network), the qnn.forward pass results in QiskitError: 'Cannot define a ParameterizedInitialize with unbound parameters' (during the circuit transpilation). Clearly, Aer Sampler does not properly bind the RawFeatureVector parameters (which are generated together with its internal circuit for the specific input data) before transpilation. Note that the reference Sampler from qiskit primitives works properly.
+
+### Steps to reproduce the problem
+As an example, run the autoencoder from tutorial 12:
+https://github.com/qiskit-community/qiskit-machine-learning/blob/stable/0.6/docs/tutorials/12_quantum_autoencoder.ipynb
+
+In cell 7 add a Aer Sampler to SamplerQNN. When run in cell 9, all works fine as this mini circuit has a fixed input and no RawFeatureVector is in use. Now do the same in cell 15, this time when running it with an optimiser in cell 18, the error stops the execution. It seems input has not been properly bound to RawFeatureVector before circuit transpilation. The error can be isolated to a single forward pass.
+
+### What is the expected behavior?
+Execution should be identical to what happens when using the reference Sampler.
+
+### Suggested solutions
+Instantiate RawFeatureVector and bind it with input parameters first - this will generate its structure with its own internal parameters, which can be bound properly. Only then compose it with the ansatz and optimise its parameters, as well as transpiling it, in a forward step. 
+

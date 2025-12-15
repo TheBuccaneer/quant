@@ -1,0 +1,24 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: latest
+- **Python version**:
+- **Operating system**: OSX
+
+### What is the current behavior?
+Trying to run `AerSimulator.from_backend` on a backend with `faulty_qubits` leads to errors.
+
+
+### Steps to reproduce the problem
+
+
+
+### What is the expected behavior?
+It builds a noise model for all qubits not in the `faulty_qubits` list
+
+
+### Suggested solutions
+Ignore qubits that are in the `faulty_qubits` list
+

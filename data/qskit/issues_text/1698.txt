@@ -1,0 +1,24 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:
+- **Python version**:
+- **Operating system**:
+
+### What is the current behavior?
+
+https://github.com/Qiskit/qiskit-terra/issues/9291 was fixed with https://github.com/Qiskit/qiskit-terra/commit/0344a1c94b8eb8206da18cc74d9bdc70ad203c9a (https://github.com/Qiskit/qiskit-terra/pull/9310) which has not been merged into the pypi latest. Therefore, Aer tests encounter the same issues with https://github.com/Qiskit/qiskit-terra/issues/9291 was fixed with https://github.com/Qiskit/qiskit-terra/commit/0344a1c94b8eb8206da18cc74d9bdc70ad203c9a.
+
+### Steps to reproduce the problem
+
+Run tests with python 3.11
+
+### What is the expected behavior?
+
+Do not block other tests with fails of python 3.11.
+
+### Suggested solutions
+
+Change the github workflow configuration.

@@ -1,0 +1,61 @@
+### Informations
+
+- **Qiskit Aer version**: 0.12.0
+- **Python version**: Python 3.9.16
+- **Operating system**: Gentoo Linux (I'm the maintainer of its package)
+
+### What is the current behavior?
+
+Various tests seem to fail with qiskit-aer-0.12.0, while qiskit-0.11.2 passed all its tests at the time of release and still passes them when I check now, which suggests it's not an environment issue.
+
+The failures all look identical:
+```
+______________________________________________________________ TestNoiseModel.test_noise_model_from_lagos_v2 ______________________________________________________________
+'NoneType' object is not iterable
+
+During handling of the above exception, another exception occurred:
+NOTE: Incompatible Exception Representation, displaying natively:
+
+testtools.testresult.real._StringException: Traceback (most recent call last):
+  File "/var/tmp/portage/dev-python/qiskit-aer-0.12.0/work/qiskit-aer-0.12.0/test/terra/noise/test_noise_model.py", line 252, in test_noise_model_from_lagos_v2
+    result = AerSimulator().run(circ, noise_model=noise_model).result()
+  File "/var/tmp/portage/dev-python/qiskit-aer-0.12.0/work/qiskit-aer-0.12.0-python3_9/install/usr/lib/python3.9/site-packages/qiskit_aer/jobs/utils.py", line 41, in _wrapper
+    return func(self, *args, **kwargs)
+  File "/var/tmp/portage/dev-python/qiskit-aer-0.12.0/work/qiskit-aer-0.12.0-python3_9/install/usr/lib/python3.9/site-packages/qiskit_aer/jobs/aerjob.py", line 106, in result
+    return self._future.result(timeout=timeout)
+  File "/usr/lib/python3.9/concurrent/futures/_base.py", line 446, in result
+    return self.__get_result()
+  File "/usr/lib/python3.9/concurrent/futures/_base.py", line 391, in __get_result
+    raise self._exception
+  File "/usr/lib/python3.9/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/var/tmp/portage/dev-python/qiskit-aer-0.12.0/work/qiskit-aer-0.12.0-python3_9/install/usr/lib/python3.9/site-packages/qiskit_aer/backends/aerbackend.py", line 438, in _execute_circuits_job
+    output = self._execute_circuits(aer_circuits, noise_model, config)
+  File "/var/tmp/portage/dev-python/qiskit-aer-0.12.0/work/qiskit-aer-0.12.0-python3_9/install/usr/lib/python3.9/site-packages/qiskit_aer/backends/aer_simulator.py", line 736, in _execute_circuits
+    ret = cpp_execute_circuits(self._controller, aer_circuits, noise_model, config)
+  File "/var/tmp/portage/dev-python/qiskit-aer-0.12.0/work/qiskit-aer-0.12.0-python3_9/install/usr/lib/python3.9/site-packages/qiskit_aer/backends/backend_utils.py", line 137, in cpp_execute_circuits
+    return controller.execute(aer_circuits, noise_model, config)
+ValueError: Invalid noise_params JSON: not an object.
+```
+
+The full log is available here:  [build.log.gz](https://github.com/Qiskit/qiskit-aer/files/10939181/build.log.gz)
+
+Let me know if I can give more information.
+
+### Steps to reproduce the problem
+
+1. Build qiskit-aer-0.12.0
+2. Try to run tests with `pytest`
+3. Observe long list of new failures
+
+I can try cook up a Gentoo Dockerfile to reproduce if needed.
+
+### What is the expected behavior?
+
+All tests pass.
+
+
+### Suggested solutions
+
+N/A
+

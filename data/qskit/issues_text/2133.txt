@@ -1,0 +1,53 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.14.1
+- **Python version**: 3.12.3
+- **Operating system**: Arch Linux
+
+### What is the current behavior?
+I am unable to run density matrix simulation on 15+ qubits
+
+
+
+### Steps to reproduce the problem
+```
+import itertools
+import cupy as cp
+import numpy as np
+import qiskit
+from qiskit.circuit.random import random_circuit
+from qiskit_aer import AerSimulator
+from cuquantum import contract
+from cuquantum import CircuitToEinsum
+import os
+import time
+import sys
+
+simulator = AerSimulator(method='density_matrix', device='GPU', cuStateVec_enable=True)
+# or even on CPU
+# simulator = AerSimulator(method='density_matrix', device='CPU')
+
+qubit_count = 15
+depth = 120
+
+circuit = random_circuit(qubit_count, depth)
+
+start_time = time.time()
+circ = qiskit.transpile(circuit, simulator)
+result = simulator.run(circ).result()
+circ.save_density_matrix()
+computation_time = time.time() - start_time
+
+
+```
+
+
+### What is the expected behavior?
+Running the computation
+
+
+### Suggested solutions
+

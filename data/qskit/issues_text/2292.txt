@@ -1,0 +1,42 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: Latest development version
+- **Python version**: Not relevant as qiskit aer was used from C++ when noticing it
+- **Operating system**: Windows 11
+
+### What is the current behavior?
+
+I was testing the MPS simulator with some randomly generated circuits... with some I've got crashes.
+This one I noticed after fixing https://github.com/Qiskit/qiskit-aer/issues/2291 
+
+The call chain was: `AerState::apply_measure` -> `AerState::flush_ops` -> `Base::apply_ops` -> `MatrixProductState::State::apply_op` -> `MPS::apply_diagonal_matrix` -> `MPS::apply_matrix` -> `MPS::apply_multi_qubit_gate`.
+
+It crashed on this line: https://github.com/Qiskit/qiskit-aer/blob/582407a3f8ef5070c850fb4c417c53c1db1f5998/src/simulators/matrix_product_state/matrix_product_state_internal.cpp#L798
+
+`is_diagonal` was `true` (as it should be by looking at the call chain), `mat` had 1 row and 8 columns (being a diagonal matrix, only the diagonal is given, so it's actually a vector)... but at that line it's used with `mat(row, col)` which is generating the crash.
+
+### Steps to reproduce the problem
+
+Again, this might be quite tough to reproduce, I was generating some random circuits with more than 100 ops to test some things and maybe one in 100 circuits crashed.
+
+### What is the expected behavior?
+
+No crash.
+
+### Suggested solutions
+
+The problem lines should probably be replaced by something like:
+```
+      if (row == col)
+        new_mat(new_vec[row], new_vec[row]) = is_diagonal ? mat(0, row) : mat(row, row);
+      else
+        new_mat(new_vec[row], new_vec[col]) = is_diagonal ? 0. : mat(row, col);
+```
+
+... or maybe a vector `new_mat` should be constructed if `is_diagonal` is `true`
+
+
+

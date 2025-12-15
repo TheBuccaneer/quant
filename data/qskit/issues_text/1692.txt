@@ -1,0 +1,43 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.11.2
+- **Python version**: 3.8.13
+- **Operating system**: macOS 13.1
+
+### What is the current behavior?
+
+Importing `qiskit_aer` raises the following import warnings:
+
+```
+/.../python3.8/site-packages/qiskit_aer/__init__.py:72: ImportWarning: __package__ != __spec__.parent
+  from . import noise
+/.../python3.8/site-packages/qiskit_aer/__init__.py:73: ImportWarning: __package__ != __spec__.parent
+  from . import utils
+/.../python3.8/site-packages/qiskit_aer/__init__.py:74: ImportWarning: __package__ != __spec__.parent
+  from .version import __version__
+```
+
+The are multiple imports within `qiskit_aer/__init__.py` that work fine before these lines. However, running the line
+
+https://github.com/Qiskit/qiskit-aer/blob/6b0e9996e907b48a3788b15ac2010aa8e1f32ff7/qiskit_aer/__init__.py#L71
+
+changes the values of `__spec__` (in particular, the name changes from `"qiskit_aer"` to `"qiskit.providers.aer"`). I couldn't find a specific import from within `quantum_info` that causes this change
+
+### Steps to reproduce the problem
+
+Running the following command causes the above warnings
+
+```bash
+python -W always -c "import qiskit_aer"
+```
+
+### What is the expected behavior?
+
+No warning should be raised. In particular, the value of `__spec__` should probably not be changed during the run.
+
+### Suggested solutions
+
+

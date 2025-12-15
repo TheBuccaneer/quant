@@ -1,0 +1,40 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.12.0
+- **Python version**: 3.10.9
+- **Operating system**: Windows 11 Pro
+
+### What is the current behavior?
+
+Using the snapshot instruction on the statevector simulator causes an error.
+
+The error is the following:
+
+`AerError: 'unknown instruction: snapshot'`
+
+### Steps to reproduce the problem
+
+```
+from qiskit import *
+
+qc = QuantumCircuit(2)
+qc.h(0)
+qc.snapshot('1')             # add a snapshot with the key '1'
+qc.h(0)                      # add more gates after the snapshot
+
+backend = Aer.get_backend('statevector_simulator')
+result = execute(qc, backend).result()
+snapshots = `result.data()['snapshots']['statevector']
+```
+
+
+### What is the expected behavior?
+
+The function should return a snapshot of the qubit state
+
+### Suggested solutions
+
+

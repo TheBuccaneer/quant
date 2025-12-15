@@ -1,0 +1,40 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.12.0
+- **Python version**:
+- **Operating system**:
+
+### What is the current behavior?
+
+Qobj is being deprecated so it's probably not worth fixing. But if I `assemble()` a circuit with an Aer backend, then call its `backend.run()`, the job would fail with 
+
+```
+_run_qobj() got multiple values for argument 'parameter_binds'
+```
+
+because `assemble` inserts `parameter_binds` into `circuits.config`.
+
+### Steps to reproduce the problem
+
+```
+from qiskit import transpile, assemble
+from qiskit.test.reference_circuits import ReferenceCircuits
+from qiskit_aer import Aer
+
+sim = Aer.get_backend("aer_simulator")
+bell = ReferenceCircuits.bell()
+qobj = assemble(transpile(bell, sim), backend=sim)
+sim.run(qobj)
+```
+
+
+### What is the expected behavior?
+
+I can still run a qobj with Aer.
+
+### Suggested solutions
+
+

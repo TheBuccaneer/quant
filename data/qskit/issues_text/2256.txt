@@ -1,0 +1,70 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:0.16.0
+- **Python version**:3.9.5
+- **Operating system**:Ubuntu 20.04
+
+### What is the current behavior?
+
+I have two compute nodes, each with 14GB of memory, and I have manually compiled the MPI version of Qiskit-Aer on both nodes. Now, I need to simulate a 30-qubit GHZ circuit, which requires around 16GB of RAM. In theory, my available RAM is 2 * 14GB = 28GB, which should be sufficient to run a 30-qubit circuit. My hostfile is set to node1:1, node2:1, and in the code, blocking_qubits = 27. I run the command `mpirun -np 2 -machinefile hostfile python new_qiskit.py`, but it throws an error indicating insufficient memory. When I checked with htop, I noticed that the memory usage on each node exceeds 14GB during computation.
+Here is Error message:
+```
+Abort(940225294) on node 1 (rank 1 in comm 0): Fatal error in PMPI_Wait: Unknown error class, error stack:
+PMPI_Wait(206): MPI_Wait(request=0x7f127004bfc0, status=0x7f1278755050) failed
+MPIR_Wait(106): 
+(unknown)(): Unknown error class
+
+```
+
+ Here is my code
+```
+
+from qiskit import QuantumCircuit
+#from qiskit.providers.basic_provider import BasicSimulator
+from qiskit.compiler import transpile, assemble
+from qiskit_aer import AerSimulator
+
+def create_ghz_circuit(n_qubits):
+    circuit = QuantumCircuit(n_qubits)
+    circuit.h(0)
+    for qubit in range(n_qubits - 1):
+        circuit.cx(qubit, qubit + 1)
+    return circuit
+
+shots = 1000
+depth=10
+qubits = 30
+block_bits = 27
+#backend = BasicSimulator()
+backend = AerSimulator(method="statevector")
+
+circuit = transpile(create_ghz_circuit(qubits),
+                    optimization_level=0)
+circuit.measure_all()
+
+#result = backend.run(circuit, shots=shots, seed_simulator=10).result()
+result = backend.run(circuit,shots=shots,seed_simulator=12345,blocking_enable=True,blocking_qubits=block_bits).result()
+print(result)
+
+adict = result.to_dict()
+meta = adict['metadata']
+print("meta: ", meta)
+myrank = meta['mpi_rank']
+print("myrank: ",myrank)
+
+```
+
+### Steps to reproduce the problem
+
+Running code with  `mpirun -np 2 -machinefile hostfile python new_qiskit.py`
+
+### What is the expected behavior?
+He should be up and running
+
+
+### Suggested solutions
+
+

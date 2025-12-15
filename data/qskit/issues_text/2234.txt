@@ -1,0 +1,43 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:
+
+Latest from the main branch.
+
+- **Python version**:
+
+Irrelevant as the call is from c++ code.
+
+- **Operating system**:
+
+Windows 11
+
+### What is the current behavior?
+
+Calling `AerState::probabilities()` for a MPS simulator crashes. Might crash for other simulators, too, but I didn't check.
+
+The reason is that `op.qubits` is empty.
+The call goes through (skipping here some intermediate calls) `MPS::get_probabilities_vector_internal` -> `MPS::diagonal_of_density_matrix` -> `MPS::centralize_qubits` -> `MPS::find_centralized_indices` with no qubits and it crashes because the `for (uint_t index = 0; index < num_qubits - 1; index++)` has an unsigned int index and num_qubits is also unsigned int so num_qubits - 1 is actually not negative, but a big number.
+
+### Steps to reproduce the problem
+
+As described above, just call `AerState::probabilities()` after configuring and initializing a MPS simulator.
+
+### What is the expected behavior?
+
+Not crashing and working as expected.
+
+### Suggested solutions
+
+Probably the `MPS::find_centralized_indices` could check and avoid such a case with empty qubits, as for the correct functionality, one way would be adding something like
+
+```
+  for (uint_t i = 0; i < num_of_qubits_; ++i)
+    op.qubits.push_back(i);
+```
+
+in `AerState::probabilities()`.
+

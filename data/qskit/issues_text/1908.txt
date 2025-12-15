@@ -1,0 +1,118 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: tip of the trunk
+- **Python version**: 3.9
+- **Operating system**: Linux x86_64
+
+### What is the current behavior?
+Segfault happens randomly during some of the tests. Tested on `test.terra.states.test_aer_state.TestAerState.test_appply_diagonal`. The segfault comes from a load intrinsic in `qv_avx2.cpp`:
+```
+    for (int64_t k = 0; k < END; k += 1) {
+      const auto base = k << (batch + 1);
+      const auto until = base + (1UL << (batch + 1));
+      for (auto i = base; i < until; i += 2) {
+        auto tgt_qv_data =
+            _mm256_load(reinterpret_cast<double *>(&(qv_data[i])));
+        auto input_data = _load_diagonal_input(input_vec, double_tmp, i, qregs,
+                                               qregs_size, q0_mask);
+        _mm_complex_multiply<double>(tgt_qv_data, input_data);
+        _mm256_store(reinterpret_cast<double *>(&(qv_data[i])), tgt_qv_data);
+      }
+    }
+```
+The issue, I think, is that in the faulty instance `&(qv_data[0])` is not 32-byte aligned. Depending on the alignment the tests succeeds or fails. I see that in:
+```
+template <typename data_t>
+void QubitVector<data_t>::allocate_mem(size_t data_size) {
+  // Free any currently assigned memory
+  free_mem();
+  // Allocate memory for new vector
+  if (data_ == nullptr) {
+#if !defined(_WIN64) && !defined(_WIN32)
+    void *data = nullptr;
+    posix_memalign(&data, 64, sizeof(std::complex<data_t>) * data_size);
+    data_ = reinterpret_cast<std::complex<data_t> *>(data);
+#else
+    data_ = reinterpret_cast<std::complex<data_t> *>(
+        malloc(sizeof(std::complex<data_t>) * data_size));
+#endif
+  }
+}
+```
+there is an effort to force the main allocator do be 64-byte aligned being std::complex only 8-byte aligned, but in this instance the `data_` array might be initialized from other buffer and not allocated. I don't have a good understanding of the tests to track the origin well. This is the faulty instruction and backtrace:
+```
+(gdb) frame                                                                                                                                                                                         
+#0  0x00007fffdec84104 in (anonymous namespace)::_mm256_load (d=0x190d5d0) at /home/sfantao/lumi-builds/qiskit-aer/qiskit-aer/src/simulators/statevector/qv_avx2.cpp:244     
+244     static auto _mm256_load(double const *d) { return _mm256_load_pd(d); }                                                                                                                      
+(gdb) p d                                                                                         
+$27 = (const double *) 0x190d5d0                                                                                                                                                                    
+(gdb) bt                                                                                          
+#0  0x00007fffdec84104 in (anonymous namespace)::_mm256_load (d=0x190d5d0) at /home/sfantao/lumi-builds/qiskit-aer/qiskit-aer/src/simulators/statevector/qv_avx2.cpp:244
+#1  0x00007fffdeca0c9d in .omp_outlined._debug__.75(const size_t &, const uint64_t *&, const uint64_t &, std::complex<double> *&, const std::complex<double> * const&) const (
+    .global_tid.=0x7fffffff54fc, .bound_tid.=0x7fffffff54f8, qregs_size=@0x7fffffff5520: 1, qregs=@0x7fffffff5528: 0x190d800, data_size=@0x7fffffff5530: 32, qv_data=@0x7fffffff5508: 0x190d5d0, 
+    input_vec=@0x7fffffff5500: 0x190dd20) at /home/sfantao/lumi-builds/qiskit-aer/qiskit-aer/src/simulators/statevector/qv_avx2.cpp:1152
+#2  0x00007fffdeca1029 in .omp_outlined..76(void) const (.global_tid.=0x7fffffff54fc, .bound_tid.=0x7fffffff54f8, qregs_size=@0x7fffffff5520: 1, qregs=@0x7fffffff5528: 0x190d800, 
+    data_size=@0x7fffffff5530: 32, qv_data=@0x7fffffff5508: 0x190d5d0, input_vec=@0x7fffffff5500: 0x190dd20)
+    at /home/sfantao/lumi-builds/qiskit-aer/qiskit-aer/src/simulators/statevector/qv_avx2.cpp:1122
+#3  0x00007fffdeca0909 in AER::QV::apply_diagonal_matrix_avx<double> (qv_data_=0x190d5d0, data_size=32, qregs=0x190d800, qregs_size=1, vec_=0x190dd20, omp_threads=1)
+    at /home/sfantao/lumi-builds/qiskit-aer/qiskit-aer/src/simulators/statevector/qv_avx2.cpp:1122
+#4  0x00007fffde81b0a7 in AER::QV::TransformerAVX2<std::complex<double>*, double>::apply_diagonal_matrix (this=0x1874de0, data=@0xb1bc48: 0x190d5d0, data_size=32, threads=1, qubits=..., diag=...)
+    at /home/sfantao/lumi-builds/qiskit-aer/qiskit-aer/src/simulators/statevector/transformer_avx2.hpp:81
+#5  0x00007fffde82efb1 in AER::QV::QubitVector<double>::apply_diagonal_matrix (this=0xb1bc28, qubits=..., diag=...)
+    at /home/sfantao/lumi-builds/qiskit-aer/qiskit-aer/src/simulators/statevector/qubitvector.hpp:1330
+#6  0x00007fffde8c3e1f in AER::Statevector::State<AER::QV::QubitVector<double> >::apply_diagonal_matrix (this=0xb1bb30, qubits=..., diag=...)
+    at /home/sfantao/lumi-builds/qiskit-aer/qiskit-aer/src/simulators/statevector/statevector_state.hpp:918
+#7  0x00007fffde8c165d in AER::Statevector::State<AER::QV::QubitVector<double> >::apply_op (this=0xb1bb30, op=..., result=..., rng=..., final_op=false)
+    at /home/sfantao/lumi-builds/qiskit-aer/qiskit-aer/src/simulators/statevector/statevector_state.hpp:529
+#8  0x00007fffde607dce in AER::QuantumState::Base::apply_ops (this=0xb1bb30, first=..., last=..., result=..., rng=..., final_ops=false)
+    at /home/sfantao/lumi-builds/qiskit-aer/qiskit-aer/src/simulators/state.hpp:318
+#9  0x00007fffde613f15 in AER::AerState::flush_ops (this=0x190e620) at /home/sfantao/lumi-builds/qiskit-aer/qiskit-aer/src/controllers/state_controller.hpp:1518
+#10 0x00007fffde60ffa4 in AER::AerState::move_to_vector (this=0x190e620) at /home/sfantao/lumi-builds/qiskit-aer/qiskit-aer/src/controllers/state_controller.hpp:875
+#11 0x00007fffdec42257 in bind_aer_state<pybind11::module_>(pybind11::module_)::{lambda(AER::AerState&)#2}::operator()(AER::AerState&) const (this=0x148cbb8, state=...)
+    at /home/sfantao/lumi-builds/qiskit-aer/qiskit-aer/qiskit_aer/backends/wrappers/aer_state_binding.hpp:104
+#12 0x00007fffdec4220c in pybind11::detail::argument_loader<AER::AerState&>::call_impl<pybind11::array_t<std::complex<double>, 16>, bind_aer_state<pybind11::module_>(pybind11::module_)::{lambda(AE
+R::AerState&)#2}&, 0ul, pybind11::detail::void_type>(bind_aer_state<pybind11::module_>(pybind11::module_)::{lambda(AER::AerState&)#2}&, std::integer_sequence<unsigned long, 0ul>, pybind11::detail:
+:void_type&&) && (this=0x7fffffff6f50, f=...) at /home/sfantao/lumi-builds/qiskit-aer/miniconda3/envs/qiskit-aer/lib/python3.9/site-packages/pybind11/include/pybind11/cast.h:1443
+#13 0x00007fffdec421ac in pybind11::detail::argument_loader<AER::AerState&>::call<pybind11::array_t<std::complex<double>, 16>, pybind11::detail::void_type, bind_aer_state<pybind11::module_>(pybind
+11::module_)::{lambda(AER::AerState&)#2}&>(bind_aer_state<pybind11::module_>(pybind11::module_)::{lambda(AER::AerState&)#2}&) && (this=0x7fffffff6f50, f=...)
+    at /home/sfantao/lumi-builds/qiskit-aer/miniconda3/envs/qiskit-aer/lib/python3.9/site-packages/pybind11/include/pybind11/cast.h:1411
+#14 0x00007fffdec420bc in pybind11::cpp_function::initialize<bind_aer_state<pybind11::module_>(pybind11::module_)::{lambda(AER::AerState&)#2}, pybind11::array_t<std::complex<double>, 16>, AER::Aer
+State&, pybind11::name, pybind11::is_method, pybind11::sibling>(bind_aer_state<pybind11::module_>(pybind11::module_)::{lambda(AER::AerState&)#2}&&, pybind11::array_t<std::complex<double>, 16> (*)(
+AER::AerState&), pybind11::name const&, pybind11::is_method const&, pybind11::sibling const&)::{lambda(pybind11::detail::function_call&)#1}::operator()(pybind11::detail::function_call&) const (
+    this=0x7fffffff6f98, call=...) at /home/sfantao/lumi-builds/qiskit-aer/miniconda3/envs/qiskit-aer/lib/python3.9/site-packages/pybind11/include/pybind11/pybind11.h:248
+#15 0x00007fffdec42019 in pybind11::cpp_function::initialize<bind_aer_state<pybind11::module_>(pybind11::module_)::{lambda(AER::AerState&)#2}, pybind11::array_t<std::complex<double>, 16>, AER::Aer
+State&, pybind11::name, pybind11::is_method, pybind11::sibling>(bind_aer_state<pybind11::module_>(pybind11::module_)::{lambda(AER::AerState&)#2}&&, pybind11::array_t<std::complex<double>, 16> (*)(
+AER::AerState&), pybind11::name const&, pybind11::is_method const&, pybind11::sibling const&)::{lambda(pybind11::detail::function_call&)#1}::__invoke(pybind11::detail::function_call&) (call=...)
+    at /home/sfantao/lumi-builds/qiskit-aer/miniconda3/envs/qiskit-aer/lib/python3.9/site-packages/pybind11/include/pybind11/pybind11.h:223
+#16 0x00007fffde71e1fc in pybind11::cpp_function::dispatcher (self=0x7fffded209f0, args_in=0x7fffe9e3f040, kwargs_in=0x0)
+    at /home/sfantao/lumi-builds/qiskit-aer/miniconda3/envs/qiskit-aer/lib/python3.9/site-packages/pybind11/include/pybind11/pybind11.h:939
+#17 0x00000000005072d7 in cfunction_call (func=0x7fffded21bd0, args=<optimized out>, kwargs=<optimized out>) at /usr/local/src/conda/python-3.9.17/Objects/methodobject.c:543
+#18 0x00000000004f06ac in _PyObject_MakeTpCall (tstate=tstate@entry=0x771220, callable=callable@entry=0x7fffded21bd0, args=args@entry=0x7fffd0bcf8c0, nargs=<optimized out>, 
+    keywords=keywords@entry=0x0) at /usr/local/src/conda/python-3.9.17/Objects/call.c:191
+#19 0x00000000005051f0 in _PyObject_VectorcallTstate (kwnames=0x0, nargsf=<optimized out>, args=0x7fffd0bcf8c0, callable=0x7fffded21bd0, tstate=0x771220)
+    at /usr/local/src/conda/python-3.9.17/Include/cpython/abstract.h:116
+...
+```
+
+### Steps to reproduce the problem
+Run the test `test.terra.states.test_aer_state.TestAerState.test_appply_diagonal` after building Qiskit-Aer with clang 16. 
+
+
+### What is the expected behavior?
+Test completes successfully
+
+
+### Suggested solutions
+Change:
+```
+template <>
+Avx apply_diagonal_matrix_avx<double>(
+    double *qv_data_, const uint64_t data_size, const uint64_t *qregs,
+    const size_t qregs_size, const double *vec_, const size_t omp_threads)
+```
+to check alignment and runtime and select unvectorized copy if not aligned. Or, if alignement is to be assumed, track down the initialization of ` BaseState::qreg_` to understand what was the original allocator and change it to one that give alignement guarantees.
+
+

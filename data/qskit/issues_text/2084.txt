@@ -1,0 +1,40 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: latest
+- **Python version**:
+- **Operating system**:
+
+### What is the current behavior?
+
+For many years now, the Aer simulator has truncated a circuit to only the active qubits, allowing for simulating transpiled circuits against device noise models; even when the full device number of qubits is larger than Aer supports (but the circuits active width is small enough for Aer to handle).  However, the Aer `Sampler` does not perform the same truncation.  E.g. using 5 qubits, and transpiling to an Eagle, the old Aer simulator will still truncate and run the circuit.
+
+```python
+
+sim = AerSimulator()
+job1 = sim.run(trans_qc, shots=int(1e4), dynamic=True)
+```
+
+works fine.  But doing the same thing via the Aer sampler raises:
+
+```python
+from qiskit_aer.primitives import Sampler as AerSampler
+sampler = AerSampler()
+job1 = sampler.run(trans_qc, shots=int(1e4), dynamic=True)
+```
+
+CircuitTooWideForTarget: 'Number of qubits (127) in circuit-8195 is greater than maximum (30) in the coupling_map'
+
+### Steps to reproduce the problem
+
+Run a transpiled circuit that is smaller than 30Q in active qubits, but transpiled against a 127Q system
+
+### What is the expected behavior?
+The sampler should truncate to active qubits only, just like the simulator does.
+
+
+### Suggested solutions
+
+

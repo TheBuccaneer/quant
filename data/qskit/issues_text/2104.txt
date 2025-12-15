@@ -1,0 +1,48 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.14.01
+- **Python version**: 3.12
+- **Operating system**:  OSX 14.4.1
+
+### What is the current behavior?
+If you measure, say, 127 qubits, only the results of 64 are returned.
+
+
+### Steps to reproduce the problem
+```
+import qiskit
+import qiskit_aer as aer
+c = qiskit.QuantumCircuit(127,127)
+for i in range(127):
+    c.x(i)
+c.measure(range(127),range(127))
+simulator = aer.AerSimulator(method="stabilizer")
+print(simulator.num_qubits)
+
+r = simulator.run(c,shots=2000).result()
+print(r.get_counts(c))
+```
+
+Gives output:
+
+```
+10000
+{'0000000000000000000000000000000000000000000000000000000000000001111111111111111111111111111111111111111111111111111111111111111': 2000}
+```
+
+### What is the expected behavior?
+
+Should give output:
+
+```
+10000
+{'1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111': 2000}
+```
+
+
+### Suggested solutions
+
+Almost certainly some precision problem.

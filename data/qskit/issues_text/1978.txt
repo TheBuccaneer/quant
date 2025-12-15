@@ -1,0 +1,115 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: master branch
+- **Python version**: 3.12.0
+- **Operating system**: Ubuntu 22.04.3
+
+### What is the current behavior?
+
+I am just trying to install the library from the master branch in order to contribute with a PR, but this happens:
+
+```output
+...
+  error: subprocess-exited-with-error
+
+  × python setup.py egg_info did not run successfully.
+  │ exit code: 1
+  ╰─> [24 lines of output]
+      /home/gianluca/anaconda3/envs/QiskitDevEnv/lib/python3.12/site-packages/setuptools/__init__.py:84: _DeprecatedInstaller: setuptools.installer and fetch_build_eggs are deprecated.
+      !!
+
+              ********************************************************************************
+              Requirements should be satisfied by a PEP 517 installer.
+              If you are using pip, you can try `pip install --use-pep517`.
+              ********************************************************************************
+
+      !!
+        dist.fetch_build_eggs(dist.setup_requires)
+      error: Multiple top-level packages discovered in a flat-layout: ['cmake', 'symengine'].
+
+      To avoid accidental inclusion of unwanted files or directories,
+      setuptools will not proceed with this build.
+
+      If you are trying to create a single distribution with multiple packages
+      on purpose, you should not rely on automatic discovery.
+      Instead, consider the following options:
+
+      1. set up custom discovery (`find` directive with `include` or `exclude`)
+      2. use a `src-layout`
+      3. explicitly set `py_modules` or `packages` with a list of names
+
+      To find more information, look for "package discovery" on setuptools docs.
+      [end of output]
+
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+error: metadata-generation-failed
+
+× Encountered error while generating package metadata.
+╰─> See above for output.
+
+note: This is an issue with the package mentioned above, not pip.
+hint: See above for details.
+...
+```
+
+### Steps to reproduce the problem
+
+I am simply trying to build `qiskit-aer` from source following [this](https://github.com/Qiskit/qiskit-aer/blob/stable/0.13/CONTRIBUTING.md#install-from-source) guide. The step which fails is:
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+and gives the output provided below. I also tried re-installing with:
+
+```bash
+ pip install --use-pep517 -r requirements-dev.txt
+```
+
+But this happens:
+
+```
+...
+  error: subprocess-exited-with-error
+
+  × Preparing metadata (pyproject.toml) did not run successfully.
+  │ exit code: 1
+  ╰─> [14 lines of output]
+      error: Multiple top-level packages discovered in a flat-layout: ['cmake', 'symengine'].
+
+      To avoid accidental inclusion of unwanted files or directories,
+      setuptools will not proceed with this build.
+
+      If you are trying to create a single distribution with multiple packages
+      on purpose, you should not rely on automatic discovery.
+      Instead, consider the following options:
+
+      1. set up custom discovery (`find` directive with `include` or `exclude`)
+      2. use a `src-layout`
+      3. explicitly set `py_modules` or `packages` with a list of names
+
+      To find more information, look for "package discovery" on setuptools docs.
+      [end of output]
+
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+error: metadata-generation-failed
+
+× Encountered error while generating package metadata.
+╰─> See above for output.
+
+note: This is an issue with the package mentioned above, not pip.
+hint: See above for details.
+...
+```
+
+### What is the expected behavior?
+
+I am expecting to have a clean installation of the developer dependencies.
+
+### Suggested solutions
+
+Sincerly have no idea, I tried everything but the problem seems related to the code probably.
+

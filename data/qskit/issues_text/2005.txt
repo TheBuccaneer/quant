@@ -1,0 +1,61 @@
+### Informations
+
+- **Qiskit Aer version**:``` {'qiskit-terra': '0.21.2', 'qiskit-aer': '0.11.0', 'qiskit-ignis': '0.6.0', 'qiskit-ibmq-provider': '0.19.2', 'qiskit': '0.38.0', 'qiskit-nature': '0.4.5', 'qiskit-finance': None, 'qiskit-optimization': None, 'qiskit-machine-learning': None}```
+- **Python version**: Python 3.8.8
+- **Operating system**: Linux
+
+### What is the current behavior?
+
+I have the following code:
+
+```
+from qiskit import QuantumCircuit, transpile
+from qiskit_aer import AerSimulator
+from qiskit.providers.fake_provider import FakeMumbai
+import resource
+
+    
+backend = FakeMumbai()
+sim = AerSimulator.from_backend(backend)
+shot = 1000
+num_samples = 1000
+for s in range(num_samples):
+    qc = QuantumCircuit(4)
+    qc.measure_all()
+    transpiled_circuit = transpile(qc, sim)
+    sim.run(transpiled_circuit,shots=shot)
+    print(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+```
+where the `resource` part is only to check the memory usage.
+As the loop goes on, the memory usage increases. Why?
+
+For this kind of circuit we still talk about few bytes, but I have this problem also for larger circuits, and, in that context, the script terminates.
+
+### Steps to reproduce the problem
+```
+from qiskit import QuantumCircuit, transpile
+from qiskit_aer import AerSimulator
+from qiskit.providers.fake_provider import FakeMumbai
+import resource
+
+    
+backend = FakeMumbai()
+sim = AerSimulator.from_backend(backend)
+shot = 1000
+num_samples = 1000
+for s in range(num_samples):
+    qc = QuantumCircuit(4)
+    qc.measure_all()
+    transpiled_circuit = transpile(qc, sim)
+    sim.run(transpiled_circuit,shots=shot)
+    print(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+```
+
+
+### What is the expected behavior?
+As far as I know, the memory usage should remain constant
+
+
+### Suggested solutions
+
+

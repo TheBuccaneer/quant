@@ -1,0 +1,83 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:'0.14.0.1
+- **Python version**: 3.12.2
+- **Operating system**: Ubuntu
+
+### What is the current behavior?
+
+I try to execute a quantum circuit with cry gate and is an error  
+
+`AerError: 'unknown instruction: cry'
+`
+
+### Steps to reproduce the problem
+
+```
+import qiskit
+from qiskit_aer import AerSimulator
+
+# Generate 3-qubit GHZ state
+circ = qiskit.QuantumCircuit(3)
+circ.h(0)
+circ.cry(1.5,0, 1)
+circ.cx(1, 2)
+circ.measure_all()
+
+# Construct an ideal simulator
+aersim = AerSimulator()
+
+# Perform an ideal simulation
+result_ideal = aersim.run(circ).result()
+counts_ideal = result_ideal.get_counts(0)
+print('Counts(ideal):', counts_ideal)
+
+```
+
+### What is the expected behavior?
+
+Counts(ideal): {'111': 269, '000': 492, '001': 263}
+
+### Suggested solutions
+
+I checked the code  and in the file https://github.com/Qiskit/qiskit-aer/blob/main/qiskit_aer/backends/aer_compiler.py
+
+consider the following gates:
+
+if name in {
+        "ccx", "ccz", "cp", "cswap", "csx", "cx", "cy", "cz", "delay", "ecr", "h",
+        "id", "mcp", "mcphase", "mcr", "mcrx", "mcry", "mcrz", "mcswap", "mcsx",
+        "mcu", "mcu1", "mcu2", "mcu3", "mcx", "mcx_gray", "mcy", "mcz", "p", "r",
+        "rx", "rxx", "ry", "ryy", "rz", "rzx", "rzz", "s", "sdg", "swap", "sx", "sxdg",
+        "t", "tdg", "u", "x", "y", "z", "u1", "u2", "u3", "cu", "cu1", "cu2", "cu3",
+    }:
+
+works if a use mcry, but this is not part of the qiskit documentation https://docs.quantum.ibm.com/api/qiskit/circuit_library
+
+just add cry,crz,crx in the name list, 
+
+
+the code works with mcry but is not the same format, I need to add a list in the parameter of qubit control that in my project will take more time to rewrite everything.
+
+import qiskit
+from qiskit_aer import AerSimulator
+
+# Generate 3-qubit GHZ state
+circ = qiskit.QuantumCircuit(3)
+circ.h(0)
+circ.mcry(1.5,[0], 1)
+circ.cx(1, 2)
+circ.measure_all()
+
+# Construct an ideal simulator
+aersim = AerSimulator()
+
+# Perform an ideal simulation
+result_ideal = aersim.run(circ).result()
+counts_ideal = result_ideal.get_counts(0)
+print('Counts(ideal):', counts_ideal)
+
+

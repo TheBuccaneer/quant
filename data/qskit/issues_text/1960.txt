@@ -1,0 +1,71 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: e434c59d4a246ad
+- **Python version**: 3.10.13
+- **Operating system**: Ubuntu 22.04.3 LTS
+
+### What is the current behavior?
+
+
+
+### Steps to reproduce the problem
+```python
+from qiskit import transpile
+from qiskit.circuit import QuantumCircuit, QuantumRegister, ClassicalRegister
+from qiskit_aer import AerSimulator
+
+qreg = QuantumRegister(3)
+creg = ClassicalRegister(3)
+qc = QuantumCircuit(qreg, creg)
+qc.h([0, 1, 2])
+qc.measure([0, 1, 2], [0, 1, 2])
+ 
+with qc.switch(creg) as case:
+    with case(0):
+        qc.x(0)
+    with case(1, 2):
+        qc.z(1)
+    with case(case.DEFAULT):
+        qc.cx(0, 1)
+
+sim = AerSimulator()
+transpiled = transpile(qc, sim)
+```
+```
+TranspilerError: "The control-flow construct 'switch_case' is not supported by the backend."
+```
+
+
+### What is the expected behavior?
+Should successfully transpile
+
+
+### Suggested solutions
+Interestingly, the circuit does run without transpiling. For example, this works:
+```python
+from qiskit import transpile
+from qiskit.circuit import QuantumCircuit, QuantumRegister, ClassicalRegister
+from qiskit_aer import AerSimulator
+
+qreg = QuantumRegister(3)
+creg = ClassicalRegister(3)
+qc = QuantumCircuit(qreg, creg)
+qc.h([0, 1, 2])
+qc.measure([0, 1, 2], [0, 1, 2])
+ 
+with qc.switch(creg) as case:
+    with case(0):
+        qc.x(0)
+    with case(1, 2):
+        qc.z(1)
+    with case(case.DEFAULT):
+        qc.cx(0, 1)
+
+sim = AerSimulator()
+job = sim.run(qc)
+counts = job.result().get_counts()
+```
+

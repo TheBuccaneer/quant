@@ -1,0 +1,106 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.17.1
+- **Python version**: 3.10.0
+- **Operating system**: MacOS (Tahoe)
+
+### What is the current behavior?
+
+- tests with `matrix_product_state` simulator fails in newer Qiskit (v2.0.2), although the same tests with Qiskit v1.4.2 succeeds.
+
+
+#### 1. with qiksit v2.0.2
+
+```
+
+7 failed, 5 passed, 12 skipped,
+
+```
+
+
+#### 2. with qiskit v1.4.2
+
+```
+
+========================================= 12 passed, 12 skipped,
+
+```
+
+### Steps to reproduce the problem
+- use some complex quantum circuit(This is an actual circuit which is tested as valid with both `statevector` and `matrix_product_state`)
+   - Example test code (using pytest) is below for the checking the results of Quantum Arithmetic Circuits behavior.(details are omitted)
+
+```
+from qiskit_aer import AerSimulator
+
+simulator = AerSimulator(
+    method="matrix_product_state",
+    matrix_product_state_max_bond_dimension=1, 
+	    // tried to change this value to 10, 20, but also fails with same errors.
+)
+
+
+@pytest.mark.parametrize("x", [0, 1, 2, 3, 4, 5, 6, 7])
+@pytest.mark.parametrize("y", [0, 1, 2, 3, 4, 5, 6, 7])
+def test__Operation_3_qubits(p: int, x: int):
+    # Inputs
+    shots = 1
+    n = 3
+
+    # setup qubits and construct circuit (details are omitted)
+    # Create input qubits
+    qubits = [.....] // prepare each qubits initialized by value with x,p.
+    # Create quantum registers
+    ##################################################################
+    qc = init_quantum_circuit(
+        qubits=qubits,
+    )
+    // -> `qc` is initialized QuantumCircuit object with in some initilaized bit values to qubut registers.
+
+    # Apply Operator
+
+    qc = SomeOperator(x,y)
+
+    ##################################################################
+    # Measurement settings
+    ##################################################################
+    result_reg = ClassicalRegister(
+        len(zeros_0_result_idx), name="zeros_0_result"
+    )
+  
+    qc.add_register(result_reg)  
+
+    for i, qubit_index in enumerate(result_idx):
+        qc.measure(qubit_index, result_reg[i])
+
+    # Transpile and simulate
+    circuit = transpile(qc, simulator)
+    result = simulator.run(circuit, shots=shots).result()
+    counts = result.get_counts()
+
+    str_result = list(counts.keys())[0]
+    
+    result, = str_result.split()[::-1]
+
+    actual = int(result, 2) # convert bits to int value.
+    expected = "some value" # expected value
+    check.equal(
+        actual,
+        expected,
+        f"failed  actual_result = {actual}, expected: {expected}",
+    )
+    
+
+```
+
+### What is the expected behavior?
+
+- pass the same tests with qikist v2.0.0 or newer versions.
+
+### Suggested solutions
+
+- some mismatches in matrix_product_state simulator, with upgraded version of qikist v2.
+

@@ -1,0 +1,40 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:
+
+Latest dev from main branch.
+
+- **Python version**:
+
+Irrelevant as it's called from c++ code.
+
+- **Operating system**:
+
+Windows 11
+
+### What is the current behavior?
+
+I have a c++ project where I have a test that compares results of my implementation of a MPS simulator with the qiskit aer MPS one. I simply generated random circuits which I applied on the simulators, expecting them to have similar results afterwards.
+
+I tried various approaches for comparisons, one that works on windows (but for some reason crashes on linux) is by using `move_to_vector()` to be able to compare amplitudes... so I tried to switch to some other ways of getting amplitudes/probabilities, to avoid the crash on linux.
+
+As a workaround, I tried to go over all base states and call amplitude and/or probability. It turns out that the results do not come as expected, the values seem to be correct but not in the proper order. I know that the MPS simulator must bring together the qubits in order to apply the two or more qubit gates, so it has to map the qubits order as expected from 'outside' to some internal ordering... and I think in there something is not ok when doing the conversion for the amplitude/probability calls. 
+
+### Steps to reproduce the problem
+
+Execute a circuit with a statevector simulator and the same one with a MPS simulator, try to compare results with amplitude/probability calls.
+
+Another way would be (after fixing https://github.com/Qiskit/qiskit-aer/issues/2234) to try to compare the vector obtained by a call to `probabilties()` against values obtained for each basis state with `probability` or with the norm of the value obtained by `amplitude`. 
+
+### What is the expected behavior?
+
+Have the same ordering as for the statevector, for example.
+
+### Suggested solutions
+
+I couldn't figure out the cause yet, but `move_to_vec` seems to return the expected statevector, maybe this could help.
+On the other hand, for some reason `move_to_vec` crashes for me on linux... I didn't look into that one yet, I thought I could avoid it by using the mentioned calls.
+

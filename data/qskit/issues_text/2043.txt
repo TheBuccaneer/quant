@@ -1,0 +1,33 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.13.0
+- **Python version**: 3.11.4
+- **Operating system**: Linux
+
+### What is the current behavior?
+Noisy Identity gates do not behave as expected when the circuit contains `if_test` method. It although works with noisy z,x,y operations.
+
+### Steps to reproduce the problem
+```
+qc = QuantumCircuit(1,1)
+qc.id(0)
+qc.measure(0,0)
+with qc.if_test((0,0)):
+    qc.z(0)
+qc.measure(0,0)
+
+nm = NoiseModel()
+qe = pauli_error([('X', 1.0)])
+nm.add_all_qubit_quantum_error(qe, ['id'])
+
+backend = AerSimulator()
+tc = transpile(qc, backend, basis_gates=['id','measure','barrier','if_else','z'])
+backend.run(tc, noise_model=nm).result().get_counts()
+```
+
+### What is the expected behavior?
+The measurement outcome must be `{'1': 1024}`  while it returns `{'0': 1024}`.
+If I remove the `if_test` method, the output is as expected.

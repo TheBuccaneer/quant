@@ -1,0 +1,30 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.14.1
+- **Python version**: 3.8-3.12
+- **Operating system**: macOS x86_64
+
+### What is the current behavior?
+
+Some of the shot branching tests are failing for macOS, for example [here](https://github.com/Qiskit/qiskit-aer/actions/runs/8888318423/job/24405081563). The tests get run as part of the conda build and two of them failed in three of the five Python versions run:
+
+* `test.terra.backends.test_runtime_parameterization.TestRuntimeParameterization.test_dynamic_circuit_with_shot_branching_1___statevector____CPU__`
+* `test.terra.backends.aer_simulator.test_shot_branching.TestShotBranching.test_shot_branching_reset_moving_qubits_1___statevector____CPU__`
+* `test.terra.backends.aer_simulator.test_shot_branching.TestShotBranching.test_shot_branching_reset_nondeterministic_1___statevector____CPU__`
+
+The CI run with the failures is [here](https://github.com/conda-forge/qiskit-aer-feedstock/runs/24418450911) (also a different test failed [here](https://github.com/conda-forge/qiskit-aer-feedstock/pull/36/checks?check_run_id=24433830090)).
+
+### Steps to reproduce the problem
+
+Run the tests (a few times?) under macOS x86_64.
+
+### What is the expected behavior?
+
+All tests pass reliably.
+
+### Suggested solutions
+
+

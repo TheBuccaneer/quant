@@ -1,0 +1,58 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+qiskit                    0.43.1                   pypi_0    pypi
+qiskit-aer                0.12.1                   pypi_0    pypi
+qiskit-ibm-provider       0.5.2                    pypi_0    pypi
+qiskit-ibm-runtime        0.9.4                    pypi_0    pypi
+qiskit-ibmq-provider      0.20.2                   pypi_0    pypi
+qiskit-terra              0.24.1                   pypi_0    pypi
+
+- **Python version**: 3.8
+- **Operating system**: ALL
+
+### What is the current behavior?
+Readout Error has absolutely no effect
+
+
+### Steps to reproduce the problem
+```
+from qiskit_aer import AerSimulator
+from qiskit_aer.primitives import Estimator as AerEstimator
+from qiskit_aer.noise import NoiseModel, ReadoutError
+from qiskit import QuantumCircuit
+from qiskit.quantum_info import SparsePauliOp, Statevector
+
+noisemodel = NoiseModel()
+readout_err = ReadoutError(
+    [[0, 1],
+     [1, 0]])
+noisemodel.add_all_qubit_readout_error(readout_err)
+
+A = SparsePauliOp("I", 1)
+state = QuantumCircuit(1)
+
+for with_noise in [0, 1]:
+    my_noisemodel = noisemodel if with_noise else None
+    aer_estimator = AerEstimator(
+            run_options={"shots": None, "seed": 42},
+            backend_options={"noise_model": my_noisemodel},
+            approximation=True,
+            )
+    print(aer_estimator.run(state, A).result().values.real)
+```
+Result:
+```
+[1.]
+[1.]
+```
+
+### What is the expected behavior?
+Has effect.
+
+
+### Suggested solutions
+Make it effective.
+

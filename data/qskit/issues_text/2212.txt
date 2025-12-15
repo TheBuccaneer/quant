@@ -1,0 +1,97 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.15.0
+- **Qiskit version**: 1.2.0
+- **Python version**: 3.12.5
+- **Operating system**: macOS 14.6.1
+
+### What is the current behavior?
+
+
+
+### Steps to reproduce the problem
+
+```python
+from qiskit import QuantumCircuit, assemble
+from qiskit_aer import AerSimulator
+
+qc = QuantumCircuit(1, 1)
+backend = AerSimulator()
+qobj = assemble(qc, backend=backend)
+print(qobj)
+```
+
+qiskit 1.2.0, aer 0.15.0
+```
+/Users/ima/tasks/4_2024/qiskit/aer/tmp/qobj.py:6: DeprecationWarning: The function ``qiskit.compiler.assembler.assemble()`` is deprecated as of qiskit 1.2. It will be removed in the 2.0 release. The `Qobj` class and related functionality are part of the deprecated `BackendV1` workflow,  and no longer necessary for `BackendV2`. If a user workflow requires `Qobj` it likely relies on deprecated functionality and should be updated to use `BackendV2`.
+  qobj = assemble(qc, backend=backend)
+Traceback (most recent call last):
+  File "/Users/ima/envs/qiskit312/lib/python3.12/site-packages/qiskit_aer/backends/backendconfiguration.py", line 288, in __getattr__
+    return self._data[name]
+           ~~~~~~~~~~^^^^^^
+KeyError: 'open_pulse'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/ima/tasks/4_2024/qiskit/aer/tmp/qobj.py", line 6, in <module>
+    qobj = assemble(qc, backend=backend)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ima/envs/qiskit312/lib/python3.12/site-packages/qiskit/utils/deprecation.py", line 97, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ima/envs/qiskit312/lib/python3.12/site-packages/qiskit/compiler/assembler.py", line 166, in assemble
+    return _assemble(
+           ^^^^^^^^^^
+  File "/Users/ima/envs/qiskit312/lib/python3.12/site-packages/qiskit/compiler/assembler.py", line 234, in _assemble
+    qobj_id, qobj_header, run_config_common_dict = _parse_common_args(
+                                                   ^^^^^^^^^^^^^^^^^^^
+  File "/Users/ima/envs/qiskit312/lib/python3.12/site-packages/qiskit/compiler/assembler.py", line 356, in _parse_common_args
+    if pulse_qobj or (backend_config.open_pulse and pulse_param_set):
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ima/envs/qiskit312/lib/python3.12/site-packages/qiskit_aer/backends/backendconfiguration.py", line 290, in __getattr__
+    raise AttributeError(f"Attribute {name} is not defined") from ex
+AttributeError: Attribute open_pulse is not defined
+```
+
+
+qiskit 1.1.2, aer 0.14.2
+```
+QASM Qobj: fdf22725-ab1d-4dbf-a7c9-93777cc4c188:
+Config: {'init_qubits': True,
+ 'meas_level': <MeasLevel.CLASSIFIED: 2>,
+ 'memory': False,
+ 'memory_slots': 1,
+ 'n_qubits': 1,
+ 'parameter_binds': [],
+ 'parametric_pulses': [],
+ 'shots': 1024}
+Header: {'backend_name': 'aer_simulator', 'backend_version': '0.14.2'}
+Experiments:
+
+OpenQASM2 Experiment:
+Header:
+{'clbit_labels': [['c', 0]],
+ 'creg_sizes': [['c', 1]],
+ 'global_phase': 0.0,
+ 'memory_slots': 1,
+ 'metadata': {},
+ 'n_qubits': 1,
+ 'name': 'circuit-166',
+ 'qreg_sizes': [['q', 1]],
+ 'qubit_labels': [['q', 0]]}
+Config:
+{'memory_slots': 1, 'n_qubits': 1}
+```
+
+
+### What is the expected behavior?
+
+No error
+
+### Suggested solutions
+
+

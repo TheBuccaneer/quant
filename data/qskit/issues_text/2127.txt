@@ -1,0 +1,33 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.14.1
+- **Python version**: 3.11
+- **Operating system**: Mac
+
+### What is the current behavior?
+New version of AER does not recognize cx gate with control state = 0, while it did recognize cnot with control state = 0, which was not removed in favor of cx in 0.1. 
+
+
+### Steps to reproduce the problem
+
+```
+qc = QuantumCircuit(2)
+qc.cx(0, 1) # works
+qc.cx(0, 1, ctrl_state=1) # works
+qc.cx(0, 1, ctrl_state=0) # fails - AerError: 'unknown instruction: cx_o0'
+qc.measure_all()
+
+simulator = AerSimulator()
+simulator.run(qc).result().get_counts()
+```
+
+
+### What is the expected behavior?
+Should handle the `qc.cx(0, 1, ctrl_state=0) ` natively
+
+
+### Suggested solutions
+Should be easy since we already had in there cnot with control on 0, just rename mapping

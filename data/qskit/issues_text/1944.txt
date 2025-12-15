@@ -1,0 +1,57 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:      current one in this github
+- **Python version**:   3.10.10
+- **Operating system**:  centos7
+
+### What is the current behavior?
+In one of my colleagues, this qiskit aer was working perfectly,  he gave me the .yml(his environment) file where all the package list was there, and then I used the command "conda env create -f qiskit-aer.yml" after that i downloaded the qiskit aer from this github repo , , changed the directory to qiskit-aer , then i tried for this command "pip install ." here it is throwing this cmake conan error, i have added the snip of the error
+
+
+![image](https://github.com/Qiskit/qiskit-aer/assets/31007362/25a959a4-b7f3-4e84-a6dd-da0b54555040)
+![image](https://github.com/Qiskit/qiskit-aer/assets/31007362/de5fe22e-9bc5-4506-924c-2b1e0549c8fd)
+
+Heres the error 
+
+"      -- Conan: Automatic detection of conan settings from cmake
+      -- Conan: Settings= -s;build_type=Release;-s;compiler=gcc;-s;compiler.version=8;-s;compiler.libcxx=libstdc++11
+      -- Conan: checking conan executable
+      -- Conan: Found program /tmp/pip-build-env-igaei3a8/overlay/bin/conan
+      -- Conan: Version found
+      -- Conan executing: /tmp/pip-build-env-igaei3a8/overlay/bin/conan install . -s build_type=Release -s compiler=gcc -s compiler.version=8 -s compiler.libcxx=libstdc++11 -e=CONAN_CMAKE_PROGRAM=/tmp/pip-build-env-5scrclq2/overlay/lib/python3.10/site-packages/cmake/data/bin/cmake -g=cmake --build=missing
+      CMake Error at cmake/conan.cmake:404 (message):
+        Conan install failed='No such file or directory'
+      Call Stack (most recent call first):
+        cmake/conan.cmake:499 (conan_cmake_install)
+        cmake/conan_utils.cmake:71 (conan_cmake_run)
+        cmake/dependency_utils.cmake:20 (setup_conan)
+        CMakeLists.txt:179 (setup_dependencies)
+      
+      
+      -- Configuring incomplete, errors occurred!
+      Traceback (most recent call last):
+        File "/tmp/pip-build-env-5scrclq2/overlay/lib/python3.10/site-packages/skbuild/setuptools_wrap.py", line 666, in setup
+          env = cmkr.configure(
+        File "/tmp/pip-build-env-5scrclq2/overlay/lib/python3.10/site-packages/skbuild/cmaker.py", line 357, in configure
+          raise SKBuildError(msg)
+      
+      An error occurred while configuring with CMake.
+        Command:
+          /tmp/pip-build-env-5scrclq2/overlay/lib/python3.10/site-packages/cmake/data/bin/cmake /home/raja/qiskit-aer -G Ninja -DCMAKE_MAKE_PROGRAM:FILEPATH=/tmp/pip-build-env-5scrclq2/overlay/lib/python3.10/site-packages/ninja/data/bin/ninja --no-warn-unused-cli -DCMAKE_INSTALL_PREFIX:PATH=/home/raja/qiskit-aer/_skbuild/linux-x86_64-3.10/cmake-install -DPYTHON_VERSION_STRING:STRING=3.10.10 -DSKBUILD:INTERNAL=TRUE -DCMAKE_MODULE_PATH:PATH=/tmp/pip-build-env-5scrclq2/overlay/lib/python3.10/site-packages/skbuild/resources/cmake -DPYTHON_EXECUTABLE:PATH=/home/raja/.conda/envs/cu/bin/python -DPYTHON_INCLUDE_DIR:PATH=/home/raja/.conda/envs/cu/include/python3.10 -DPYTHON_LIBRARY:PATH=/home/raja/.conda/envs/cu/lib/libpython3.10.so -DPython_EXECUTABLE:PATH=/home/raja/.conda/envs/cu/bin/python -DPython_ROOT_DIR:PATH=/home/raja/.conda/envs/cu -DPython_FIND_REGISTRY:STRING=NEVER -DPython_INCLUDE_DIR:PATH=/home/raja/.conda/envs/cu/include/python3.10 -DPython_NumPy_INCLUDE_DIRS:PATH=/tmp/pip-build-env-5scrclq2/overlay/lib/python3.10/site-packages/numpy/core/include -DPython3_EXECUTABLE:PATH=/home/raja/.conda/envs/cu/bin/python -DPython3_ROOT_DIR:PATH=/home/raja/.conda/envs/cu -DPython3_FIND_REGISTRY:STRING=NEVER -DPython3_INCLUDE_DIR:PATH=/home/raja/.conda/envs/cu/include/python3.10 -DPython3_NumPy_INCLUDE_DIRS:PATH=/tmp/pip-build-env-5scrclq2/overlay/lib/python3.10/site-packages/numpy/core/include -DCMAKE_MAKE_PROGRAM:FILEPATH=/tmp/pip-build-env-5scrclq2/overlay/lib/python3.10/site-packages/ninja/data/bin/ninja -DCMAKE_BUILD_TYPE:STRING=Release
+        Source directory:
+          /home/raja/qiskit-aer
+        Working directory:
+          /home/raja/qiskit-aer/_skbuild/linux-x86_64-3.10/cmake-build
+      Please see CMake's output for more information.
+      
+      [end of output]
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+  ERROR: Failed building wheel for qiskit-aer
+Failed to build qiskit-aer
+ERROR: Could not build wheels for qiskit-aer, which is required to install pyproject.toml-based projects "
+
+how to resolve this 

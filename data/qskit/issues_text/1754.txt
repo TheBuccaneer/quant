@@ -1,0 +1,31 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: latest
+- **Python version**:
+- **Operating system**:
+
+### What is the current behavior?
+Previous versions of Aer allowed for setting shots values using things like `shots=1e4`.  The latest version stopped doing this and gives a cryptic error:
+
+```
+TypeError: (): incompatible function arguments. The following argument types are supported:
+    1. (self: qiskit_aer.backends.controller_wrappers.AerConfig, arg0: int) -> None
+
+Invoked with: <qiskit_aer.backends.controller_wrappers.AerConfig object at 0x7f7291bd0730>, 10000.0
+```
+
+
+### Steps to reproduce the problem
+Run a simulation, e.g. via the fake backends using a float representation of an int
+
+
+### What is the expected behavior?
+
+This represents a breaking change, and should probably be fixed by casting.
+
+### Suggested solutions
+
+

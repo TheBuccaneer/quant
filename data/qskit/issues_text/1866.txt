@@ -1,0 +1,24 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.12.1
+- **Python version**: 3.10
+- **Operating system**: Linux
+
+### What is the current behavior?
+
+`pip install qiskit-aer` fails on a Linux machine with aarch64 architecture.
+
+### Steps to reproduce the problem
+
+Try running `pip install qiskit-aer` on a Linux aarch64 architecture.
+
+### What is the expected behavior?
+
+The package should be installable from PyPI. v0.12.0 does provide the aarch64 wheel for Linux.
+
+### Suggested solutions
+
+Upload the aarch64 wheel for Linux. I see that the corresponding deploy job indeed failed: https://github.com/Qiskit/qiskit-aer/actions/runs/5250760188/jobs/9485031521

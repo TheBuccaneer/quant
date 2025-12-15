@@ -1,0 +1,99 @@
+### Informations
+
+- **Qiskit Aer version**: 0.12.2
+- **Python version**: 3.10.12
+- **Operating system**: Ubuntu 22.04 LTS
+- **Cuda Version**: 12.0
+- **Nvidia-driver**: 525.125.06
+- **GPU**: Tesla T4 16GB
+
+This is a follow-up to [Issue-1721: GPU low clock usage](https://github.com/Qiskit/qiskit-aer/issues/1721).
+I wanted to ask if there has been any progress on enabling batching over multiple circuits on GPU as mentioned by @doichanj 
+
+### What is the current behavior?
+Aer sampler using GPU appears to not be optimized for executing multiple circuits and parameters as GPU usage only makes up for a relatively small fraction of the ``sampler.run()`` command.
+
+
+### Steps to reproduce the problem
+Subsequent code can be executed to reproduce the behavior. 
+```python
+from time import time
+
+import numpy as np
+from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
+from qiskit.circuit.library import RealAmplitudes
+from qiskit.utils import algorithm_globals
+from qiskit_aer.primitives import Sampler as AerSampler
+
+
+# quantum autoencoder ansatz
+def auto_encoder_circuit(num_latent: int, num_trash: int, depth: int = 5) -> QuantumCircuit:
+    qr = QuantumRegister(num_latent + 2 * num_trash + 1, "q")
+    cr = ClassicalRegister(1, "c")
+    circuit = QuantumCircuit(qr, cr)
+    encoder = RealAmplitudes(num_latent + num_trash, reps=depth)
+
+    circuit.compose(encoder, range(0, num_latent + num_trash), inplace=True)
+    circuit.barrier()
+    auxiliary_qubit = num_latent + 2 * num_trash
+
+    circuit.h(auxiliary_qubit)
+    for i in range(num_trash):
+        circuit.cswap(auxiliary_qubit, num_latent + i, num_latent + num_trash + i)
+
+    circuit.h(auxiliary_qubit)
+    circuit.measure(auxiliary_qubit, cr[0])
+    return circuit
+
+
+n = 1500
+ansatz_depth = 5
+latent_space_qubits = 6
+trash_space_qubits = 1
+
+ae = auto_encoder_circuit(latent_space_qubits, trash_space_qubits, depth=ansatz_depth)
+# circuit for data encoding (amplitude encoding)
+qc_ae_training = QuantumCircuit(latent_space_qubits + 2 * trash_space_qubits + 1, 1)
+qc_ae_training = qc_ae_training.compose(ae)
+
+# training data of size 128, L2-normalized for amplitude encoding
+train_data = np.random.random(size=(n, 128))
+train_data = train_data / np.linalg.norm(train_data, axis=1).reshape(-1, 1)
+
+# initial param value for encoder
+param_values = algorithm_globals.random.random(len(qc_ae_training.parameters))
+
+
+def build_circ(x: np.ndarray) -> QuantumCircuit:
+    circ = QuantumCircuit(qc_ae_training.qubits)
+    # initialize with data record as amplitude encoding
+    circ.initialize(x, np.arange(0, latent_space_qubits + trash_space_qubits).tolist())
+    circ = circ.compose(qc_ae_training)
+    return circ
+
+
+# create one circuit for each record and initialize it using amplitude encoding -> 1500 circuits
+circs = [build_circ(x) for x in train_data]
+
+for dev in ['CPU', 'GPU']:
+    s = time()
+    sampler = AerSampler(run_options={"method": "statevector", "device": dev})
+    job = sampler.run(circs, [param_values] * train_data.shape[0])
+    result = job.result()
+    duration = time() - s
+    print('{} time (s)'.format(dev), duration)
+
+```
+Above code outpus:
+```
+CPU time (s) 14.341666221618652
+GPU time (s) 20.188242197036743
+```
+According to nvidia-smi, actual GPU usage only makes up ~5 seconds.
+
+### What is the expected behavior?
+GPU also accelerates execution of multiple circuits.
+
+
+### Suggested solutions
+Thank you, any suggestion on how to optimize multi-circuit execution is very much appreciated.

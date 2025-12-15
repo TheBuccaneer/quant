@@ -1,0 +1,139 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.14.1
+- **Python version**: 3.11
+- **Operating system**: MacOS
+
+### What is the current behavior?
+
+Running a scheduled circuit containing delay gates errors on Qiskit Aer 0.14 if the AerSimulator is initialized from a V1 backend.
+
+### Steps to reproduce the problem
+
+```python
+from qiskit_ibm_runtime.fake_provider import FakeVigo
+from qiskit_aer import AerSimulator
+from qiskit import QuantumCircuit, transpile
+
+backend = AerSimulator.from_backend(FakeVigo())
+qc = QuantumCircuit(5)
+qc.cx(0, 1)
+qc.cx(1, 2)
+qc.measure_all()
+tqc = transpile(qc, backend, scheduling_method="alap")
+
+backend.run([tqc]).result()
+```
+Errors with
+```
+---------------------------------------------------------------------------
+AerError                                  Traceback (most recent call last)
+Cell In[1], line 12
+      9 qc.measure_all()
+     10 tqc = transpile(qc, backend, scheduling_method="alap")
+---> 12 backend.run([tqc]).result()
+
+File ~/mambaforge/envs/qiskit1/lib/python3.11/site-packages/qiskit_aer/jobs/utils.py:42, in requires_submit.<locals>._wrapper(self, *args, **kwargs)
+     40 if self._future is None:
+     41     raise JobError("Job not submitted yet!. You have to .submit() first!")
+---> 42 return func(self, *args, **kwargs)
+
+File ~/mambaforge/envs/qiskit1/lib/python3.11/site-packages/qiskit_aer/jobs/aerjob.py:114, in AerJob.result(self, timeout)
+     96 @requires_submit
+     97 def result(self, timeout=None):
+     98     # pylint: disable=arguments-differ
+     99     """Get job result. The behavior is the same as the underlying
+    100     concurrent Future objects,
+    101 
+   (...)
+    112         concurrent.futures.CancelledError: if job cancelled before completed.
+    113     """
+--> 114     return self._future.result(timeout=timeout)
+
+File ~/mambaforge/envs/qiskit1/lib/python3.11/concurrent/futures/_base.py:456, in Future.result(self, timeout)
+    454     raise CancelledError()
+    455 elif self._state == FINISHED:
+--> 456     return self.__get_result()
+    457 else:
+    458     raise TimeoutError()
+
+File ~/mambaforge/envs/qiskit1/lib/python3.11/concurrent/futures/_base.py:401, in Future.__get_result(self)
+    399 if self._exception:
+    400     try:
+--> 401         raise self._exception
+    402     finally:
+    403         # Break a reference cycle with the exception in self._exception
+    404         self = None
+
+File ~/mambaforge/envs/qiskit1/lib/python3.11/concurrent/futures/thread.py:58, in _WorkItem.run(self)
+     55     return
+     57 try:
+---> 58     result = self.fn(*self.args, **self.kwargs)
+     59 except BaseException as exc:
+     60     self.future.set_exception(exc)
+
+File ~/mambaforge/envs/qiskit1/lib/python3.11/site-packages/qiskit_aer/backends/aerbackend.py:454, in AerBackend._execute_circuits_job(self, circuits, parameter_binds, run_options, job_id, format_result)
+    451 circuits, noise_model = self._compile(circuits, **run_options)
+    453 if self._target is not None:
+--> 454     aer_circuits, idx_maps = assemble_circuits(circuits, self.configuration().basis_gates)
+    455 else:
+    456     aer_circuits, idx_maps = assemble_circuits(circuits)
+
+File ~/mambaforge/envs/qiskit1/lib/python3.11/site-packages/qiskit_aer/backends/aer_compiler.py:959, in assemble_circuits(circuits, basis_gates)
+    956 if basis_gates is not None:
+    957     basis_gates_set = set(basis_gates)
+    958     aer_circuits, idx_maps = zip(
+--> 959         *[assemble_circuit(circuit, basis_gates_set) for circuit in circuits]
+    960     )
+    961 else:
+    962     aer_circuits, idx_maps = zip(*[assemble_circuit(circuit) for circuit in circuits])
+
+File ~/mambaforge/envs/qiskit1/lib/python3.11/site-packages/qiskit_aer/backends/aer_compiler.py:959, in <listcomp>(.0)
+    956 if basis_gates is not None:
+    957     basis_gates_set = set(basis_gates)
+    958     aer_circuits, idx_maps = zip(
+--> 959         *[assemble_circuit(circuit, basis_gates_set) for circuit in circuits]
+    960     )
+    961 else:
+    962     aer_circuits, idx_maps = zip(*[assemble_circuit(circuit) for circuit in circuits])
+
+File ~/mambaforge/envs/qiskit1/lib/python3.11/site-packages/qiskit_aer/backends/aer_compiler.py:681, in assemble_circuit(circuit, basis_gates)
+    678     elif hasattr(inst.operation, "condition_expr") and inst.operation.condition_expr:
+    679         conditional_expr = inst.operation.condition_expr
+--> 681     num_of_aer_ops += _assemble_op(
+    682         circuit,
+    683         aer_circ,
+    684         inst,
+    685         qubit_indices,
+    686         clbit_indices,
+    687         is_conditional,
+    688         conditional_reg,
+    689         conditional_expr,
+    690         basis_gates,
+    691     )
+    692     index_map.append(num_of_aer_ops - 1)
+    694 return aer_circ, index_map
+
+File ~/mambaforge/envs/qiskit1/lib/python3.11/site-packages/qiskit_aer/backends/aer_compiler.py:926, in _assemble_op(circ, aer_circ, inst, qubit_indices, clbit_indices, is_conditional, conditional_reg, conditional_expr, basis_gates)
+    921     raise AerError(
+    922         "control-flow instructions must be converted " f"to jump and mark instructions: {name}"
+    923     )
+    925 else:
+--> 926     raise AerError(f"unknown instruction: {name}")
+    928 return num_of_aer_ops
+
+AerError: 'unknown instruction: delay'
+```
+
+### What is the expected behavior?
+
+The above code worked correctly with Aer 0.13.3, it also works correctly for V2 fake backends in Aer 0.14
+
+### Suggested solutions
+
+There looks like there is a bug in `_assemble_op` where it expects "delay" to be in a backends basis gates, but ibm backends don't report delay as a basis gate.
+
+

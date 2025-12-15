@@ -1,0 +1,760 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.17.1
+- **Python version**: 3.13.5
+- **Operating system**: Arch Linux
+
+### What is the current behavior?
+
+`test_options.py::TestOptions::test_mps_options` crashes when running on a clean chroot build env.
+
+And the following 4 tests fail in the same environment:
+
+```
+=========================== short test summary info ============================
+FAILED test/terra/backends/aer_simulator/test_control_flow.py::TestControlFlow::test_switch_register_with_classical_expression_1_statevector
+FAILED test/terra/backends/aer_simulator/test_control_flow.py::TestControlFlow::test_switch_register_with_classical_expression_2_density_matrix
+FAILED test/terra/backends/aer_simulator/test_control_flow.py::TestControlFlow::test_switch_register_with_classical_expression_3_matrix_product_state
+FAILED test/terra/backends/aer_simulator/test_control_flow.py::TestControlFlow::test_switch_register_with_classical_expression_4_stabilizer
+= 4 failed, 3046 passed, 141 skipped, 1 deselected, 1907 warnings in 270.19s (0:04:30) =
+```
+
+<details>
+
+<summary>Full output</summary>
+
+```
+=================================== FAILURES ===================================
+_ TestControlFlow.test_switch_register_with_classical_expression_1_statevector _
+
+self = <test.terra.backends.aer_simulator.test_control_flow.TestControlFlow testMethod=test_switch_register_with_classical_expression_1_statevector>
+method = 'statevector'
+
+    @data("statevector", "density_matrix", "matrix_product_state", "stabilizer")
+    def test_switch_register_with_classical_expression(self, method):
+        """Test that a switch statement can be constructed with a register as a condition."""
+    
+        backend = self.backend(method=method, seed_simulator=1)
+    
+        qubit0 = Qubit()
+        qubit1 = Qubit()
+        qubit2 = Qubit()
+        creg = ClassicalRegister(2)
+        case1 = QuantumCircuit([qubit0, qubit1, qubit2], creg)
+        case1.x(0)
+        case2 = QuantumCircuit([qubit0, qubit1, qubit2], creg)
+        case2.x(1)
+        case3 = QuantumCircuit([qubit0, qubit1, qubit2], creg)
+        case3.x(2)
+    
+        op = SwitchCaseOp(expr.lift(creg), [(0, case1), (1, case2), (2, case3)])
+    
+        qc0 = QuantumCircuit([qubit0, qubit1, qubit2], creg)
+        qc0.measure(0, creg[0])
+        qc0.append(op, [qubit0, qubit1, qubit2], creg)
+        qc0.measure_all()
+    
+>       ret0 = backend.run(qc0, shots=100).result()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+test/terra/backends/aer_simulator/test_control_flow.py:941: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/jobs/utils.py:38: in _wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/jobs/aerjob.py:96: in result
+    return self._future.result(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/concurrent/futures/_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/concurrent/futures/_base.py:401: in __get_result
+    raise self._exception
+/usr/lib/python3.13/concurrent/futures/thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aerbackend.py:451: in _execute_circuits_job
+    circuits, noise_model = self._compile(circuits, **run_options)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aerbackend.py:528: in _compile
+    circuits, optypes = compile_circuit(circuits, optypes=optypes)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aer_compiler.py:545: in compile_circuit
+    return AerCompiler().compile(circuits, optypes)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aer_compiler.py:101: in compile
+    compiled_circ = pm.run(self._inline_circuit(circuit, None, None))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aer_compiler.py:206: in _inline_circuit
+    self._inline_switch_case_op(instruction, continue_label, break_label, ret, bit_map)
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aer_compiler.py:478: in _inline_switch_case_op
+    self._convert_jump_conditional(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <qiskit_aer.backends.aer_compiler.AerCompiler object at 0x7f673b74fc50>
+cond_tuple = (Var(ClassicalRegister(2, 'c260'), Uint(2)), 0)
+bit_map = {<Qubit uid=355>: <Qubit uid=355>, <Qubit uid=356>: <Qubit uid=356>, <Qubit uid=357>: <Qubit uid=357>, <Clbit register=(2, "c260"), index=0>: <Clbit register=(2, "c260"), index=0>, ...}
+
+    def _convert_jump_conditional(self, cond_tuple, bit_map):
+        """Convert a condition tuple according to the wire map."""
+        if isinstance(cond_tuple, Expr):
+            return cond_tuple
+        elif isinstance(cond_tuple[0], Clbit):
+            return (bit_map[cond_tuple[0]], cond_tuple[1])
+        elif isinstance(cond_tuple[0], ClassicalRegister):
+            # ClassicalRegister conditions should already be in the outer circuit.
+            return cond_tuple
+        elif isinstance(cond_tuple[0], Var):
+            if isinstance(cond_tuple[0].var, Clbit):
+                expr = Var(bit_map[cond_tuple[0].var], cond_tuple[0].type)
+            elif isinstance(cond_tuple[0].var, ClassicalRegister):
+>               expr = Var([bit_map[clbit] for clbit in cond_tuple[0].var], cond_tuple[0].type)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               TypeError: 'list' object cannot be converted to 'Clbit'
+
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aer_compiler.py:239: TypeError
+_ TestControlFlow.test_switch_register_with_classical_expression_2_density_matrix _
+
+self = <test.terra.backends.aer_simulator.test_control_flow.TestControlFlow testMethod=test_switch_register_with_classical_expression_2_density_matrix>
+method = 'density_matrix'
+
+    @data("statevector", "density_matrix", "matrix_product_state", "stabilizer")
+    def test_switch_register_with_classical_expression(self, method):
+        """Test that a switch statement can be constructed with a register as a condition."""
+    
+        backend = self.backend(method=method, seed_simulator=1)
+    
+        qubit0 = Qubit()
+        qubit1 = Qubit()
+        qubit2 = Qubit()
+        creg = ClassicalRegister(2)
+        case1 = QuantumCircuit([qubit0, qubit1, qubit2], creg)
+        case1.x(0)
+        case2 = QuantumCircuit([qubit0, qubit1, qubit2], creg)
+        case2.x(1)
+        case3 = QuantumCircuit([qubit0, qubit1, qubit2], creg)
+        case3.x(2)
+    
+        op = SwitchCaseOp(expr.lift(creg), [(0, case1), (1, case2), (2, case3)])
+    
+        qc0 = QuantumCircuit([qubit0, qubit1, qubit2], creg)
+        qc0.measure(0, creg[0])
+        qc0.append(op, [qubit0, qubit1, qubit2], creg)
+        qc0.measure_all()
+    
+>       ret0 = backend.run(qc0, shots=100).result()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+test/terra/backends/aer_simulator/test_control_flow.py:941: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/jobs/utils.py:38: in _wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/jobs/aerjob.py:96: in result
+    return self._future.result(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/concurrent/futures/_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/concurrent/futures/_base.py:401: in __get_result
+    raise self._exception
+/usr/lib/python3.13/concurrent/futures/thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aerbackend.py:451: in _execute_circuits_job
+    circuits, noise_model = self._compile(circuits, **run_options)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aerbackend.py:528: in _compile
+    circuits, optypes = compile_circuit(circuits, optypes=optypes)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aer_compiler.py:545: in compile_circuit
+    return AerCompiler().compile(circuits, optypes)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aer_compiler.py:101: in compile
+    compiled_circ = pm.run(self._inline_circuit(circuit, None, None))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aer_compiler.py:206: in _inline_circuit
+    self._inline_switch_case_op(instruction, continue_label, break_label, ret, bit_map)
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aer_compiler.py:478: in _inline_switch_case_op
+    self._convert_jump_conditional(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <qiskit_aer.backends.aer_compiler.AerCompiler object at 0x7f66c31e0c80>
+cond_tuple = (Var(ClassicalRegister(2, 'c261'), Uint(2)), 0)
+bit_map = {<Qubit uid=358>: <Qubit uid=358>, <Qubit uid=359>: <Qubit uid=359>, <Qubit uid=360>: <Qubit uid=360>, <Clbit register=(2, "c261"), index=0>: <Clbit register=(2, "c261"), index=0>, ...}
+
+    def _convert_jump_conditional(self, cond_tuple, bit_map):
+        """Convert a condition tuple according to the wire map."""
+        if isinstance(cond_tuple, Expr):
+            return cond_tuple
+        elif isinstance(cond_tuple[0], Clbit):
+            return (bit_map[cond_tuple[0]], cond_tuple[1])
+        elif isinstance(cond_tuple[0], ClassicalRegister):
+            # ClassicalRegister conditions should already be in the outer circuit.
+            return cond_tuple
+        elif isinstance(cond_tuple[0], Var):
+            if isinstance(cond_tuple[0].var, Clbit):
+                expr = Var(bit_map[cond_tuple[0].var], cond_tuple[0].type)
+            elif isinstance(cond_tuple[0].var, ClassicalRegister):
+>               expr = Var([bit_map[clbit] for clbit in cond_tuple[0].var], cond_tuple[0].type)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               TypeError: 'list' object cannot be converted to 'Clbit'
+
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aer_compiler.py:239: TypeError
+_ TestControlFlow.test_switch_register_with_classical_expression_3_matrix_product_state _
+
+self = <test.terra.backends.aer_simulator.test_control_flow.TestControlFlow testMethod=test_switch_register_with_classical_expression_3_matrix_product_state>
+method = 'matrix_product_state'
+
+    @data("statevector", "density_matrix", "matrix_product_state", "stabilizer")
+    def test_switch_register_with_classical_expression(self, method):
+        """Test that a switch statement can be constructed with a register as a condition."""
+    
+        backend = self.backend(method=method, seed_simulator=1)
+    
+        qubit0 = Qubit()
+        qubit1 = Qubit()
+        qubit2 = Qubit()
+        creg = ClassicalRegister(2)
+        case1 = QuantumCircuit([qubit0, qubit1, qubit2], creg)
+        case1.x(0)
+        case2 = QuantumCircuit([qubit0, qubit1, qubit2], creg)
+        case2.x(1)
+        case3 = QuantumCircuit([qubit0, qubit1, qubit2], creg)
+        case3.x(2)
+    
+        op = SwitchCaseOp(expr.lift(creg), [(0, case1), (1, case2), (2, case3)])
+    
+        qc0 = QuantumCircuit([qubit0, qubit1, qubit2], creg)
+        qc0.measure(0, creg[0])
+        qc0.append(op, [qubit0, qubit1, qubit2], creg)
+        qc0.measure_all()
+    
+>       ret0 = backend.run(qc0, shots=100).result()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+test/terra/backends/aer_simulator/test_control_flow.py:941: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/jobs/utils.py:38: in _wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/jobs/aerjob.py:96: in result
+    return self._future.result(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/concurrent/futures/_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/concurrent/futures/_base.py:401: in __get_result
+    raise self._exception
+/usr/lib/python3.13/concurrent/futures/thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aerbackend.py:451: in _execute_circuits_job
+    circuits, noise_model = self._compile(circuits, **run_options)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aerbackend.py:528: in _compile
+    circuits, optypes = compile_circuit(circuits, optypes=optypes)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aer_compiler.py:545: in compile_circuit
+    return AerCompiler().compile(circuits, optypes)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aer_compiler.py:101: in compile
+    compiled_circ = pm.run(self._inline_circuit(circuit, None, None))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aer_compiler.py:206: in _inline_circuit
+    self._inline_switch_case_op(instruction, continue_label, break_label, ret, bit_map)
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aer_compiler.py:478: in _inline_switch_case_op
+    self._convert_jump_conditional(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <qiskit_aer.backends.aer_compiler.AerCompiler object at 0x7f66c2c7bc50>
+cond_tuple = (Var(ClassicalRegister(2, 'c262'), Uint(2)), 0)
+bit_map = {<Qubit uid=361>: <Qubit uid=361>, <Qubit uid=362>: <Qubit uid=362>, <Qubit uid=363>: <Qubit uid=363>, <Clbit register=(2, "c262"), index=0>: <Clbit register=(2, "c262"), index=0>, ...}
+
+    def _convert_jump_conditional(self, cond_tuple, bit_map):
+        """Convert a condition tuple according to the wire map."""
+        if isinstance(cond_tuple, Expr):
+            return cond_tuple
+        elif isinstance(cond_tuple[0], Clbit):
+            return (bit_map[cond_tuple[0]], cond_tuple[1])
+        elif isinstance(cond_tuple[0], ClassicalRegister):
+            # ClassicalRegister conditions should already be in the outer circuit.
+            return cond_tuple
+        elif isinstance(cond_tuple[0], Var):
+            if isinstance(cond_tuple[0].var, Clbit):
+                expr = Var(bit_map[cond_tuple[0].var], cond_tuple[0].type)
+            elif isinstance(cond_tuple[0].var, ClassicalRegister):
+>               expr = Var([bit_map[clbit] for clbit in cond_tuple[0].var], cond_tuple[0].type)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               TypeError: 'list' object cannot be converted to 'Clbit'
+
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aer_compiler.py:239: TypeError
+_ TestControlFlow.test_switch_register_with_classical_expression_4_stabilizer __
+
+self = <test.terra.backends.aer_simulator.test_control_flow.TestControlFlow testMethod=test_switch_register_with_classical_expression_4_stabilizer>
+method = 'stabilizer'
+
+    @data("statevector", "density_matrix", "matrix_product_state", "stabilizer")
+    def test_switch_register_with_classical_expression(self, method):
+        """Test that a switch statement can be constructed with a register as a condition."""
+    
+        backend = self.backend(method=method, seed_simulator=1)
+    
+        qubit0 = Qubit()
+        qubit1 = Qubit()
+        qubit2 = Qubit()
+        creg = ClassicalRegister(2)
+        case1 = QuantumCircuit([qubit0, qubit1, qubit2], creg)
+        case1.x(0)
+        case2 = QuantumCircuit([qubit0, qubit1, qubit2], creg)
+        case2.x(1)
+        case3 = QuantumCircuit([qubit0, qubit1, qubit2], creg)
+        case3.x(2)
+    
+        op = SwitchCaseOp(expr.lift(creg), [(0, case1), (1, case2), (2, case3)])
+    
+        qc0 = QuantumCircuit([qubit0, qubit1, qubit2], creg)
+        qc0.measure(0, creg[0])
+        qc0.append(op, [qubit0, qubit1, qubit2], creg)
+        qc0.measure_all()
+    
+>       ret0 = backend.run(qc0, shots=100).result()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+test/terra/backends/aer_simulator/test_control_flow.py:941: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/jobs/utils.py:38: in _wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/jobs/aerjob.py:96: in result
+    return self._future.result(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/concurrent/futures/_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/concurrent/futures/_base.py:401: in __get_result
+    raise self._exception
+/usr/lib/python3.13/concurrent/futures/thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aerbackend.py:451: in _execute_circuits_job
+    circuits, noise_model = self._compile(circuits, **run_options)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aerbackend.py:528: in _compile
+    circuits, optypes = compile_circuit(circuits, optypes=optypes)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aer_compiler.py:545: in compile_circuit
+    return AerCompiler().compile(circuits, optypes)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aer_compiler.py:101: in compile
+    compiled_circ = pm.run(self._inline_circuit(circuit, None, None))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aer_compiler.py:206: in _inline_circuit
+    self._inline_switch_case_op(instruction, continue_label, break_label, ret, bit_map)
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aer_compiler.py:478: in _inline_switch_case_op
+    self._convert_jump_conditional(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <qiskit_aer.backends.aer_compiler.AerCompiler object at 0x7f66c2fc32a0>
+cond_tuple = (Var(ClassicalRegister(2, 'c263'), Uint(2)), 0)
+bit_map = {<Qubit uid=364>: <Qubit uid=364>, <Qubit uid=365>: <Qubit uid=365>, <Qubit uid=366>: <Qubit uid=366>, <Clbit register=(2, "c263"), index=0>: <Clbit register=(2, "c263"), index=0>, ...}
+
+    def _convert_jump_conditional(self, cond_tuple, bit_map):
+        """Convert a condition tuple according to the wire map."""
+        if isinstance(cond_tuple, Expr):
+            return cond_tuple
+        elif isinstance(cond_tuple[0], Clbit):
+            return (bit_map[cond_tuple[0]], cond_tuple[1])
+        elif isinstance(cond_tuple[0], ClassicalRegister):
+            # ClassicalRegister conditions should already be in the outer circuit.
+            return cond_tuple
+        elif isinstance(cond_tuple[0], Var):
+            if isinstance(cond_tuple[0].var, Clbit):
+                expr = Var(bit_map[cond_tuple[0].var], cond_tuple[0].type)
+            elif isinstance(cond_tuple[0].var, ClassicalRegister):
+>               expr = Var([bit_map[clbit] for clbit in cond_tuple[0].var], cond_tuple[0].type)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               TypeError: 'list' object cannot be converted to 'Clbit'
+
+../test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/aer_compiler.py:239: TypeError
+=============================== warnings summary ===============================
+test/terra/backends/aer_simulator/test_chunk.py::TestChunkSimulators::test_chunk_QFTWithFusion_1___statevector____CPU__
+test/terra/backends/aer_simulator/test_chunk.py::TestChunkSimulators::test_chunk_QFTWithFusion_2___density_matrix____CPU__
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/backends/aer_simulator/test_chunk.py:128: DeprecationWarning: The class ``qiskit.circuit.library.basis_change.qft.QFT`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. ('Use qiskit.circuit.library.QFTGate or qiskit.synthesis.qft.synth_qft_full instead, for access to all previous arguments.',)
+    circuit = transpile(QFT(num_qubits), backend=backend, optimization_level=0)
+
+test/terra/backends/aer_simulator/test_chunk.py: 4 warnings
+test/terra/backends/aer_simulator/test_fusion.py: 8 warnings
+test/terra/backends/aer_simulator/test_noise.py: 6 warnings
+test/terra/backends/aer_simulator/test_save_amplitudes.py: 60 warnings
+test/terra/backends/aer_simulator/test_shot_branching.py: 2 warnings
+test/terra/states/test_aer_densitymatrix.py: 3 warnings
+test/terra/states/test_aer_statevector.py: 3 warnings
+  /usr/lib/python3.13/site-packages/qiskit/circuit/library/basis_change/qft.py:108: DeprecationWarning: The class ``qiskit.circuit.library.blueprintcircuit.BlueprintCircuit`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. There is no direct replacement other than the QuantumCircuit class.
+    super().__init__(name=name)
+
+test/terra/backends/aer_simulator/test_chunk.py::TestChunkSimulators::test_chunk_QFT_1___statevector____CPU__
+test/terra/backends/aer_simulator/test_chunk.py::TestChunkSimulators::test_chunk_QFT_2___density_matrix____CPU__
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/backends/aer_simulator/test_chunk.py:102: DeprecationWarning: The class ``qiskit.circuit.library.basis_change.qft.QFT`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. ('Use qiskit.circuit.library.QFTGate or qiskit.synthesis.qft.synth_qft_full instead, for access to all previous arguments.',)
+    circuit = transpile(QFT(num_qubits), backend=backend, optimization_level=0)
+
+test/terra/backends/aer_simulator/test_circuit.py: 1 warning
+test/terra/backends/aer_simulator/test_wrapper_statevector_simulator.py: 11 warnings
+test/terra/backends/test_aer_provider.py: 1 warning
+  /build/python-qiskit-aer/src/test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/statevector_simulator.py:242: PendingDeprecationWarning: The `StatevectorSimulator` backend will be deprecated in the future. It has been superseded by the `AerSimulator` backend. To obtain legacy functionality initialize with `AerSimulator(method="statevector")` and append run circuits with the `save_state` instruction.
+    warn(
+
+test/terra/backends/aer_simulator/test_executors.py: 96 warnings
+test/terra/backends/aer_simulator/test_non_cliffords.py: 360 warnings
+test/terra/backends/aer_simulator/test_wrapper_statevector_simulator.py: 36 warnings
+test/terra/primitives/test_estimator_v2.py: 60 warnings
+test/terra/primitives/test_sampler_v2.py: 48 warnings
+  /usr/lib/python3.13/multiprocessing/popen_fork.py:67: DeprecationWarning: This process (pid=1773) is multi-threaded, use of fork() may lead to deadlocks in the child.
+    self.pid = os.fork()
+
+test/terra/backends/aer_simulator/test_fusion.py::TestGateFusion::test_fusion_default_1___statevector____CPU__
+test/terra/backends/aer_simulator/test_fusion.py::TestGateFusion::test_fusion_default_2___density_matrix____CPU__
+test/terra/backends/aer_simulator/test_fusion.py::TestGateFusion::test_fusion_default_3___unitary____CPU__
+test/terra/backends/aer_simulator/test_fusion.py::TestGateFusion::test_fusion_default_4___superop____CPU__
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/backends/aer_simulator/test_fusion.py:202: DeprecationWarning: The class ``qiskit.circuit.library.basis_change.qft.QFT`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. ('Use qiskit.circuit.library.QFTGate or qiskit.synthesis.qft.synth_qft_full instead, for access to all previous arguments.',)
+    circuit = transpile(QFT(num_qubits), backend, optimization_level=0)
+
+test/terra/backends/aer_simulator/test_fusion.py::TestGateFusion::test_fusion_qft
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/backends/aer_simulator/test_fusion.py:418: DeprecationWarning: The class ``qiskit.circuit.library.basis_change.qft.QFT`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. ('Use qiskit.circuit.library.QFTGate or qiskit.synthesis.qft.synth_qft_full instead, for access to all previous arguments.',)
+    circuit = transpile(QFT(num_qubits), backend, optimization_level=0)
+
+test/terra/backends/aer_simulator/test_fusion.py::TestGateFusion::test_fusion_threshold_1___automatic____CPU__
+test/terra/backends/aer_simulator/test_fusion.py::TestGateFusion::test_fusion_threshold_2___statevector____CPU__
+test/terra/backends/aer_simulator/test_fusion.py::TestGateFusion::test_fusion_threshold_3___density_matrix____CPU__
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/backends/aer_simulator/test_fusion.py:105: DeprecationWarning: The class ``qiskit.circuit.library.basis_change.qft.QFT`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. ('Use qiskit.circuit.library.QFTGate or qiskit.synthesis.qft.synth_qft_full instead, for access to all previous arguments.',)
+    circuit = transpile(QFT(num_qubits), backend, optimization_level=0)
+
+test/terra/backends/aer_simulator/test_fusion.py::TestGateFusion::test_fusion_two_qubits
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/backends/aer_simulator/test_fusion.py:480: DeprecationWarning: The class ``qiskit.circuit.library.n_local.real_amplitudes.RealAmplitudes`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. Use the function qiskit.circuit.library.real_amplitudes instead.
+    circuit = RealAmplitudes(num_qubits=num_qubits, entanglement="linear", reps=reps)
+
+test/terra/backends/aer_simulator/test_fusion.py: 1 warning
+test/terra/primitives/test_estimator.py: 29 warnings
+test/terra/primitives/test_estimator_v2.py: 44 warnings
+test/terra/primitives/test_sampler.py: 24 warnings
+test/terra/primitives/test_sampler_v2.py: 50 warnings
+  /usr/lib/python3.13/site-packages/qiskit/circuit/library/n_local/real_amplitudes.py:290: DeprecationWarning: The class ``qiskit.circuit.library.n_local.two_local.TwoLocal`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. Use the function qiskit.circuit.library.n_local instead.
+    super().__init__(
+
+test/terra/backends/aer_simulator/test_fusion.py: 1 warning
+test/terra/primitives/test_estimator.py: 29 warnings
+test/terra/primitives/test_estimator_v2.py: 44 warnings
+test/terra/primitives/test_sampler.py: 24 warnings
+test/terra/primitives/test_sampler_v2.py: 50 warnings
+  /usr/lib/python3.13/site-packages/qiskit/circuit/library/n_local/two_local.py:216: DeprecationWarning: The class ``qiskit.circuit.library.n_local.n_local.NLocal`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. This applies to NLocal subclasses too. Use the corresponding function from the module qiskit.circuit.library.n_local instead.
+    super().__init__(
+
+test/terra/backends/aer_simulator/test_fusion.py: 1 warning
+test/terra/primitives/test_estimator.py: 29 warnings
+test/terra/primitives/test_estimator_v2.py: 44 warnings
+test/terra/primitives/test_sampler.py: 24 warnings
+test/terra/primitives/test_sampler_v2.py: 50 warnings
+  /usr/lib/python3.13/site-packages/qiskit/circuit/library/n_local/n_local.py:379: DeprecationWarning: The class ``qiskit.circuit.library.blueprintcircuit.BlueprintCircuit`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. There is no direct replacement other than the QuantumCircuit class.
+    super().__init__(name=name)
+
+test/terra/backends/aer_simulator/test_noise.py::TestNoise::test_kraus_gate_noise_on_QFT_1___automatic____CPU__
+test/terra/backends/aer_simulator/test_noise.py::TestNoise::test_kraus_gate_noise_on_QFT_2___statevector____CPU__
+test/terra/backends/aer_simulator/test_noise.py::TestNoise::test_kraus_gate_noise_on_QFT_3___density_matrix____CPU__
+test/terra/backends/aer_simulator/test_noise.py::TestNoise::test_kraus_gate_noise_on_QFT_4___matrix_product_state____CPU__
+test/terra/backends/aer_simulator/test_noise.py::TestNoise::test_kraus_gate_noise_on_QFT_cache_blocking_1___statevector____CPU__
+test/terra/backends/aer_simulator/test_noise.py::TestNoise::test_kraus_gate_noise_on_QFT_cache_blocking_2___density_matrix____CPU__
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/backends/aer_simulator/test_noise.py:242: DeprecationWarning: The class ``qiskit.circuit.library.basis_change.qft.QFT`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. ('Use qiskit.circuit.library.QFTGate or qiskit.synthesis.qft.synth_qft_full instead, for access to all previous arguments.',)
+    ideal_circuit = transpile(QFT(3), backend)
+
+test/terra/backends/aer_simulator/test_save_amplitudes.py: 18 warnings
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/backends/aer_simulator/test_save_amplitudes.py:69: DeprecationWarning: The class ``qiskit.circuit.library.basis_change.qft.QFT`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. ('Use qiskit.circuit.library.QFTGate or qiskit.synthesis.qft.synth_qft_full instead, for access to all previous arguments.',)
+    self._test_save_amplitudes(QFT(3), params, False, method=method, device=device)
+
+test/terra/backends/aer_simulator/test_save_amplitudes.py::TestSaveAmplitudes::test_save_amplitudes_cache_blocking_1___statevector____CPU____0__1__2__3__4__5__6__7__
+test/terra/backends/aer_simulator/test_save_amplitudes.py::TestSaveAmplitudes::test_save_amplitudes_cache_blocking_2___statevector____CPU____7__6__5__4__3__2__1__0__
+test/terra/backends/aer_simulator/test_save_amplitudes.py::TestSaveAmplitudes::test_save_amplitudes_cache_blocking_3___statevector____CPU____5__3__0__2__
+test/terra/backends/aer_simulator/test_save_amplitudes.py::TestSaveAmplitudes::test_save_amplitudes_cache_blocking_4___statevector____CPU____0__
+test/terra/backends/aer_simulator/test_save_amplitudes.py::TestSaveAmplitudes::test_save_amplitudes_cache_blocking_5___statevector____CPU____5__2__
+test/terra/backends/aer_simulator/test_save_amplitudes.py::TestSaveAmplitudes::test_save_amplitudes_cache_blocking_6___statevector____CPU____7__0__
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/backends/aer_simulator/test_save_amplitudes.py:104: DeprecationWarning: The class ``qiskit.circuit.library.basis_change.qft.QFT`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. ('Use qiskit.circuit.library.QFTGate or qiskit.synthesis.qft.synth_qft_full instead, for access to all previous arguments.',)
+    QFT(3),
+
+test/terra/backends/aer_simulator/test_save_amplitudes.py: 24 warnings
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/backends/aer_simulator/test_save_amplitudes.py:77: DeprecationWarning: The class ``qiskit.circuit.library.basis_change.qft.QFT`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. ('Use qiskit.circuit.library.QFTGate or qiskit.synthesis.qft.synth_qft_full instead, for access to all previous arguments.',)
+    self._test_save_amplitudes(QFT(3), params, True, method=method, device=device)
+
+test/terra/backends/aer_simulator/test_save_amplitudes.py: 12 warnings
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/backends/aer_simulator/test_save_amplitudes.py:117: DeprecationWarning: The class ``qiskit.circuit.library.basis_change.qft.QFT`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. ('Use qiskit.circuit.library.QFTGate or qiskit.synthesis.qft.synth_qft_full instead, for access to all previous arguments.',)
+    QFT(3),
+
+test/terra/backends/aer_simulator/test_shot_branching.py::TestShotBranching::test_shot_branching_kraus_gate_noise_on_QFT_1___statevector____CPU__
+test/terra/backends/aer_simulator/test_shot_branching.py::TestShotBranching::test_shot_branching_kraus_gate_noise_on_QFT_2___density_matrix____CPU__
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/backends/aer_simulator/test_shot_branching.py:493: DeprecationWarning: The class ``qiskit.circuit.library.basis_change.qft.QFT`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. ('Use qiskit.circuit.library.QFTGate or qiskit.synthesis.qft.synth_qft_full instead, for access to all previous arguments.',)
+    ideal_circuit = transpile(QFT(3), backend)
+
+test/terra/backends/aer_simulator/test_standard_gates.py::TestGates::test_multictrl_gate_07___automatic____CPU____MCXGrayCode__
+test/terra/backends/aer_simulator/test_standard_gates.py::TestGates::test_multictrl_gate_14___statevector____CPU____MCXGrayCode__
+test/terra/backends/aer_simulator/test_standard_gates.py::TestGates::test_multictrl_gate_21___unitary____CPU____MCXGrayCode__
+test/terra/backends/aer_simulator/test_standard_gates.py::TestGates::test_multictrl_gate_cache_blocking_7___statevector____CPU____MCXGrayCode__
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/common.py:266: DeprecationWarning: The method ``qiskit.circuit.library.standard_gates.x.MCXGrayCode.__new__()`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. It is recommended to use MCXGate and let HighLevelSynthesis choose the best synthesis method depending on the number of ancilla qubits available. If this specific synthesis method is required, one can specify it using the high-level-synthesis plugin 'gray_code' for MCX gates, or, alternatively, one can use synth_mcx_gray_code' to construct the gate directly.
+    gate = gate_cls(*params)
+
+test/terra/backends/aer_simulator/test_standard_gates.py: 256 warnings
+  /usr/lib/python3.13/copyreg.py:99: DeprecationWarning: The method ``qiskit.circuit.library.standard_gates.x.MCXGrayCode.__new__()`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. It is recommended to use MCXGate and let HighLevelSynthesis choose the best synthesis method depending on the number of ancilla qubits available. If this specific synthesis method is required, one can specify it using the high-level-synthesis plugin 'gray_code' for MCX gates, or, alternatively, one can use synth_mcx_gray_code' to construct the gate directly.
+    return cls.__new__(cls, *args)
+
+test/terra/backends/aer_simulator/test_truncate.py::TestTruncateQubits::test_truncate_default
+  /usr/lib/python3.13/site-packages/qiskit/compiler/transpiler.py:269: UserWarning: Providing `coupling_map` and/or `basis_gates` along with `backend` is not recommended, as this will invalidate the backend's gate durations and error rates.
+    pm = generate_preset_pass_manager(
+
+test/terra/backends/aer_simulator/test_wrapper_qasm_simulator.py::TestQasmSimulator::test_legacy_methods_1___statevector____CPU__
+test/terra/backends/aer_simulator/test_wrapper_qasm_simulator.py::TestQasmSimulator::test_legacy_methods_2___density_matrix____CPU__
+test/terra/backends/aer_simulator/test_wrapper_qasm_simulator.py::TestQasmSimulator::test_unsupported_methods_1_unitary
+test/terra/backends/aer_simulator/test_wrapper_qasm_simulator.py::TestQasmSimulator::test_unsupported_methods_2_superop
+test/terra/backends/test_aer_provider.py::TestAerProvider::test_enum_backends
+  /build/python-qiskit-aer/src/test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/qasm_simulator.py:433: PendingDeprecationWarning: The `QasmSimulator` backend will be deprecated in the future. It has been superseded by the `AerSimulator` backend.
+    warn(
+
+test/terra/backends/aer_simulator/test_wrapper_unitary_simulator.py::TestUnitarySimulator::test_diagonal_gate_1_CPU
+test/terra/backends/aer_simulator/test_wrapper_unitary_simulator.py::TestUnitarySimulator::test_legacy_method_1_CPU
+test/terra/backends/aer_simulator/test_wrapper_unitary_simulator.py::TestUnitarySimulator::test_qobj_global_phase_1_CPU
+test/terra/backends/aer_simulator/test_wrapper_unitary_simulator.py::TestUnitarySimulator::test_unitary_gate_1_CPU
+test/terra/backends/aer_simulator/test_wrapper_unitary_simulator.py::TestUnitarySimulator::test_unitary_gate_circuit_run_1_CPU
+test/terra/backends/aer_simulator/test_wrapper_unitary_simulator.py::TestUnitarySimulator::test_unsupported_methods
+test/terra/backends/test_aer_provider.py::TestAerProvider::test_enum_backends
+  /build/python-qiskit-aer/src/test_dir/usr/lib/python3.13/site-packages/qiskit_aer/backends/unitary_simulator.py:228: PendingDeprecationWarning: The `UnitarySimulator` backend will be deprecated in the future. It has been superseded by the `AerSimulator` backend. To obtain legacy functionality initialize with `AerSimulator(method="unitary")` and append run circuits with the `save_state` instruction.
+    warn(
+
+test/terra/noise/test_standard_errors.py::TestNoise::test_amplitude_damping_error_full_0state_canonical
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/noise/test_standard_errors.py:269: DeprecationWarning: Treating CircuitInstruction as an iterable is deprecated legacy behavior since Qiskit 1.2, and will be removed in Qiskit 3.0. Instead, use the `operation`, `qubits` and `clbits` named attributes.
+    self.assertEqual(circ[0][1], [circ.qubits[0]])
+
+test/terra/noise/test_standard_errors.py::TestNoise::test_amplitude_damping_error_full_0state_canonical
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/noise/test_standard_errors.py:270: DeprecationWarning: Treating CircuitInstruction as an iterable is deprecated legacy behavior since Qiskit 1.2, and will be removed in Qiskit 3.0. Instead, use the `operation`, `qubits` and `clbits` named attributes.
+    self.assertTrue(np.allclose(circ[0][0].params, targets), msg="Incorrect kraus matrices")
+
+test/terra/noise/test_standard_errors.py::TestNoise::test_amplitude_damping_error_full_0state_noncanonical
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/noise/test_standard_errors.py:287: DeprecationWarning: Treating CircuitInstruction as an iterable is deprecated legacy behavior since Qiskit 1.2, and will be removed in Qiskit 3.0. Instead, use the `operation`, `qubits` and `clbits` named attributes.
+    self.assertEqual(circ[0][1], [circ.qubits[0]])
+
+test/terra/noise/test_standard_errors.py::TestNoise::test_amplitude_damping_error_full_0state_noncanonical
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/noise/test_standard_errors.py:288: DeprecationWarning: Treating CircuitInstruction as an iterable is deprecated legacy behavior since Qiskit 1.2, and will be removed in Qiskit 3.0. Instead, use the `operation`, `qubits` and `clbits` named attributes.
+    self.assertTrue(np.allclose(circ[0][0].params, targets), msg="Incorrect kraus matrices")
+
+test/terra/noise/test_standard_errors.py::TestNoise::test_amplitude_damping_error_full_1state_canonical
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/noise/test_standard_errors.py:278: DeprecationWarning: Treating CircuitInstruction as an iterable is deprecated legacy behavior since Qiskit 1.2, and will be removed in Qiskit 3.0. Instead, use the `operation`, `qubits` and `clbits` named attributes.
+    self.assertEqual(circ[0][1], [circ.qubits[0]])
+
+test/terra/noise/test_standard_errors.py::TestNoise::test_amplitude_damping_error_full_1state_canonical
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/noise/test_standard_errors.py:279: DeprecationWarning: Treating CircuitInstruction as an iterable is deprecated legacy behavior since Qiskit 1.2, and will be removed in Qiskit 3.0. Instead, use the `operation`, `qubits` and `clbits` named attributes.
+    self.assertTrue(np.allclose(circ[0][0].params, targets), msg="Incorrect kraus matrices")
+
+test/terra/noise/test_standard_errors.py::TestNoise::test_amplitude_damping_error_full_1state_noncanonical
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/noise/test_standard_errors.py:296: DeprecationWarning: Treating CircuitInstruction as an iterable is deprecated legacy behavior since Qiskit 1.2, and will be removed in Qiskit 3.0. Instead, use the `operation`, `qubits` and `clbits` named attributes.
+    self.assertEqual(circ[0][1], [circ.qubits[0]])
+
+test/terra/noise/test_standard_errors.py::TestNoise::test_amplitude_damping_error_full_1state_noncanonical
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/noise/test_standard_errors.py:297: DeprecationWarning: Treating CircuitInstruction as an iterable is deprecated legacy behavior since Qiskit 1.2, and will be removed in Qiskit 3.0. Instead, use the `operation`, `qubits` and `clbits` named attributes.
+    self.assertTrue(np.allclose(circ[0][0].params, targets), msg="Incorrect kraus matrices")
+
+test/terra/noise/test_standard_errors.py::TestNoise::test_mixed_unitary_error
+test/terra/noise/test_standard_errors.py::TestNoise::test_mixed_unitary_error
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/noise/test_standard_errors.py:81: DeprecationWarning: Treating CircuitInstruction as an iterable is deprecated legacy behavior since Qiskit 1.2, and will be removed in Qiskit 3.0. Instead, use the `operation`, `qubits` and `clbits` named attributes.
+    self.assertTrue(np.allclose(op[0][0].to_matrix(), unitaries[i]))
+
+test/terra/noise/test_standard_errors.py::TestNoise::test_phase_amplitude_damping_error_canonical
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/noise/test_standard_errors.py:253: DeprecationWarning: Treating CircuitInstruction as an iterable is deprecated legacy behavior since Qiskit 1.2, and will be removed in Qiskit 3.0. Instead, use the `operation`, `qubits` and `clbits` named attributes.
+    self.assertEqual(circ[0][1], [circ.qubits[0]])
+
+test/terra/noise/test_standard_errors.py::TestNoise::test_phase_amplitude_damping_error_canonical
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/noise/test_standard_errors.py:254: DeprecationWarning: Treating CircuitInstruction as an iterable is deprecated legacy behavior since Qiskit 1.2, and will be removed in Qiskit 3.0. Instead, use the `operation`, `qubits` and `clbits` named attributes.
+    self.assertEqual(len(circ[0][0].params), 4, msg="Incorrect number of kraus matrices")
+
+test/terra/noise/test_standard_errors.py::TestNoise::test_phase_amplitude_damping_error_noncanonical
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/noise/test_standard_errors.py:245: DeprecationWarning: Treating CircuitInstruction as an iterable is deprecated legacy behavior since Qiskit 1.2, and will be removed in Qiskit 3.0. Instead, use the `operation`, `qubits` and `clbits` named attributes.
+    self.assertEqual(circ[0][1], [circ.qubits[0]])
+
+test/terra/noise/test_standard_errors.py::TestNoise::test_phase_amplitude_damping_error_noncanonical
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/noise/test_standard_errors.py:246: DeprecationWarning: Treating CircuitInstruction as an iterable is deprecated legacy behavior since Qiskit 1.2, and will be removed in Qiskit 3.0. Instead, use the `operation`, `qubits` and `clbits` named attributes.
+    self.assertEqual(len(circ[0][0].params), 6, msg="Incorrect number of kraus matrices")
+
+test/terra/noise/test_standard_errors.py::TestNoise::test_phase_damping_error_canonical
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/noise/test_standard_errors.py:334: DeprecationWarning: Treating CircuitInstruction as an iterable is deprecated legacy behavior since Qiskit 1.2, and will be removed in Qiskit 3.0. Instead, use the `operation`, `qubits` and `clbits` named attributes.
+    self.assertEqual(circ[0][1], [circ.qubits[0]])
+
+test/terra/noise/test_standard_errors.py::TestNoise::test_phase_damping_error_canonical
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/noise/test_standard_errors.py:335: DeprecationWarning: Treating CircuitInstruction as an iterable is deprecated legacy behavior since Qiskit 1.2, and will be removed in Qiskit 3.0. Instead, use the `operation`, `qubits` and `clbits` named attributes.
+    for actual, expected in zip(circ[0][0].params, targets):
+
+test/terra/noise/test_standard_errors.py::TestNoise::test_phase_damping_error_full_canonical
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/noise/test_standard_errors.py:312: DeprecationWarning: Treating CircuitInstruction as an iterable is deprecated legacy behavior since Qiskit 1.2, and will be removed in Qiskit 3.0. Instead, use the `operation`, `qubits` and `clbits` named attributes.
+    self.assertEqual(circ[0][1], [circ.qubits[0]])
+
+test/terra/noise/test_standard_errors.py::TestNoise::test_phase_damping_error_full_canonical
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/noise/test_standard_errors.py:313: DeprecationWarning: Treating CircuitInstruction as an iterable is deprecated legacy behavior since Qiskit 1.2, and will be removed in Qiskit 3.0. Instead, use the `operation`, `qubits` and `clbits` named attributes.
+    self.assertTrue(np.allclose(circ[0][0].params, targets), msg="Incorrect kraus matrices")
+
+test/terra/noise/test_standard_errors.py::TestNoise::test_phase_damping_error_full_noncanonical
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/noise/test_standard_errors.py:321: DeprecationWarning: Treating CircuitInstruction as an iterable is deprecated legacy behavior since Qiskit 1.2, and will be removed in Qiskit 3.0. Instead, use the `operation`, `qubits` and `clbits` named attributes.
+    self.assertEqual(circ[0][1], [circ.qubits[0]])
+
+test/terra/noise/test_standard_errors.py::TestNoise::test_phase_damping_error_full_noncanonical
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/noise/test_standard_errors.py:322: DeprecationWarning: Treating CircuitInstruction as an iterable is deprecated legacy behavior since Qiskit 1.2, and will be removed in Qiskit 3.0. Instead, use the `operation`, `qubits` and `clbits` named attributes.
+    self.assertTrue(np.allclose(circ[0][0].params, targets), msg="Incorrect kraus matrices")
+
+test/terra/noise/test_standard_errors.py::TestNoise::test_phase_damping_error_noncanonical
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/noise/test_standard_errors.py:350: DeprecationWarning: Treating CircuitInstruction as an iterable is deprecated legacy behavior since Qiskit 1.2, and will be removed in Qiskit 3.0. Instead, use the `operation`, `qubits` and `clbits` named attributes.
+    self.assertEqual(circ[0][1], [circ.qubits[0]])
+
+test/terra/noise/test_standard_errors.py::TestNoise::test_phase_damping_error_noncanonical
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/noise/test_standard_errors.py:351: DeprecationWarning: Treating CircuitInstruction as an iterable is deprecated legacy behavior since Qiskit 1.2, and will be removed in Qiskit 3.0. Instead, use the `operation`, `qubits` and `clbits` named attributes.
+    self.assertTrue(np.allclose(circ[0][0].params, targets), msg="Incorrect kraus matrices")
+
+test/terra/noise/test_standard_errors.py::TestNoise::test_thermal_relaxation_error_kraus
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/noise/test_standard_errors.py:445: DeprecationWarning: Treating CircuitInstruction as an iterable is deprecated legacy behavior since Qiskit 1.2, and will be removed in Qiskit 3.0. Instead, use the `operation`, `qubits` and `clbits` named attributes.
+    self.assertEqual(circ[0][0].name, "kraus")
+
+test/terra/noise/test_standard_errors.py::TestNoise::test_thermal_relaxation_error_kraus
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/noise/test_standard_errors.py:446: DeprecationWarning: Treating CircuitInstruction as an iterable is deprecated legacy behavior since Qiskit 1.2, and will be removed in Qiskit 3.0. Instead, use the `operation`, `qubits` and `clbits` named attributes.
+    self.assertEqual(circ[0][1], [circ.qubits[0]])
+
+test/terra/primitives/test_estimator.py: 23 warnings
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/primitives/test_estimator.py:39: DeprecationWarning: The class ``qiskit.circuit.library.n_local.real_amplitudes.RealAmplitudes`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. Use the function qiskit.circuit.library.real_amplitudes instead.
+    self.ansatz = RealAmplitudes(num_qubits=2, reps=2)
+
+test/terra/primitives/test_estimator.py: 48 warnings
+  /build/python-qiskit-aer/src/test_dir/usr/lib/python3.13/site-packages/qiskit_aer/primitives/estimator.py:583: DeprecationWarning: Treating CircuitInstruction as an iterable is deprecated legacy behavior since Qiskit 1.2, and will be removed in Qiskit 3.0. Instead, use the `operation`, `qubits` and `clbits` named attributes.
+    layout = [bit_map[qr[0]] for _, qr, _ in circuit[-num_qubits:]]
+
+test/terra/primitives/test_estimator.py::TestEstimator::test_estimator_1_True
+test/terra/primitives/test_estimator.py::TestEstimator::test_estimator_2_False
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/primitives/test_estimator.py:58: DeprecationWarning: The class ``qiskit.circuit.library.n_local.real_amplitudes.RealAmplitudes`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. Use the function qiskit.circuit.library.real_amplitudes instead.
+    ansatz = RealAmplitudes(num_qubits=2, reps=2)
+
+test/terra/primitives/test_estimator.py::TestEstimator::test_estimator_1_True
+test/terra/primitives/test_estimator.py::TestEstimator::test_estimator_2_False
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/primitives/test_estimator.py:78: DeprecationWarning: The class ``qiskit.circuit.library.n_local.real_amplitudes.RealAmplitudes`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. Use the function qiskit.circuit.library.real_amplitudes instead.
+    ansatz = RealAmplitudes(num_qubits=2, reps=2)
+
+test/terra/primitives/test_estimator.py::TestEstimator::test_numpy_params_1_True
+test/terra/primitives/test_estimator.py::TestEstimator::test_numpy_params_2_False
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/primitives/test_estimator.py:256: DeprecationWarning: The class ``qiskit.circuit.library.n_local.real_amplitudes.RealAmplitudes`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. Use the function qiskit.circuit.library.real_amplitudes instead.
+    qc = RealAmplitudes(num_qubits=2, reps=2)
+
+test/terra/primitives/test_estimator.py::TestEstimator::test_result_order
+  /usr/lib/python3.13/unittest/case.py:606: DeprecationWarning: Estimator has been deprecated as of Aer 0.15, please use EstimatorV2 instead.
+    if method() is not None:
+
+test/terra/primitives/test_estimator.py::TestEstimator::test_warn_shots_none_without_approximation
+  /build/python-qiskit-aer/src/test_dir/usr/lib/python3.13/site-packages/qiskit_aer/primitives/estimator.py:263: RuntimeWarning: If `shots` is None and `approximation` is False, the number of shots is automatically set to backend options' shots=1024.
+    warn(
+
+test/terra/primitives/test_estimator.py::TestEstimator::test_with_shots_option_with_approximation_1_True
+test/terra/primitives/test_estimator.py::TestEstimator::test_with_shots_option_with_approximation_2_False
+  /usr/lib/python3.13/site-packages/ddt.py:221: DeprecationWarning: Estimator has been deprecated as of Aer 0.15, please use EstimatorV2 instead.
+    return func(self, *args, **kwargs)
+
+test/terra/primitives/test_estimator_v2.py: 14 warnings
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/primitives/test_estimator_v2.py:49: DeprecationWarning: The class ``qiskit.circuit.library.n_local.real_amplitudes.RealAmplitudes`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. Use the function qiskit.circuit.library.real_amplitudes instead.
+    self.ansatz = RealAmplitudes(num_qubits=2, reps=2)
+
+test/terra/primitives/test_estimator_v2.py: 28 warnings
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/primitives/test_estimator_v2.py:61: DeprecationWarning: The class ``qiskit.circuit.library.n_local.real_amplitudes.RealAmplitudes`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. Use the function qiskit.circuit.library.real_amplitudes instead.
+    self.psi = (RealAmplitudes(num_qubits=2, reps=2), RealAmplitudes(num_qubits=2, reps=3))
+
+test/terra/primitives/test_estimator_v2.py::TestEstimatorV2::test_run_numpy_params
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/primitives/test_estimator_v2.py:312: DeprecationWarning: The class ``qiskit.circuit.library.n_local.real_amplitudes.RealAmplitudes`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. Use the function qiskit.circuit.library.real_amplitudes instead.
+    qc = RealAmplitudes(num_qubits=2, reps=2)
+
+test/terra/primitives/test_estimator_v2.py::TestEstimatorV2::test_truncate
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/primitives/test_estimator_v2.py:417: DeprecationWarning: The class ``qiskit.circuit.library.n_local.real_amplitudes.RealAmplitudes`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. Use the function qiskit.circuit.library.real_amplitudes instead.
+    qc.append(RealAmplitudes(num_qubits=2, reps=2), [0, 1])
+
+test/terra/primitives/test_sampler.py: 24 warnings
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/primitives/test_sampler.py:51: DeprecationWarning: The class ``qiskit.circuit.library.n_local.real_amplitudes.RealAmplitudes`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. Use the function qiskit.circuit.library.real_amplitudes instead.
+    self._pqc = RealAmplitudes(num_qubits=2, reps=2)
+
+test/terra/primitives/test_sampler.py::TestSampler::test_1qubit
+test/terra/primitives/test_sampler.py::TestSampler::test_2qubit
+test/terra/primitives/test_sampler.py::TestSampler::test_empty_parameter
+test/terra/primitives/test_sampler.py::TestSampler::test_multiple_cregs
+test/terra/primitives/test_sampler.py::TestSampler::test_sampler_param_order
+test/terra/primitives/test_sampler.py::TestSampler::test_sampler_reverse_meas_order
+test/terra/primitives/test_sampler.py::TestSampler::test_with_shots_none
+test/terra/primitives/test_sampler.py::TestSampler::test_with_shots_option
+  /usr/lib/python3.13/unittest/case.py:606: DeprecationWarning: Sampler has been deprecated as of Aer 0.15, please use SamplerV2 instead.
+    if method() is not None:
+
+test/terra/primitives/test_sampler.py: 16 warnings
+  /usr/lib/python3.13/site-packages/ddt.py:221: DeprecationWarning: Sampler has been deprecated as of Aer 0.15, please use SamplerV2 instead.
+    return func(self, *args, **kwargs)
+
+test/terra/primitives/test_sampler_v2.py: 24 warnings
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/primitives/test_sampler_v2.py:57: DeprecationWarning: The class ``qiskit.circuit.library.n_local.real_amplitudes.RealAmplitudes`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. Use the function qiskit.circuit.library.real_amplitudes instead.
+    pqc = RealAmplitudes(num_qubits=2, reps=2)
+
+test/terra/primitives/test_sampler_v2.py: 24 warnings
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/primitives/test_sampler_v2.py:64: DeprecationWarning: The class ``qiskit.circuit.library.n_local.real_amplitudes.RealAmplitudes`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. Use the function qiskit.circuit.library.real_amplitudes instead.
+    pqc2 = RealAmplitudes(num_qubits=2, reps=3)
+
+test/terra/primitives/test_sampler_v2.py::TestSamplerV2::test_run_errors
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/primitives/test_sampler_v2.py:303: DeprecationWarning: The class ``qiskit.circuit.library.n_local.real_amplitudes.RealAmplitudes`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. Use the function qiskit.circuit.library.real_amplitudes instead.
+    qc2 = RealAmplitudes(num_qubits=1, reps=1)
+
+test/terra/primitives/test_sampler_v2.py::TestSamplerV2::test_run_numpy_params
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/primitives/test_sampler_v2.py:371: DeprecationWarning: The class ``qiskit.circuit.library.n_local.real_amplitudes.RealAmplitudes`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. Use the function qiskit.circuit.library.real_amplitudes instead.
+    qc = RealAmplitudes(num_qubits=2, reps=2)
+
+test/terra/states/test_aer_densitymatrix.py::TestAerDensityMatrix::test_QFT
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/states/test_aer_densitymatrix.py:141: DeprecationWarning: The class ``qiskit.circuit.library.basis_change.qft.QFT`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. ('Use qiskit.circuit.library.QFTGate or qiskit.synthesis.qft.synth_qft_full instead, for access to all previous arguments.',)
+    qft.compose(QFT(4), inplace=True)
+
+test/terra/states/test_aer_densitymatrix.py::TestAerDensityMatrix::test_drawings
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/states/test_aer_densitymatrix.py:1312: DeprecationWarning: The class ``qiskit.circuit.library.basis_change.qft.QFT`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. ('Use qiskit.circuit.library.QFTGate or qiskit.synthesis.qft.synth_qft_full instead, for access to all previous arguments.',)
+    qc1 = QFT(5)
+
+test/terra/states/test_aer_densitymatrix.py::TestAerDensityMatrix::test_reverse_qargs
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/states/test_aer_densitymatrix.py:1303: DeprecationWarning: The class ``qiskit.circuit.library.basis_change.qft.QFT`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. ('Use qiskit.circuit.library.QFTGate or qiskit.synthesis.qft.synth_qft_full instead, for access to all previous arguments.',)
+    circ1 = QFT(5)
+
+test/terra/states/test_aer_statevector.py::TestAerStatevector::test_QFT
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/states/test_aer_statevector.py:148: DeprecationWarning: The class ``qiskit.circuit.library.basis_change.qft.QFT`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. ('Use qiskit.circuit.library.QFTGate or qiskit.synthesis.qft.synth_qft_full instead, for access to all previous arguments.',)
+    qft.compose(QFT(4), inplace=True)
+
+test/terra/states/test_aer_statevector.py::TestAerStatevector::test_drawings
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/states/test_aer_statevector.py:1337: DeprecationWarning: The class ``qiskit.circuit.library.basis_change.qft.QFT`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. ('Use qiskit.circuit.library.QFTGate or qiskit.synthesis.qft.synth_qft_full instead, for access to all previous arguments.',)
+    qc1 = QFT(5)
+
+test/terra/states/test_aer_statevector.py: 157 warnings
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/states/test_aer_statevector.py:303: DeprecationWarning: Arrays of 2-dimensional vectors are deprecated. Use arrays of 3-dimensional vectors instead. (deprecated in NumPy 2.0)
+    return np.isclose(np.cross(sv1, sv2), 0)
+
+test/terra/states/test_aer_statevector.py::TestAerStatevector::test_reverse_qargs
+  /build/python-qiskit-aer/src/qiskit-aer-0.17.1/test/terra/states/test_aer_statevector.py:1328: DeprecationWarning: The class ``qiskit.circuit.library.basis_change.qft.QFT`` is deprecated as of Qiskit 2.1. It will be removed in Qiskit 3.0. ('Use qiskit.circuit.library.QFTGate or qiskit.synthesis.qft.synth_qft_full instead, for access to all previous arguments.',)
+    circ1 = QFT(5)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED test/terra/backends/aer_simulator/test_control_flow.py::TestControlFlow::test_switch_register_with_classical_expression_1_statevector
+FAILED test/terra/backends/aer_simulator/test_control_flow.py::TestControlFlow::test_switch_register_with_classical_expression_2_density_matrix
+FAILED test/terra/backends/aer_simulator/test_control_flow.py::TestControlFlow::test_switch_register_with_classical_expression_3_matrix_product_state
+FAILED test/terra/backends/aer_simulator/test_control_flow.py::TestControlFlow::test_switch_register_with_classical_expression_4_stabilizer
+= 4 failed, 3046 passed, 141 skipped, 1 deselected, 1907 warnings in 270.19s (0:04:30) =
+```
+</details>
+
+### Steps to reproduce the problem
+1. Build wheel package
+2. Install in a clean python venv
+3. Install the build package
+4. Run all the tests with `pytest -v test -k "not test_mps_options"` (remove the `-k` to observe the crash)
+
+### What is the expected behavior?
+All tests should work as in previous releases
+
+### Suggested solutions
+
+

@@ -1,0 +1,53 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.14.1
+- **Python version**:3.9.18
+- **Operating system**:MacOS
+
+### What is the current behavior?
+I try to run the control flow circuit by the Generic BackendV2. it works in Aer version 0.13.2. But after I upgrade to 0.14.1. it can not show counts in the job.result.
+
+### Steps to reproduce the problem
+```python
+from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, transpile
+from qiskit.visualization import plot_histogram
+from qiskit.providers.fake_provider import GenericBackendV2
+
+# dynamic circuits i would like to test
+qubits = QuantumRegister(1,'q1')
+clbits = ClassicalRegister(1,'c1')
+circuit = QuantumCircuit(qubits, clbits)
+(q0,) = qubits
+(c0,) = clbits
+ 
+circuit.h(q0)
+circuit.measure(q0, c0)
+with circuit.if_test((c0, 1)):
+    circuit.x(q0)
+circuit.measure(q0, c0)
+
+# create 5 qubits and enable the dynamic circuit
+G_backend = GenericBackendV2(5,control_flow=True)
+transpile_circuit = transpile(circuit,backend=G_backend)
+
+job = G_backend.run(transpile_circuit)
+counts = job.result().get_counts()
+plot_histogram(counts)
+```
+output
+``` sh
+CircuitError: "Bit 'Qubit(QuantumRegister(1, 'q1'), 0)' is not in the circuit."
+```
+
+
+### What is the expected behavior?
+it show a plot like this. After the if condition it apply another x gate to make the measurement go to 0 state.
+![output](https://github.com/Qiskit/qiskit-aer/assets/138212252/342d3467-a34a-4ee8-9f4c-3f93a0dadc3b)
+
+
+
+### Suggested solutions
+if I don't play the gate in the control flow statement, everything will be fine. Hence maybe there has some bug in control flow in aer=0.14.1

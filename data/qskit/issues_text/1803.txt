@@ -1,0 +1,25 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**:
+- **Python version**:
+- **Operating system**:
+
+### What is the current behavior?
+
+Since https://github.com/Qiskit/qiskit-terra/commit/75673c7867222a9d8048d5264053162c5cfbe802 of Terra, `close()` is removed from `Sampler` but `AerSampler` has `close()` with assuming that docstring exists in its base class. This mismatch causes Lint error: `qiskit_aer/primitives/sampler.py:161:4: C0116: Missing function or method docstring (missing-function-docstring)`.
+
+### Steps to reproduce the problem
+
+Just run lint.
+
+### What is the expected behavior?
+
+Pass Lint.
+
+### Suggested solutions
+
+Add docstring to `close()` or  change `Sampler` implementation in Aer.
+

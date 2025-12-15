@@ -1,0 +1,59 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.12.2
+- **Python version**:  3.11.6
+- **Operating system**:  Ubuntu 23.10
+
+### What is the current behavior?
+I have installed qiskit-aer-gpu and MPI4PY using pip3 in order to run qiskit code on multiple nodes. My code is currently running on two nodes but independently. Below is the code I am running:
+
+```
+from qiskit import *
+from qiskit.circuit.library import *
+from qiskit.providers.aer import *
+sim = AerSimulator(method='statevector', device='GPU', cuStateVec_enable=True, blocking_enable=True, blocking_qubits=10)
+shots = 100
+depth=10
+qubits =  25
+circuit = transpile(QuantumVolume(qubits, depth, seed=0),
+backend=sim,
+optimization_level=0)
+circuit.measure_all()
+result = execute(circuit,sim,shots=shots,seed_simulator=12345, blocking_enable=True, blocking_qubits=10).result()
+dict=result.to_dict()
+meta = dict['metadata']
+myrank = meta['mpi_rank']
+data = dict['results'][0]['data']['counts']
+#print (myrank)
+if (myrank==0):
+   print(meta)
+```
+
+And the command is:
+`mpirun -np 3 -machinefile machinefile.txt python3  demo.py `
+
+I am getting following output as result:
+```
+
+{'time_taken_execute': 22.230309361, 'mpi_rank': 0, 'num_mpi_processes': 1, 'max_gpu_memory_mb': 5933, 'max_memory_mb': 15903, 'parallel_experiments': 1, 'num_processes_per_experiments': 1, 'omp_enabled': True}
+{'time_taken_execute': 180.515637528, 'mpi_rank': 0, 'num_mpi_processes': 1, 'max_gpu_memory_mb': 5933, 'max_memory_mb': 15903, 'parallel_experiments': 1, 'num_processes_per_experiments': 1, 'omp_enabled': True}
+{'time_taken_execute': 180.538947709, 'mpi_rank': 0, 'num_mpi_processes': 1, 'max_gpu_memory_mb': 5933, 'max_memory_mb': 15903, 'parallel_experiments': 1, 'num_processes_per_experiments': 1, 'omp_enabled': True}
+```
+All processes have rank=0 and num_mpi_processes=1. My goal is to share GPU resources of two nodes in order to run computation.
+
+### Steps to reproduce the problem
+
+Installation of MPI4PY and qiskit-aer-gpu
+
+
+### What is the expected behavior?
+
+My expectation is that output should show num_mpi_processes=3 (for this particular command) and mpi_rank should be assigned according to process number and computation share the resources (CPU+GPU) of both nodes.
+
+### Suggested solutions
+
+I cannot suggest any solution but I am concerned about installation of qiskit-aer-gpu? Is it come with support for MPI and GPU itself when installed it with pip3 or I have to build it separately with particular flags as mentioned in CONTIBUTING.md [installation instructions](https://github.com/Qiskit/qiskit-aer/blob/main/CONTRIBUTING.md#building-with-mpi-support)
+

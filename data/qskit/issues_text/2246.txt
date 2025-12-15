@@ -1,0 +1,70 @@
+<!-- ⚠️ If you do not respect this template, your issue will be closed -->
+<!-- ⚠️ Make sure to browse the opened and closed issues -->
+
+### Informations
+
+- **Qiskit Aer version**: 0.15.1
+- **Python version**: 3.11
+- **Operating system**: Linux
+
+### What is the current behavior?
+
+First of all, I find that #2056 is still a problem even though it is marked as fixed.
+
+Secondly, at https://github.com/Qiskit/qiskit-aer/pull/2059 it was mentioned that I can use `max_memory_mb=-1` to ignore the check of required memory.  However, even when that is passed, the `save_matrix_product_state` instruction will fail to create an MPS if the error would have been triggered.  Here's a full example:
+
+
+```python
+from qiskit import QuantumCircuit
+from qiskit.circuit.library import PauliEvolutionGate
+from qiskit.quantum_info import SparsePauliOp
+from qiskit.synthesis import SuzukiTrotter
+from qiskit_aer import AerSimulator
+
+L = 100
+hamiltonian = SparsePauliOp.from_sparse_list([], num_qubits=L)
+for x in range(L - 1):
+    hamiltonian += SparsePauliOp.from_sparse_list(
+        [
+            ("XX", (x, x + 1), 1),
+            ("YY", (x, x + 1), 1),
+        ],
+        num_qubits=L,
+    )
+sim = AerSimulator(
+    method="matrix_product_state",
+    matrix_product_state_max_bond_dimension=10,
+    max_memory_mb=-1,
+)
+qc = QuantumCircuit(L)
+qc.append(
+    PauliEvolutionGate(hamiltonian, synthesis=SuzukiTrotter(reps=100)), qargs=qc.qubits
+)
+qc = qc.decompose()
+qc.save_matrix_product_state("mps")
+sim.run(qc).result().data(0)["mps"]
+```
+
+fails with
+
+```
+Traceback (most recent call last):
+  File "/var/home/garrison/Qiskit/aer-mps-fail.py", line 19, in <module>
+    sim.run(qc).result().data(0)["mps"]
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+KeyError: 'mps'
+```
+
+However, if you change it to `L = 10`, it works (at least on my system; these numbers likely need to be tweaked slightly elsewhere).
+
+### Steps to reproduce the problem
+
+Code example above
+
+### What is the expected behavior?
+
+It should save the matrix product state, especially if given `max_memory_mb=-1`.  And ideally the memory check will be fixed so that passing `max_memory_mb=-1` is not necessary, especially when `matrix_product_state_max_bond_dimension` already provides an upper bound on the memory that can be used.
+
+### Suggested solutions
+
+I have not examined the code yet but may soon.
