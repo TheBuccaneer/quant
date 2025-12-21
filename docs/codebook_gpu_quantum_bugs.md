@@ -477,6 +477,34 @@ procedural Analysis, Domain-spezifische statische Checks.
   Invarianten (z.B. Loop-Unrolling-Beschränkungen bei Hardware-Backends)?
 - Wenn ja, tendiert die Einstufung eher zu B als zu A.
 
+
+### 3.2.1 Subtypen innerhalb von CTClass B (B1/B2)
+
+**Motivation (kurz):** CTClass B fasst Fälle zusammen, die prinzipiell vor Ausführung vermeidbar sind,
+aber nicht „trivial“ wie A. Zur Präzisierung unterscheiden wir zwei Mechanismen.
+
+**B1 – statisch/metadata-basiert vermeidbar (Compatibility/Constraints)**
+Definition: Vermeidbarkeit durch Checks über *statische Artefakte* (Build-/Install-Metadaten, Versions- und Feature-Matrizen,
+Architektur/Compute-Capability, deklarierte Limits, Konfigurationsflags).
+Typische Mechanismen: Dependency-Resolver-Regeln, Kompatibilitäts-Audits, Build-Time Guards, Capability-Matrix-Checks.
+
+Heuristische Fragen:
+- Liegt die nötige Information in Metadaten/Constraints/Support-Matrix vor (Versionen, Arch, Flags, Limits)?
+- Könnte ein Preflight/Resolver ohne Ausführung des Workloads „fail-fast“ korrekt entscheiden?
+
+**B2 – vertraglich/guard-basiert vermeidbar (Contracts/Feature-Gating/Typestate-Idee)**
+Definition: Vermeidbarkeit durch *API-/Framework-Verträge*, Guards oder Feature-Gates, die unsichere Zustände un-erreichbar machen
+(z.B. verbotene Kombinationszustände, result-typed error propagation, safe/unsafe modes).
+Typische Mechanismen: Preflight-Validatoren in der API, explizite „unsafe“-Modi, State-Machine/Typestate-Design, Result/Option-Contracts.
+
+Heuristische Fragen:
+- Entsteht der Fehler, weil das Framework einen „unsicheren Zustand“ überhaupt zulässt?
+- Könnte ein Contract/Guard die fehlerhafte Kombination vor dem Start verhindern oder deterministisch blocken?
+
+**Coding-Regel:** Subtyp nur vergeben, wenn CTClass=B; sonst leer.
+Optional: Konfidenz {hoch/mittel/niedrig} bei unsicheren Reports.
+
+
 ### 3.3 CTClass C – nicht sinnvoll compile-time vermeidbar
 
 **Definition:**  
@@ -775,9 +803,13 @@ tritt in Kombination von `uv` und dem aktuellen Packaging von `cudaq` auf.
   Config-/Environment-Problemen (z.B. falsche CUDA-Treiber-Version) abzugrenzen.
 
 
-## 5. Coding-Regeln und Entscheidungsbäume
+## 5. Coding-Regeln (Erweiterung)
 
-<!-- Regeln, wie wir im Zweifel entscheiden (z.B. Reihenfolge der Fragen, Grenzfälle) -->
+1) CTClass (A/B/C) vergeben.
+2) Falls CTClass = B: CTSubType vergeben:
+   - B1, wenn Vermeidbarkeit über Metadaten/Constraints/Support-Matrix plausibel ist.
+   - B2, wenn Vermeidbarkeit über Contracts/Guards/Feature-Gating plausibel ist.
+3) Falls unklar: CTClass bleibt wie entschieden, CTSubType optional mit niedriger Konfidenz markieren.
 
 ## 6. Meta-Informationen
 

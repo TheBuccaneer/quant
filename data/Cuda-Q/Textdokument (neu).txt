@@ -1,0 +1,62 @@
+Das ist eine messerscharfe Beobachtung, Thomas! Deine Vermutung ist absolut korrekt und lässt sich durch die Architektur von **CUDA-Q (C++)** im Vergleich zu **Qiskit Aer (Python/C++ Mix)** wissenschaftlich begründen.
+
+Dass in deiner `cudaq_issues_raw.csv` mehr **As** und **Cs** auftauchen, liegt an zwei zentralen Faktoren:
+
+### 1. Warum mehr As? (Strenge Typisierung)
+
+CUDA-Q ist primär auf **C++** ausgelegt und nutzt eine stark typisierte API.
+
+* **Der Effekt:** Viele Fehler, die in Qiskit (Python) erst zur Laufzeit "knallen" und daher als B1/B2 (statisch analysierbar/vertraglich) eingestuft werden, fängt der C++ Compiler bei CUDA-Q direkt ab.
+* **Beispiel:** Ein falscher Kernel-Aufruf oder inkompatible Register-Typen führen bei CUDA-Q oft zu einem **Compile-Error**. Da der User diesen sofort sieht und er direkt durch das Typsystem der Sprache verhindert wird, ist es ein klassisches **A**.
+* **Informatik-Sicht:** Die "Sicherheitslinie" ist bei CUDA-Q weiter nach vorne geschoben.
+
+### 2. Warum mehr Cs? (Hardware-Nähe)
+
+CUDA-Q operiert viel näher an der Hardware-Abstraktionsschicht (Kernels, Streams, NVQ++ Compiler-Toolchain).
+
+* **Der Effekt:** Wenn etwas schiefläuft, betrifft es oft die **Codegenerierung** für die GPU oder die Interaktion mit dem NVIDIA-Treiberstack.
+* **Beispiel:** Ein "Internal Compiler Error" oder "Wrong Simulation Result" im TensorNet-Target (wie in deinem Issue #2937). Da dies oft tief in der Black-Box des Compilers oder der Hardware-Optimierung passiert, ist es für den Entwickler statisch kaum vorhersehbar. Das landet dann konsequenterweise in **C**.
+
+### Zusammenfassung der Architektur-Logik
+
+In deiner Arbeit kannst du diesen Kontrast hervorragend nutzen:
+
+* **Qiskit Aer (Viel B1/B2):** Hohe Abstraktion (Python). Fehler sind oft logische Konfigurationsfehler, die man durch *zusätzliche* Schutzzäune (Pre-flight Checks) verhindern müsste.
+* **CUDA-Q (Mehr A/C):** Niedrige Abstraktion (C++). Die Sprache selbst übernimmt die Schutzzäune (**A**), aber wenn die Hardware-Integration hakt, wird es sofort unvorhersehbar (**C**).
+
+**Begründung für die Einordnung (2 Sätze):**
+Die Verschiebung zu den Extremen A und C bei CUDA-Q resultiert aus der strengen C++-Typisierung, die einfache API-Fehler sofort als Compile-Time-Error (**A**) markiert. Gleichzeitig führt die tiefere Hardware-Integration dazu, dass verbleibende Bugs oft komplexe Toolchain- oder Treiberprobleme sind, die sich der statischen Vorhersagbarkeit entziehen (**C**).
+
+Möchtest du, dass wir für die Auswertung deiner CSV-Datei eine kleine Vergleichsstatistik erstellen, um genau diesen Unterschied zwischen den Frameworks (Qiskit vs. CUDA-Q) grafisch darzustellen?
+
+
+
+CHATGPT
+
+
+Kurz: **Nein, da musst du dir keine Sorgen machen – das ist eher ein *erwartbares* Muster als ein Fehler in deiner Codierung.**
+
+Warum das okay (und sogar interessant) ist:
+
+1. **Deine A-Definition ist extrem streng.**
+   CTClass **A** heißt bei dir ja sinngemäß: *„Mit einem realistisch einsetzbaren Compile-Time-Typ-/Shape-System im aktuellen Stack wäre dieser Bug weg.“*
+   In einem **Python-basierten Stack wie Qiskit Aer** gibt es faktisch **kein echtes Compile-Time-Safety-Netz** – weder für MPI noch für GPU-Blocking, Multi-GPU oder CUDA-Limits. Da ist es fast logisch, dass echte „A-Fälle“ selten bis gar nicht auftauchen.
+
+2. **Deine Qiskit-Aer-GPU-Stichprobe ist bewusst auf Stack-/Env-Themen gebiased.**
+   Du filterst gezielt auf **GPU-relevante Issues**: Build, CUDA, cuStateVec, MPI+GPU, Multi-GPU, Blocking usw. – das sind genau die Bereiche, wo
+
+   * **B1**: Metadaten/Kompatibilität/Support-Matrix helfen (Build, CUDA-Versionen, Arch), oder
+   * **B2**: Contracts/Feature-Gating helfen (riskante Kombinationen blocken).
+     Das sind **klassische B-Fälle** – und nur sehr selten etwas, das ein „normaler“ Typsystem-Check (A) im Frontend lösen könnte.
+
+3. **Python-Frontend + C++/CUDA-Backend ⇒ typischerweise B/C, kaum A.**
+
+   * **A-Fälle** würdest du eher bei **statisch typisierten, stärker kontraktierten Frontends** sehen (z. B. C++/CUDA-Q, Rust-DSLs, streng getypte IRs).
+   * Qiskit Aer sitzt genau in der Ecke „dynamisches Python + dicker C++/CUDA-Klumpen darunter“ – dort sind die leichten Gewinne eben B1 (Tooling/Resolver) und B2 (Guards/Contracts), nicht A.
+
+Wie du das in der Arbeit rahmen kannst (2–3 Sätze, sinngemäß):
+
+> In der Qiskit-Aer-GPU-Stichprobe finden wir kaum CTClass-A-Fälle, sondern hauptsächlich CTClass-B (B1/B2) und C. Das ist konsistent mit der Architektur: Ein dynamisches Python-Frontend mit C++/CUDA-Backend bietet wenig Raum für echte Compile-Time-Garantien, aber viel Potenzial für bessere Kompatibilitätsprüfungen (B1) und Stack-Verträge/Feature-Gates (B2).
+
+Optional kannst du später noch schön kontrastieren:
+„Im Vergleich zu Qiskit Aer zeigen *[andere Library X]* mehr A-Fälle, weil …“ – aber selbst wenn das ausbleibt, ist **‚viele Bs, kaum As bei Qiskit‘ ein völlig legitimes Ergebnis**, kein Problem.

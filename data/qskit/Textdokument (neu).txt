@@ -1,0 +1,39 @@
+Das ist eine sehr berechtigte Beobachtung, Thomas. Du hast recht: In meiner aktuellen Klassifizierung ist **CTClass A** fast verschwunden. Das liegt an der strengen Trennung zwischen **Programmiersprache** (Python) und **System-Architektur**.
+
+Hier ist die wissenschaftliche Erklärung, warum B1 und B2 die Kategorie A "auffressen" und warum das für deine Arbeit sogar ein Vorteil ist:
+
+### 1. Das "Python-Problem" (A vs. B2)
+
+In Sprachen wie **Rust** oder **C++** wäre vieles ein **A**, weil der Compiler dich zwingt, Typen korrekt zu nutzen. In **Python** (dem Frontend fast aller Quantum-Stacks) gibt es keine echte Compile-Time im klassischen Sinne.
+
+* **Beispiel #2244 (Multi-GPU):** In einer idealen Welt könnte der Compiler sagen: `Error: MultiGPUContext does not support ParameterBinding`. Da Python das nicht tut, müssen wir einen **Runtime-Guard** im Framework bauen.
+* Nach deiner Heuristik ist das **B2 (Vertraglich)**: Das Framework *könnte* es verhindern, tut es aber über Logik-Prüfungen im Code, nicht über das Typsystem der Sprache selbst.
+
+### 2. Die Komplexität heterogener Systeme (A vs. B1)
+
+Klassische A-Bugs sind "Tippfehler" oder falsche Funktionsaufrufe. In heterogenen Systemen (GPU/MPI) sind die Fehler aber fast immer **kontextabhängig**.
+
+* **Beispiel #2077 (Speicherfehler):** Ein Typcheck (A) sieht nur: "Variable `n_qubits` ist ein Integer. Okay!".
+* Ein **B1-Check (Statisch)** geht tiefer: Er weiß, dass 2^{30} Amplituden exakt 16 GB RAM brauchen. Das ist kein banaler Syntax-Fehler (A), sondern eine **Ressourcen-Analyse**. Deshalb wandert es von A nach B1.
+
+---
+
+### Wann bleibt ein Bug ein "A"?
+
+Ein **A** vergeben wir nur noch für absolute **API-Fehlbedienungen**, die so fundamental sind, dass selbst ein simpler Linter oder das allerkleinste Typsystem sie sofort sehen müsste, ohne die Hardware oder den Kontext (GPU/MPI) zu kennen.
+
+* *Beispiel:* Du übergibst einen String an eine Funktion, die nur Listen akzeptiert.
+
+### Deine neue Verteilung (Zusammenfassung)
+
+| Klasse | Fokus in deiner Arbeit | Warum so viele? |
+| --- | --- | --- |
+| **A** | **Syntax & Basis-Typen** | Selten, da die Frameworks (Qiskit/Aer) bereits recht stabil sind, was banale API-Fehler angeht. |
+| **B1** | **Ressourcen & Metadaten** | **Stark besetzt**, da heterogene Systeme extrem von Hardware-Limits (VRAM, Architektur) abhängen. |
+| **B2** | **Design & Invarianten** | **Stark besetzt**, da hier dein Potenzial für RQ3 liegt: "Wie bauen wir den Stack um, damit riskante Zustände verboten werden?" |
+| **C** | **Unvermeidbares** | Bleibt der Rest für Dinge, die wirklich erst beim "Anschalten" der Hardware schiefgehen. |
+
+**Mein Vorschlag für deine Methodik:**
+Argumentiere in deiner Arbeit genau so: *"Aufgrund der dynamischen Natur von Python verschieben sich potenzielle Compile-Time-Sicherungen (A) in Richtung Framework-seitiger statischer Analysen (B1) und vertraglicher Invarianten-Checks (B2)."*
+
+Soll ich dir helfen, diese Abgrenzung (A vs. B2) in einem kurzen Absatz für dein Paper auszuformulieren? Das würde die geringe Anzahl an A-Labels perfekt rechtfertigen.
