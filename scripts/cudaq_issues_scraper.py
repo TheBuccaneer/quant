@@ -9,7 +9,6 @@ def scrape_github_issues():
     page = 1
     per_page = 100
     
-    # Create directory for issue texts
     os.makedirs('issues_text', exist_ok=True)
     
     while True:
@@ -20,7 +19,7 @@ def scrape_github_issues():
             'page': page
         }
         
-        print(f"Fetching page {page}...", file=sys.stderr)
+        print(f"Fetching page {page}", file=sys.stderr)
         
         response = requests.get(url, params=params)
         if response.status_code != 200:

@@ -9,7 +9,7 @@ def scrape_github_issues():
     page = 1
     per_page = 100
     
-    # Create directory for issue texts
+
     os.makedirs('issues_text', exist_ok=True)
     
     while True:
@@ -20,7 +20,7 @@ def scrape_github_issues():
             'page': page
         }
         
-        print(f"Fetching page {page}...", file=sys.stderr)
+        print(f"Fetching page {page}", file=sys.stderr)
         
         response = requests.get(url, params=params)
         if response.status_code != 200:
@@ -45,7 +45,7 @@ def scrape_github_issues():
                 'CreatedAt': issue['created_at']
             })
             
-            # Save issue body to text file
+
             body = issue.get('body', '')
             if body:
                 filename = f"issues_text/{issue_number}.txt"
@@ -53,9 +53,9 @@ def scrape_github_issues():
                     f.write(body)
                 print(f"  Saved issue #{issue_number}", file=sys.stderr)
         
-        print(f"  Found {len(issues)} issues on page {page} (total so far: {len(all_issues)})", file=sys.stderr)
+        print(f"Found {len(issues)} issues on page {page} (total so far: {len(all_issues)})", file=sys.stderr)
         
-        # Check if there are more pages
+
         if len(issues) < per_page:
             break
         

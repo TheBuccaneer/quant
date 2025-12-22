@@ -37,38 +37,38 @@
 Die folgenden Bug-Kategorien sind eine erste Arbeitsversion und werden im
 Rahmen des Pilot-Codings (Phase 1) getestet und ggf. angepasst:
 
-1. Config-/Environment-Bug  
+1. Config-Environment-Bug  
    → Probleme durch falsche oder inkompatible Umgebung, Treiber, CUDA-Versionen,
    fehlende Bibliotheken, fehlerhafte Container-/Cluster-Configs, etc.
 
-2. Build-/Install-/Packaging-Bug  
+2. Build-Install-Packaging-Bug  
    → Fehler im Build-System, bei der Installation oder im Packaging
    (z.B. falsche oder dynamische Dependency-Deklarationen, Probleme mit
    `pip`/`uv`/Wheels, falsch verlinkte Bibliotheken).
 
-3. Backend-/Framework-Integrations-Bug  
+3. Backend-Framework-Integrations-Bug  
    → Probleme im Zusammenspiel zwischen Framework und Backend(s), z.B.
    falsche Auswahl von Targets/Simulators, fehlerhafte Initialisierung von
    GPU-Backends, Inkonsistenzen zwischen Python-/C++-API und internen
    Implementierungen.
 
-4. API-/Usage-/Logic-Bug (High-Level)  
+4. API-Usage-Logic-Bug (High-Level)  
    → Fehlgebrauch von High-Level-APIs, falsche Annahmen über Semantik,
    typische Logik- oder Algorithmusfehler in Quantum-Programmen, die nicht
    primär von der Umgebung abhängen.
 
-5. Performance-/Numerik-Bug  
+5. Performance-Numerik-Bug  
    → Bugs, bei denen die Hauptursache in Performance-Degradierung, falscher
    Komplexität oder numerischen Problemen (z.B. Instabilitäten, Overflow,
    unerwarteter Precision-Loss) liegt.
 
-6. Sonstige / Uncategorized  
+6. Sonstige - Uncategorized  
    → Fälle, die nicht gut in die obigen Kategorien passen; werden im Verlauf
    des Pilot-Codings genutzt, um zu entscheiden, ob neue Kategorien nötig sind
    oder bestehende erweitert werden müssen.
 
 
-### 1.1 Config-/Environment-Bug
+### 1.1 Config-Environment-Bug
 
 **Arbeitsdefinition:**  
 Ein Bug, bei dem die Hauptursache in der Systemumgebung, Installation oder
@@ -95,7 +95,7 @@ Build-/Install-Bug handelt, wird zunächst geprüft, ob das Problem allein durch
 Anpassen der Umgebung (Treiber, CUDA-Version, Paketwahl, Flags) lösbar ist.
 Falls ja, wird es als Config-/Environment-Bug kodiert.
 
-### 1.2 Build-/Install-/Packaging-Bug
+### 1.2 Build-Install-Packaging-Bug
 
 **Arbeitsdefinition:**  
 Ein Bug, bei dem die Hauptursache im Build- oder Installationsprozess oder im
@@ -130,7 +130,7 @@ Wenn hingegen der *Build-/Install-Prozess selbst* kaputt oder unvollständig
 ist (Metapackage falsch geschnürt, dynamische Dependencies, kaputte Wheels),
 kodieren wir es als Build-/Install-/Packaging-Bug (1.2).
 
-### 1.3 Backend-/Framework-Integrations-Bug
+### 1.3 Backend-Framework-Integrations-Bug
 
 **Arbeitsdefinition:**  
 Ein Bug, bei dem die Hauptursache im Zusammenspiel zwischen Framework und
@@ -171,7 +171,7 @@ und C++-Layer oder Fehler bei der Initialisierung von GPU-Backends.
   Initialisierung, Schnittstelle) ist fehlerhaft oder unzureichend
   abgestimmt.
 
-### 1.4 API-/Usage-/Logic-Bug (High-Level)
+### 1.4 API-Usage-Logic-Bug (High-Level)
 
 **Arbeitsdefinition:**  
 Ein Bug, bei dem die Hauptursache in der Verwendung von High-Level-APIs oder
@@ -216,7 +216,7 @@ im (hybriden) Quantum-Code.
   funktionieren), sollte eher 1.3 „Backend-/Framework-Integrations-Bug“
   gewählt werden.
 
-### 1.5 Performance-/Numerik-Bug
+### 1.5 Performance-Numerik-Bug
 
 **Arbeitsdefinition:**  
 Ein Bug, bei dem die Hauptursache in Performance- oder numerikbezogenen
@@ -255,7 +255,7 @@ Ergebnisse (z.B. durch Floating-Point-Grenzen, Mixed Precision, Rundungsfehler).
 - 1.5 wird verwendet, wenn der Code im Prinzip „funktioniert“, aber
   Performance-/Ressourcen- oder Numerik-Eigenschaften das Problem sind.
 
-### 1.6 Sonstige / Uncategorized
+### 1.6 Sonstige - Uncategorized
 
 **Arbeitsdefinition:**  
 Auffang-Kategorie für Bugs, die nicht sinnvoll in eine der vorherigen
@@ -292,7 +292,7 @@ sollten.
 
 ## 2. Stack-Schicht (Where)
 
-### 2.1 Build/Deploy/Environment
+### 2.1 Build-Deploy-Environment
 
 **Arbeitsdefinition:**  
 Diese Schicht umfasst alles rund um Installation, Packaging, Build-System,
@@ -374,7 +374,7 @@ Diese Kategorie umfasst Bugs im **Zusammenspiel zwischen High-Level-Framework (P
 
 ---
 
-### 2.4 High-Level-API / Framework-Logik
+### 2.4 High-Level-API - Framework-Logic
 
 **Definition:**  
 Diese Kategorie umfasst Bugs in der **User-facing API und Framework-Logik** – also in Kernel-Semantik, Parametervalidierung, Typ-/Shape-Handling, Ergebnisverarbeitung, Transformations- und Messungslogik. Die Ursache liegt typischerweise im **Frontend** (z.B. Python-API, Dekoratoren, High-Level-Konstrukte).
@@ -399,7 +399,7 @@ Diese Kategorie umfasst Bugs in der **User-facing API und Framework-Logik** – 
 
 ---
 
-### 2.5 Runtime-/Framework-Laufzeit
+### 2.5 Runtime-Framework-Runtime
 
 **Definition:**  
 Diese Kategorie deckt Bugs ab, die sich primär in der **Laufzeitphase des Frameworks** zeigen, typischerweise im Bereich **Ressourcenmanagement, Caching, Scheduling und Performance**. Dazu gehören z.B. Memory-Leaks, ineffiziente JIT-Caches, fehlerhaftes Lazy-Evaluation-Verhalten oder starke Performance-Regressionen bei ansonsten korrekten Ergebnissen.
