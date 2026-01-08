@@ -374,7 +374,11 @@ Diese Kategorie umfasst Bugs im **Zusammenspiel zwischen High-Level-Framework (P
 
 ---
 
+<<<<<<< HEAD
+### 2.4 High-Level-API / Framework-Logic
+=======
 ### 2.4 High-Level-API - Framework-Logic
+>>>>>>> 831f88e52aa055ae788b7e7c490cc663e82a2cd3
 
 **Definition:**  
 Diese Kategorie umfasst Bugs in der **User-facing API und Framework-Logik** – also in Kernel-Semantik, Parametervalidierung, Typ-/Shape-Handling, Ergebnisverarbeitung, Transformations- und Messungslogik. Die Ursache liegt typischerweise im **Frontend** (z.B. Python-API, Dekoratoren, High-Level-Konstrukte).
@@ -399,7 +403,11 @@ Diese Kategorie umfasst Bugs in der **User-facing API und Framework-Logik** – 
 
 ---
 
+<<<<<<< HEAD
+### 2.5 Runtime-/Framework-Runtime
+=======
 ### 2.5 Runtime-Framework-Runtime
+>>>>>>> 831f88e52aa055ae788b7e7c490cc663e82a2cd3
 
 **Definition:**  
 Diese Kategorie deckt Bugs ab, die sich primär in der **Laufzeitphase des Frameworks** zeigen, typischerweise im Bereich **Ressourcenmanagement, Caching, Scheduling und Performance**. Dazu gehören z.B. Memory-Leaks, ineffiziente JIT-Caches, fehlerhaftes Lazy-Evaluation-Verhalten oder starke Performance-Regressionen bei ansonsten korrekten Ergebnissen.

@@ -1,0 +1,39 @@
+Ah, sehr gute Meta-Frage 😊 – jetzt geht’s weg vom einzelnen Issue hin zum „Wie erkläre ich das im Paper?“.
+
+Ich würd’s auf zwei Ebenen framen:
+
+---
+
+## 1. Kurzbeschreibung im Methodenteil (für die ganze Tabelle)
+
+Das ist der wichtigste Teil – 3–6 Sätze, die erklären, **warum** diese drei Begründungen existieren und **wie** sie entstanden sind. Auf Englisch könnte das z.B. so aussehen:
+
+> For each issue, we additionally recorded three short textual rationales:
+> (i) a *bug rationale* (“reason Bug”) summarising the core failure mode as described in the issue report,
+> (ii) a *stack rationale* (“reason Stack”) explaining in which layer of the CUDA-Q stack the defect is located (high-level API, compiler/IR, backend, build system, environment), and
+> (iii) a *compile-time rationale* (“reason Class”) justifying our CTClass assignment (A/B/B1/B2/C) by arguing whether and how the defect could in principle be prevented by static or compile-pipeline analyses.
+>
+> These rationales are manually derived from the original GitHub issue descriptions, discussion threads, and stack traces, and are intended to make the category assignments transparent and reproducible.
+
+Wenn du willst, etwas kürzer:
+
+> For each issue we provide three short rationales (“reason Bug”, “reason Stack”, “reason Class”) that (i) summarise the concrete failure, (ii) explain where in the stack the defect resides, and (iii) justify whether the bug is in principle preventable by compile-time or compile-pipeline analyses (CTClass A/B/B1/B2/C). The rationales are manually derived from the corresponding GitHub issue reports and discussion threads.
+
+---
+
+## 2. Optional: Erklärung direkt bei der Tabelle / im Anhang
+
+Wenn die Tabelle mit den Issues im Anhang landet, kannst du dort einen kleinen Vorspann machen, der die drei Spalten nochmal in **einem Satz** erklärt:
+
+> Columns *reason Bug*, *reason Stack*, and *reason Class* provide short textual explanations that (a) summarise the bug as reported on GitHub, (b) indicate the affected stack layer, and (c) justify the assigned compile-time class (CTClass).
+
+Auf Deutsch (falls du in der Diss oder Doku einmal deutsch brauchst):
+
+> Für jedes Issue haben wir drei kurze Begründungen ergänzt:
+> **reason Bug** fasst den eigentlichen Fehler aus dem Issue-Report zusammen,
+> **reason Stack** erläutert, in welcher Schicht des CUDA-Q-Stacks der Fehler verortet ist, und
+> **reason Class** begründet die Zuordnung zur Compile-Time-Klasse (A/B/B1/B2/C), also ob und wie der Fehler prinzipiell durch statische Analysen oder Compiler-Checks vermeidbar wäre.
+
+---
+
+Wenn du magst, kann ich dir das auch direkt als kleinen „Methods“-Abschnitt fertig formulieren, den du 1:1 ins Paper schieben kannst.
