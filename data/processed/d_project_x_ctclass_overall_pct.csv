@@ -1,0 +1,3 @@
+project,A,B,C
+NVIDIA/cuda-quantum,6.9,17.0,76.1
+Qiskit/qiskit-aer,2.7,70.3,27.0

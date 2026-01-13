@@ -1,0 +1,4 @@
+project,n_unique_stacklayer,n_unique_bugtype,n_issues
+OVERALL,5,5,196
+NVIDIA/cuda-quantum,5,5,159
+Qiskit/qiskit-aer,5,5,37

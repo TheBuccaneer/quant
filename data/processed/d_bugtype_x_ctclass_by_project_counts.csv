@@ -1,0 +1,11 @@
+bugtype,A,B,C,project
+API-/Usage-/Logic-Bug (High-Level),10,15,47,NVIDIA/cuda-quantum
+Backend-/Framework-Integrations-Bug,0,4,41,NVIDIA/cuda-quantum
+Build-/Install-/Packaging-Bug,1,8,6,NVIDIA/cuda-quantum
+Config-/Environment-Bug,0,0,2,NVIDIA/cuda-quantum
+Performance-/Numerik-Bug,0,0,25,NVIDIA/cuda-quantum
+API-/Usage-/Logic-Bug (High-Level),0,2,1,Qiskit/qiskit-aer
+Backend-/Framework-Integrations-Bug,1,4,3,Qiskit/qiskit-aer
+Build-/Install-/Packaging-Bug,0,9,0,Qiskit/qiskit-aer
+Config-/Environment-Bug,0,8,0,Qiskit/qiskit-aer
+Performance-/Numerik-Bug,0,3,6,Qiskit/qiskit-aer

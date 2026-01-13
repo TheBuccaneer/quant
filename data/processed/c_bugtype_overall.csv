@@ -1,0 +1,7 @@
+bugtype,count,total,percent,pct_ci_low,pct_ci_high
+API-/Usage-/Logic-Bug (High-Level),75,196,38.3,31.7,45.2
+Backend-/Framework-Integrations-Bug,53,196,27.0,21.3,33.7
+Build-/Install-/Packaging-Bug,24,196,12.2,8.4,17.6
+Config-/Environment-Bug,10,196,5.1,2.8,9.1
+Performance--Scaling-Bug,2,196,1.0,0.3,3.6
+Performance-/Numerik-Bug,32,196,16.3,11.8,22.1

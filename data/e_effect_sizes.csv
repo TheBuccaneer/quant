@@ -1,0 +1,4 @@
+test,row_var,col_var,n_used_uid,shape_rxc,chi2,dof,p_chi2,p_perm,p_fisher_2x2,cramers_v,min_expected
+Project × CTClass,project,ctclass,196,2x3,43.2072,2,0.0,0.0002,,0.4695,2.2653
+StackLayer × CTClass,stacklayer,ctclass,196,5x3,77.0129,8,0.0,0.0002,,0.4432,1.102
+BugType × CTClass,bugtype,ctclass,196,5x3,60.4082,8,0.0,0.0002,,0.3926,0.6122

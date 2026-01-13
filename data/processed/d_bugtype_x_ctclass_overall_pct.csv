@@ -1,0 +1,6 @@
+bugtype,A,B,C
+API-/Usage-/Logic-Bug (High-Level),13.3,22.7,64.0
+Backend-/Framework-Integrations-Bug,1.9,15.1,83.0
+Build-/Install-/Packaging-Bug,4.2,70.8,25.0
+Config-/Environment-Bug,0.0,80.0,20.0
+Performance-/Numerik-Bug,0.0,8.8,91.2

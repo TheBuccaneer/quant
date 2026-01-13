@@ -1,0 +1,35 @@
+Das ist **völlig okay** – und sogar eine **gute, nachvollziehbare Methodik**, solange du es sauber **als “Pilot → Codebook-Refinement → konservative Tie-break-Regeln → Final Labels”** beschreibst (und nicht so darstellst, als wäre die finale Übereinstimmung “rein unabhängig” entstanden).
+
+### So kannst du das im Paper berichten (kurz + sauber)
+
+**Method / Reliability (CTClass):**
+
+> “Two raters initially labeled CTClass independently and achieved about 67% agreement. After discussing disagreements, we refined the codebook by introducing the B-subclasses (B1/B2), which increased agreement to about 83% on a follow-up labeling round. Remaining borderline cases were resolved using a conservative decision rule to avoid overestimating compile-time checkability: when uncertain, we favored B2 over B1, and C over B2. Final labels were obtained by consensus/adjudication.”
+
+### Wichtige Klarstellung (damit Reviewer nicht meckern)
+
+* Die **67%** und **83%** sind **Pre-Adjudication** Werte (also *vor* finaler Einigung).
+* Alles **danach** ist “adjudicated consensus” und zählt nicht mehr als unabhängige Übereinstimmung, sondern als **Gold-Label-Erstellung**.
+
+Wenn du nur Percent Agreement hast, ist das okay. Eleganter wäre zusätzlich κ, aber nicht zwingend, wenn du die Zahlen transparent einordnest.
+
+### Warum die konservative Regel gut ist (und was du dazu sagen solltest)
+
+Dein Tie-break “B1→B2→C” ist methodisch sinnvoll, weil er:
+
+* das Risiko reduziert, **CT-Checkbarkeit zu überschätzen** (also nicht zu optimistisch zu labeln),
+* aber zugleich systematisch die Verteilung Richtung **weniger “checkbar”** verschiebt.
+
+Ein Satz reicht:
+
+> “This conservative tie-break may bias labels toward lower checkability; we chose it intentionally to avoid optimistic estimates.”
+
+Wenn du willst, formuliere ich dir daraus auch direkt eine **Threats-to-validity** Passage (3–4 Sätze) passend zu ICCS/LNCS.
+
+
+Hier ist eine Threats-to-Validity / Reliability Passage (kurz, LNCS-tauglich) plus danach F als Checkliste.
+
+Textbaustein fürs Paper (Reliability + Threat)
+
+Labeling reliability. Two raters independently coded the CTClass dimension. The initial agreement was approximately 67%. After discussing disagreements, we refined the codebook by introducing the B-subclasses (B1/B2), which increased agreement to approximately 83% in a second round. Remaining borderline cases were resolved by adjudication using a conservative tie-break rule to avoid overestimating compile-time checkability (prefer B2 over B1, and C over B2). The final dataset therefore represents consensus labels derived from this procedure.
+Threats to validity. Since the conservative tie-break systematically favors lower checkability, our CTClass distribution may be biased toward B2/C; we intentionally accepted this bias to avoid optimistic conclusions. Further, only CTClass was double-coded; other dimensions (e.g., BugType, StackLayer) may contain higher subjective variance and should be interpreted descriptively.

@@ -1,0 +1,6 @@
+stacklayer,A,B,C
+Backend-Library,1,10,23
+Build/Deploy/Environment,1,26,6
+Framework-Integration,1,8,52
+High-Level-API / Framework-Logic,9,9,32
+Runtime-/Framework-Runtime,0,0,18

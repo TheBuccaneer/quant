@@ -1,0 +1,82 @@
+Ja — da steckt **mehr als genug „Story“** drin. Aus deinen **Kreuztabellen (D)** kann man ziemlich klare Muster lesen:
+
+## 1) Zwischen den Projekten ist der Unterschied extrem
+
+**CUDA-Q (N=159):** A **6.9%**, B **17.0%**, C **76.1%**
+**Qiskit Aer GPU (N=37):** A **2.7%**, B **70.3%**, C **27.0%**
+
+➡️ *Interpretation:* Qiskit-GPU-Issues sind bei dir überwiegend **CTClass=B** (also „theoretisch statisch/preflight checkbar“), während CUDA-Q stark von **CTClass=C** dominiert wird (runtime/numerik/integration, schwer statisch abfangbar). Das ist ein ziemlich starker Befund.
+
+## 2) Wo sitzen die „B“-Fälle im Stack?
+
+In **Layer × CTClass** sieht man:
+
+* **Build/Deploy/Environment**: **~79% B** (und bei Qiskit sogar **100% B** in dieser Layer)
+* **Runtime-/Framework-Runtime**: **100% C** (bei dir: 18/18)
+* **Framework-Integration**: überwiegend **C** (~85%)
+* **Backend-Library**: mehrheitlich **C**, aber merkbar **B-Anteil** (~29%)
+* **High-Level-API / Framework-Logic**: **höchster A-Anteil** (~18%)
+
+➡️ *Interpretation:*
+Die „leichtesten“ CT-/Preflight-Hebel liegen offensichtlich in **Build/Deploy/Env** (klassische Kompatibilitäts- und Setup-Probleme). Sobald du in **Runtime** bist, ist es praktisch nur noch **C** (also dynamische Effekte, Performance/Resources, Heisenbugs).
+
+## 3) Welche BugTypes treiben das?
+
+In **BugType × CTClass**:
+
+* **Config/Environment**: **80% B**
+* **Build/Install/Packaging**: **~71% B**
+* **Performance/Numerical**: **~91% C**
+* **Backend/Framework-Integration**: **~83% C**
+* **API/Usage/Logic**: gemischt (**A ~13%**, **B ~23%**, **C ~64%**)
+
+➡️ *Interpretation:*
+Das ist exakt die erwartbare, aber sehr gut zitierbare Trennung:
+
+* **Setup/Packaging/Config** → stark **B** (prüf-/blockbar durch Constraints, Support-Matrix, Preflight)
+* **Performance/Numerik/Integration** → stark **C** (runtime-getrieben; hier helfen eher Tests, Assertions, Differential Testing, Monitoring)
+
+## 4) Warum Qiskit so „B-lastig“ ist (und das ist okay)
+
+In deinen by-project Tabellen sieht man, dass bei **Qiskit** die **Build/Install** und **Config/Env** Kategorien praktisch komplett **B** sind (z.B. Packaging und Config sehr stark). Das zieht den gesamten B-Anteil hoch.
+
+➡️ *Interpretation:* Das ist nicht „schlecht“ — das ist **ein Ergebnis**: *GPU-relevante Qiskit-Issues sind in deinem Sample häufig „ops-/setup-nah“*, während CUDA-Q stärker „deep stack / runtime“-lastig ist.
+
+## 5) Kann man daraus „spannende“ Aussagen machen?
+
+Ja, sogar mehrere, ohne zu overclaimen:
+
+**A)** *CT-Potenzial ist stack- und repo-abhängig.*
+Qiskit-GPU wirkt „preflight-checkbar“, CUDA-Q ist „runtime/integration heavy“.
+
+**B)** *Wenn man Compile-Time-Safety/Preflight verbessern will, muss man in Build/Deploy/Env ansetzen* (Support-Matrix, Dependency Constraints, Installer-Checks, Capability Detection).
+
+**C)** *Performance/Numerik ist fast nie CTClass A/B* → statische Methoden sind hier nicht der Hebel; das ist wichtig für deine „Implications“.
+
+Wenn du willst, kann ich dir daraus direkt 3–5 **Paper-Formulierungen** bauen (Results + Discussion-Sätze), passend zu RQ2/RQ3/RQ4.
+
+
+Ja – daraus kann man **eine klare, „spannende“ Story** bauen. Hier sind **paper-fertige Formulierungen** (Results + kurze Discussion/Implications), direkt mit Zahlen aus deinen D-CSVs:
+
+## Results (Paper-ready Textbausteine)
+
+1. **Projektvergleich (CTClass-Profil):**
+   “In our sample of 196 GPU-relevant issues, the CTClass distribution differs strongly between projects: NVIDIA/cuda-quantum is dominated by CTClass C (121/159; 76.1%), whereas Qiskit/qiskit-aer shows a markedly higher share of CTClass B (26/37; 70.3%).”
+
+2. **StackLayer × CTClass (wo liegen B vs C):**
+   “Across the stack, CTClass B concentrates in Build/Deploy/Environment (26/33; 78.8% B), while Runtime-/Framework-Runtime issues are exclusively CTClass C (18/18; 100% C). Framework-Integration is largely CTClass C (52/61; 85.2%), whereas High-Level-API / Framework-Logic exhibits the highest share of CTClass A (9/50; 18.0%).”
+
+3. **BugType × CTClass (welche Bugtypen sind ‘checkbar’):**
+   “Bug types related to configuration and packaging are predominantly CTClass B, e.g., Config-/Environment-Bug (8/10; 80.0% B) and Build-/Install-/Packaging-Bug (17/24; 70.8% B). In contrast, Performance-/Numerik-Bug is mostly CTClass C (31/34; 91.2% C), and Backend-/Framework-Integrations-Bug is likewise C-heavy (44/53; 83.0% C).”
+
+4. **Repo-spezifische Muster (vorsichtig, kleines N bei Qiskit):**
+   “Within Qiskit/qiskit-aer, all Build-/Install-/Packaging-Bugs (9/9) and Config-/Environment-Bugs (8/8) fall into CTClass B, while cuda-quantum contains most Performance-/Numerik-Bugs as CTClass C (25/25).”
+
+## Discussion / Implications (kurz, reviewer-tauglich)
+
+5. **Interpretation (CT-Hebel sitzt im Ops-/Setup-Bereich):**
+   “These results suggest that the most actionable compile-time or preflight opportunities (CTClass B) lie in build/dependency/environment management, whereas runtime and numerical/performance effects are primarily CTClass C and thus require complementary mitigation (e.g., testing, monitoring, differential checks) rather than purely static validation.”
+
+Wenn du magst, schreibe ich dir daraus direkt einen **kompakten Results-Abschnitt (½ Seite)**, der sauber auf **Fig 2 (Layer×CTClass)** und **Fig 3 (BugType×CTClass)** referenziert – oder wir machen als Nächstes **eine einzige Kernbotschaft pro Figur** (damit es im Short Paper nicht überfrachtet wirkt).
+
+

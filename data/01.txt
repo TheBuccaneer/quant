@@ -1,0 +1,7 @@
+We collected and manually classified 196 GPU-relevant bug reports from two quantum software projects. The dataset contains 159 issues from NVIDIA/cuda-quantum (created 2023-03-20 to 2025-09-10, 79.2% closed) and 37 GPU-relevant issues from Qiskit/qiskit-aer (created 2023-02-07 to 2025-10-29, 54.1% closed). For Qiskit Aer, GPU relevance was determined via the gpu_relevant flag and only marked issues were included.
+
+Table 1 (paper-ready)
+Project/Repository	# Issues (GPU-relevant)	CreatedAt range (UTC)	Closed	Open
+NVIDIA/cuda-quantum	159	2023-03-20 – 2025-09-10	126 (79.2%)	33 (20.8%)
+Qiskit/qiskit-aer (GPU-relevant)	37	2023-02-07 – 2025-10-29	20 (54.1%)	17 (45.9%)
+Total	196	—	146	50

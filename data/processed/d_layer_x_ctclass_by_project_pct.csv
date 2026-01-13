@@ -1,0 +1,11 @@
+stacklayer,A,B,C,project
+Backend-Library,3.6,21.4,75.0,NVIDIA/cuda-quantum
+Build/Deploy/Environment,6.7,53.3,40.0,NVIDIA/cuda-quantum
+Framework-Integration,0.0,10.7,89.3,NVIDIA/cuda-quantum
+High-Level-API / Framework-Logic,20.0,15.6,64.4,NVIDIA/cuda-quantum
+Runtime-/Framework-Runtime,0.0,0.0,100.0,NVIDIA/cuda-quantum
+Backend-Library,0.0,66.7,33.3,Qiskit/qiskit-aer
+Build/Deploy/Environment,0.0,100.0,0.0,Qiskit/qiskit-aer
+Framework-Integration,20.0,40.0,40.0,Qiskit/qiskit-aer
+High-Level-API / Framework-Logic,0.0,40.0,60.0,Qiskit/qiskit-aer
+Runtime-/Framework-Runtime,0.0,0.0,100.0,Qiskit/qiskit-aer

@@ -1,0 +1,6 @@
+stacklayer,count,total,percent,pct_ci_low,pct_ci_high
+Backend-Library,34,196,17.3,12.7,23.3
+Build/Deploy/Environment,33,196,16.8,12.2,22.7
+Framework-Integration,61,196,31.1,25.1,37.9
+High-Level-API / Framework-Logic,50,196,25.5,19.9,32.0
+Runtime-/Framework-Runtime,18,196,9.2,5.9,14.0

@@ -1,0 +1,5 @@
+project,ctsubtype_norm,count,total,percent,pct_ci_low,pct_ci_high
+NVIDIA/cuda-quantum,B1,9,27,33.3,18.6,52.2
+NVIDIA/cuda-quantum,B2,18,27,66.7,47.8,81.4
+Qiskit/qiskit-aer,B1,21,26,80.8,62.1,91.5
+Qiskit/qiskit-aer,B2,5,26,19.2,8.5,37.9

@@ -1,0 +1,4 @@
+ctclass,count,total,percent,pct_ci_low,pct_ci_high
+A,12,196,6.1,3.5,10.4
+B,53,196,27.0,21.3,33.7
+C,131,196,66.8,60.0,73.0

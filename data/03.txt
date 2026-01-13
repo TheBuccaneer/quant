@@ -1,0 +1,337 @@
+# Audit Report: Script 03_cross.py & Kreuztabellen (Schritt D)
+
+## ✅ Zusammenfassung: Gesamt-Qualität
+
+**Status: Exzellent** – Das Script ist technisch korrekt, die Kreuztabellen sind valide, und alle mathematischen Checks bestehen. Ich habe **1 wichtige Daten-Interpretation** und **3 methodische Beobachtungen** identifiziert.
+
+***
+
+## 📊 1. Audit-CSV: Label-Konsistenz Check
+
+### **d_audit_unique_labels.csv**[1]
+
+| Project | n_unique_stacklayer | n_unique_bugtype | n_issues |
+|---------|---------------------|------------------|----------|
+| **OVERALL** | 5 | 5 | 196 |
+| NVIDIA/cuda-quantum | 5 | 5 | 159 |
+| Qiskit/qiskit-aer | 5 | 5 | 37 |
+
+**✅ Interpretation**: 
+- **Perfekte Label-Konsistenz**: Beide Projekte nutzen exakt dieselben 5 StackLayer und 5 BugType Kategorien[1]
+- **Keine Daten-Qualitätsprobleme**: Keine wilden Varianten (z.B. "Build/Deploy/Env" vs "Build-Deploy-Environment")[1]
+- Das ist **ungewöhnlich gut** für manuelle Klassifikation – spricht für sehr diszipliniertes Coding oder Post-Processing[1]
+
+***
+
+## 📊 2. Kreuztabellen-Validierung
+
+### **2.1 StackLayer × CTClass (Overall)**[2][3]
+
+| StackLayer | A | B | C | **Sum** | A% | B% | C% | **Sum%** |
+|------------|---|---|---|---------|----|----|----|---------:|
+| Backend-Library | 1 | 10 | 23 | **34** | 2.9 | 29.4 | 67.6 | **99.9** ✅ |
+| Build/Deploy/Environment | 1 | 26 | 6 | **33** | 3.0 | 78.8 | 18.2 | **100.0** ✅ |
+| Framework-Integration | 1 | 8 | 52 | **61** | 1.6 | 13.1 | 85.2 | **99.9** ✅ |
+| High-Level-API / Framework-Logic | 9 | 9 | 32 | **50** | 18.0 | 18.0 | 64.0 | **100.0** ✅ |
+| Runtime-/Framework-Runtime | 0 | 0 | 18 | **18** | 0.0 | 0.0 | 100.0 | **100.0** ✅ |
+| **Total** | **12** | **53** | **131** | **196** | | | | |
+
+**✅ Mathematische Validierung**:
+- Alle Row-Sums korrekt (z.B. Backend: 1+10+23=34)[2]
+- Row-wise percentages summieren zu 100% (±0.1% Rundungsfehler)[3]
+- Column-Totals stimmen mit Step C überein: A=12, B=53, C=131[4][2]
+
+**🔍 Wichtige Interpretation**:
+
+1. **Build/Deploy/Environment: 78.8% B-Bugs**[3]
+   - Das sind überwiegend **"potenziell zur CT erkennbare" Config-Probleme**[5]
+   - Passt perfekt zu deiner RQ3-Hypothese: Build-Layer hat statisch prüfbare Abhängigkeiten[5]
+
+2. **Runtime-/Framework-Runtime: 100% C**[3]
+   - Vollständig Runtime-gebunden – keine CT-Vermeidbarkeit[3]
+   - Konsistent mit Layer-Definition ("Laufzeit-Aspekte")[5]
+
+3. **High-Level-API: 18% A**[3]
+   - Höchster A-Anteil aller Layer[3]
+   - Das sind typischerweise **API-Missbrauch-Bugs** (falsche Sequenzen, Typestate-Verletzungen)[5]
+
+***
+
+### **2.2 BugType × CTClass (Overall)**[6][7]
+
+| BugType | A | B | C | **Sum** | A% | B% | C% | **Sum%** |
+|---------|---|---|---|---------|----|----|----|---------:|
+| API-/Usage-/Logic-Bug (High-Level) | 10 | 17 | 48 | **75** | 13.3 | 22.7 | 64.0 | **100.0** ✅ |
+| Backend-/Framework-Integrations-Bug | 1 | 8 | 44 | **53** | 1.9 | 15.1 | 83.0 | **100.0** ✅ |
+| Build-/Install-/Packaging-Bug | 1 | 17 | 6 | **24** | 4.2 | 70.8 | 25.0 | **100.0** ✅ |
+| Config-/Environment-Bug | 0 | 8 | 2 | **10** | 0.0 | 80.0 | 20.0 | **100.0** ✅ |
+| Performance-/Numerik-Bug | 0 | 3 | 31 | **34** | 0.0 | 8.8 | 91.2 | **100.0** ✅ |
+| **Total** | **12** | **53** | **131** | **196** | | | | |
+
+**✅ Validierung**: Alle Row-Sums und Percentages korrekt[7][6]
+
+**🔍 Zentrale Findings für dein Paper**:
+
+1. **Config-/Environment-Bug: 80% B**[7]
+   - **Höchster B-Anteil** aller BugTypes[7]
+   - Das sind die klassischen "GPU-Treiber-Version inkompatibel", "CUDA Toolkit nicht gefunden"-Probleme[5]
+   - Für RQ4: **Starker Kontrast zu klassischen Quantum-Framework-Studien** (dort dominieren Logic-Bugs)[5]
+
+2. **Performance-/Numerik-Bug: 91.2% C**[7]
+   - Fast vollständig Runtime-gebunden[7]
+   - Das sind numerische Instabilitäten, Präzisionsfehler, unerwartete Performance-Degradation[5]
+
+3. **API-/Usage-/Logic-Bug: 13.3% A**[7]
+   - **Höchster A-Anteil** (wie erwartet für High-Level API-Bugs)[7]
+   - Das sind die Typestate-Candidates für dein späteres TypeQCL-Tool[5]
+
+***
+
+### **2.3 Project × CTClass**[8][9]
+
+| Project | A | B | C | **Sum** | A% | B% | C% |
+|---------|---|---|---|---------|----|----|-----|
+| NVIDIA/cuda-quantum | 11 | 27 | 121 | **159** | 6.9 | 17.0 | 76.1 |
+| Qiskit/qiskit-aer | 1 | 26 | 10 | **37** | 2.7 | 70.3 | 27.0 |
+
+**✅ Validierung**: 
+- Row-Sums: 11+27+121=159 ✅, 1+26+10=37 ✅[8]
+- Total: 159+37=196 ✅[4]
+- Percentages korrekt[9]
+
+**🔍 KRITISCHE Beobachtung: Gegensätzliche CTClass-Profile**
+
+| Projekt | A% | B% | C% |
+|---------|----|----|-----|
+| **CUDA-Q** | 6.9 | **17.0** | **76.1** |
+| **Qiskit** | 2.7 | **70.3** | **27.0** |
+
+**Das ist ein SEHR starker Unterschied**:[9]
+
+1. **Qiskit: 70.3% B-Bugs** (vs CUDA-Q: 17.0%)[9]
+   - Fast **umgekehrtes Profil**[9]
+   - Qiskit hat deutlich mehr "potenziell zur CT erkennbare" Probleme[9]
+
+2. **CUDA-Q: 76.1% C-Bugs** (vs Qiskit: 27.0%)[9]
+   - CUDA-Q ist viel stärker Runtime-dominiert[9]
+
+**Mögliche Erklärungen** (für dein Paper):[5]
+
+- **Architektur-Unterschied**:
+  - CUDA-Q: Komplexeres Runtime-System mit vielen Dynamic-Dispatch-Mechanismen → mehr C[5]
+  - Qiskit Aer GPU: Primär Build/Config-Integration-Probleme mit cuStateVec → mehr B[5]
+
+- **Daten-Bias**:
+  - Qiskit-Sample: Nur 37 Issues (vs CUDA-Q: 159)[8]
+  - Möglicherweise **Selection-Bias**: Qiskit GPU-relevant Issues sind überwiegend Build/Config-Probleme?[5]
+
+**Empfehlung**: Das ist ein **Kern-Finding deines Papers** – aber unbedingt in Threats-to-Validity diskutieren (Sample-Size-Imbalance, möglicher Selection-Bias bei Qiskit GPU-Filter).[5]
+
+***
+
+### **2.4 Cross-Check: by_project Tabellen**
+
+**StackLayer × CTClass (CUDA-Q)**:[10][11]
+
+| StackLayer | A | B | C | Sum | A% | B% | C% |
+|------------|---|---|---|-----|----|----|-----|
+| Backend-Library | 1 | 6 | 21 | 28 | 3.6 | 21.4 | 75.0 |
+| Build/Deploy/Env | 1 | 8 | 6 | 15 | 6.7 | 53.3 | 40.0 |
+| Framework-Integration | 0 | 6 | 50 | 56 | 0.0 | 10.7 | 89.3 |
+| High-Level-API | 9 | 7 | 29 | 45 | 20.0 | 15.6 | 64.4 |
+| Runtime-Runtime | 0 | 0 | 15 | 15 | 0.0 | 0.0 | 100.0 |
+| **Sum CUDA-Q** | **11** | **27** | **121** | **159** | | | |
+
+**✅ Validierung**: Sum stimmt mit Project × CTClass überein (11, 27, 121)[10][8]
+
+**Qiskit**:[11][10]
+
+| StackLayer | A | B | C | Sum | A% | B% | C% |
+|------------|---|---|---|-----|----|----|-----|
+| Backend-Library | 0 | 4 | 2 | 6 | 0.0 | 66.7 | 33.3 |
+| Build/Deploy/Env | 0 | 18 | 0 | **18** | 0.0 | **100.0** | 0.0 |
+| Framework-Integration | 1 | 2 | 2 | 5 | 20.0 | 40.0 | 40.0 |
+| High-Level-API | 0 | 2 | 3 | 5 | 0.0 | 40.0 | 60.0 |
+| Runtime-Runtime | 0 | 0 | 3 | 3 | 0.0 | 0.0 | 100.0 |
+| **Sum Qiskit** | **1** | **26** | **10** | **37** | | | |
+
+**✅ Validierung**: Sum stimmt[10][8]
+
+**🔍 Beobachtung: Qiskit Build/Deploy = 100% B-Bugs**[11]
+
+- **18 von 18 Build-Bugs sind Klasse B**[11][10]
+- Das sind fast sicher: "CUDA Toolkit Version X required, but Y found", "cuStateVec not in LD_LIBRARY_PATH", etc.[5]
+- **Perfektes Beispiel für Config-Dependency-Checks** (B1-Subtype)[5]
+
+***
+
+## 🔍 3. Script-Code Review (03_cross.py)
+
+### **✅ Korrekte Implementierungen**[12]
+
+1. **Crosstab-Logik**:
+   - `pd.crosstab()` für counts ✅[12]
+   - Row-wise percentages via `.div(row_sums, axis=0) * 100` ✅[12]
+   - `.round(1)` für 1 Dezimalstelle ✅[12]
+
+2. **by_project Struktur**:
+   - Loop über `sorted(df['project'].unique())` ✅[12]
+   - Separate Crosstabs pro Project, dann `concat` ✅[12]
+   - Spalte `project` am Ende eingefügt ✅[12]
+
+3. **Audit-Feature**:
+   - `nunique()` für StackLayer/BugType pro Project ✅[12]
+   - OVERALL-Zeile am Anfang ✅[1]
+
+4. **Deduplizierung**:
+   - `drop_duplicates(subset=['project', 'issueid'], keep='last')` ✅[12]
+   - UID-Konstruktion: `project + '#' + issueid` ✅[12]
+
+***
+
+### **🔧 Methodische Beobachtungen**
+
+#### **1. GPU-Filter: Noch nicht gepatcht**[12]
+
+```python
+df = df[df['gpu_relevant'].str.strip().str.upper() == 'X'].copy()
+```
+
+**Status**: Wie in Script 02.py – akzeptiert nur "X", nicht `True/1/yes`.[13][12]
+
+**Impact**: Falls deine Qiskit-Daten nur "X" enthalten → kein Problem. Falls gemischt → Patch anwenden (siehe vorherige Audit-Empfehlung).[14]
+
+***
+
+#### **2. Row-wise Percentages: Division-by-Zero Handling**[12]
+
+```python
+row_sums = ct_counts.drop('project', axis=1).sum(axis=1).replace(0, pd.NA)
+ct_pct = ct_counts.drop('project', axis=1).div(row_sums, axis=0) * 100
+```
+
+**✅ Gut**: `.replace(0, pd.NA)` verhindert Division-by-Zero[12]
+
+**Aber**: Falls eine Zeile 0-Sum hat (z.B. StackLayer ohne Issues in einem Projekt), wird sie zu NaN → erscheint nicht im Output[12]
+
+**Prüfung**: In deinen Outputs gibt es keine NaN-Zeilen → alle Layer/BugTypes haben mindestens 1 Issue pro Projekt ✅[15][10]
+
+***
+
+#### **3. Deduplizierung: Zwei Ebenen**[12]
+
+```python
+# 1) Innerhalb load_and_prepare():
+df.drop_duplicates(subset=['project', 'issueid'], keep='last')
+
+# 2) Im main():
+df['uid'] = project + '#' + issueid  # Aber keine zweite Deduplizierung!
+```
+
+**Beobachtung**: UID wird erzeugt, aber **nicht** nochmal dedupliziert nach `uid`[12]
+
+**Impact**: 
+- Falls ein Issue in beiden Dateien vorkommt (CUDA-Q + Qiskit mit gleicher IssueID): würde doppelt zählen
+- **Aber**: Realistisch unmöglich, da IssueIDs repo-spezifisch sind[12]
+
+**Status**: Technisch kein Bug, aber Konsistenz mit Script 02.py wäre besser (dort wird uid implizit für `nunique()` genutzt)[13]
+
+***
+
+## 📊 4. Daten-Plausibilität: Finale Cross-Checks
+
+### **Check 1: Overall-Tabellen summieren zu Total**
+
+**StackLayer × CTClass**:[2]
+- Sum(A-Column): 1+1+1+9+0 = **12** ✅ (stimmt mit Step C)[4]
+- Sum(B-Column): 10+26+8+9+0 = **53** ✅[4]
+- Sum(C-Column): 23+6+52+32+18 = **131** ✅[4]
+
+**BugType × CTClass**:[6]
+- Sum(A-Column): 10+1+1+0+0 = **12** ✅[4]
+- Sum(B-Column): 17+8+17+8+3 = **53** ✅[4]
+- Sum(C-Column): 48+44+6+2+31 = **131** ✅[4]
+
+***
+
+### **Check 2: by_project summiert zu Overall**
+
+**CUDA-Q StackLayer (A-Column)**:[10]
+- 1+1+0+9+0 = **11** ✅ (stimmt mit Project × CTClass)[8]
+
+**Qiskit StackLayer (A-Column)**:[10]
+- 0+0+1+0+0 = **1** ✅[8]
+
+**Sum**: 11+1 = **12** ✅ (stimmt mit Overall)[2]
+
+***
+
+### **Check 3: Audit-Zahlen konsistent**
+
+- **OVERALL n_issues: 196** ✅[1]
+- CUDA-Q: 159, Qiskit: 37 → **Sum: 196** ✅[1]
+- Stimmt mit allen Tabellen überein[8][4]
+
+***
+
+## 🎯 Zentrale Findings für dein Paper
+
+### **RQ1 (Bug-Arten)**:[6][7]
+- **Config/Build-Bugs dominieren** (24+10 = 34 Issues, 17.3%)[6]
+- **Performance/Numerik-Bugs signifikant** (34 Issues, 17.3%)[6]
+- **API-Bugs häufigste Kategorie** (75 Issues, 38.3%)[6]
+
+### **RQ2 (Schichten)**:[2][3]
+- **Framework-Integration größter Layer** (61 Issues, 31.1%)[2]
+- **Build/Deploy/Environment stark vertreten** (33 Issues, 16.8%)[2]
+
+### **RQ3 (CT-Vermeidbarkeit)**:[3][7]
+- **Build/Deploy: 78.8% B** → hoher CT-Potenzial[3]
+- **High-Level-API: 18% A** → klassische Typestate-Candidates[3]
+- **Config-Bugs: 80% B** → Dependency-Check-Kandidaten[7]
+
+### **RQ4 (GPU-Stack vs Literatur)**:[9]
+- **Qiskit: 70.3% B** → stark Config-lastig[9]
+- **CUDA-Q: 76.1% C** → Runtime-dominiert[9]
+- **Kontrast zu Paltenghi/Pradel** (High-Level-Frameworks: Logic-dominiert)[5]
+
+***
+
+## ✅ Finale Bewertung
+
+**Script-Qualität**: **9.5/10**
+- Technisch exzellent, alle Tabellen mathematisch korrekt
+- Audit-Feature sehr smart
+- GPU-Filter-Patch noch ausständig (minor)
+
+**Daten-Plausibilität**: **10/10**
+- Alle Cross-Checks bestehen
+- Perfekte Label-Konsistenz (5×5)
+- Mathematische Integrität durchgehend
+
+**Paper-Relevanz**: **10/10**
+- Sehr starke Findings für alle 4 RQs
+- Qiskit vs CUDA-Q Unterschied ist "paper-worthy"
+- Build/Deploy + Config → hoher B-Anteil ist Kern-Message
+
+**Einzige kritische Empfehlung**: Das **Qiskit vs CUDA-Q CTClass-Profil** (70% B vs 17% B) unbedingt in **Threats-to-Validity** diskutieren (Sample-Size-Imbalance, möglicher Selection-Bias durch GPU-Filter).[9][5]
+
+[1](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/11747852/38e90af2-778e-4461-8eaf-fb9407ad21c0/d_audit_unique_labels.csv)
+[2](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/11747852/a5f3147f-59d1-4ba9-95ee-1ed77bafcd34/d_layer_x_ctclass_overall_counts.csv)
+[3](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/11747852/3c60c66a-6018-471d-a342-a8d15d617b1e/d_layer_x_ctclass_overall_pct.csv)
+[4](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/11747852/f4e80fa0-494e-40e8-90b2-9e93519fcd46/c_ctclass_overall.csv)
+[5](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/collection_78564573-4304-462e-b433-cf7ce1fd60f4/9b189670-1f77-4151-b09f-1c76d410b70e/Projekt-01-2.txt)
+[6](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/11747852/ce66fea9-e371-41aa-b3f1-370566429968/d_bugtype_x_ctclass_overall_counts.csv)
+[7](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/11747852/a9137e4a-f655-424d-a4f6-4e722bda3424/d_bugtype_x_ctclass_overall_pct.csv)
+[8](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/11747852/d6685659-d844-49e3-884e-28f6434413a5/d_project_x_ctclass_overall_counts.csv)
+[9](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/11747852/abb82817-610e-4946-b4ab-b45b6335aef2/d_project_x_ctclass_overall_pct.csv)
+[10](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/11747852/bab0ee62-355c-4e9b-b03a-fefa38f97834/d_layer_x_ctclass_by_project_counts.csv)
+[11](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/11747852/edd68c30-9a77-4738-9ecc-056999e9be82/d_layer_x_ctclass_by_project_pct.csv)
+[12](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/11747852/b38078a2-4fcf-4383-a331-8892fe2072bc/03_cross.py)
+[13](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/11747852/5aab5109-4a7d-4733-8658-d57b51f73985/02.py)
+[14](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/11747852/5be49069-320b-4a0d-822e-7ad50f6ddd12/Textdokument-neu.txt)
+[15](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/11747852/f241f95b-ee38-49e3-a40d-3929b2aee218/d_bugtype_x_ctclass_by_project_counts.csv)
+[16](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/11747852/6d619c40-65a9-4b6c-8e9e-74d6fe6a1ea0/d_bugtype_x_ctclass_by_project_pct.csv)
+[17](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/11747852/54e9e279-7d9f-453f-9652-fde24bbe84eb/01_amount_of_issues.py)
+[18](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/11747852/ff191b51-c48e-489f-8f08-8641a30b2e7d/c_b_subtype_overall.csv)
+[19](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/11747852/22cf71c8-fd72-4d57-bc57-5fbeeaec7428/c_b_subtype_by_project.csv)
